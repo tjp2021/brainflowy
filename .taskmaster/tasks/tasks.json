@@ -1,0 +1,673 @@
+{
+  "master": {
+    "tasks": [
+      {
+        "id": 1,
+        "title": "Phase 1: Setup Project Infrastructure",
+        "description": "Initialize the project repository with React TypeScript frontend for UI prototyping, and prepare for later backend integration with FastAPI, PostgreSQL, and Redis.",
+        "details": "1. Create a monorepo structure with separate directories for frontend and backend\n2. Frontend setup (Agent A):\n   - Create React app with TypeScript\n   - Set up Zustand for state management\n   - Configure mobile-responsive design foundation\n   - Implement mock API service layer for UI prototyping\n   - Configure PWA capabilities\n3. Backend preparation (Agent B):\n   - Document backend requirements based on UI prototype needs\n   - Plan FastAPI project structure\n   - Plan PostgreSQL schema with ltree extension\n   - Plan Redis caching strategy\n4. Set up CI/CD pipeline for automated testing and deployment",
+        "testStrategy": "1. Verify frontend development environment starts correctly\n2. Validate frontend build process\n3. Test mock API service functionality\n4. Confirm UI prototype works with mock data\n5. Review backend requirements documentation for completeness",
+        "priority": "high",
+        "dependencies": [],
+        "status": "pending",
+        "subtasks": [
+          {
+            "id": 1,
+            "title": "Create Monorepo Structure",
+            "description": "Set up the initial project repository with a monorepo structure containing separate directories for backend and frontend.",
+            "dependencies": [],
+            "details": "1. Initialize a new git repository\n2. Create a root directory structure with folders for 'backend', 'frontend', and 'docker'\n3. Add a root package.json for workspace management\n4. Create .gitignore file with appropriate entries for Node.js, Python, and environment files\n5. Set up README.md with project overview and setup instructions\n6. Initialize git submodules if needed\n7. Create a basic project configuration for code style and linting",
+            "status": "done",
+            "testStrategy": "Verify the repository structure is correctly set up with all required directories and configuration files."
+          },
+          {
+            "id": 2,
+            "title": "Initialize React TypeScript Frontend for UI Prototyping",
+            "description": "Set up the React frontend application with TypeScript, routing, and basic project structure for rapid UI prototyping.",
+            "dependencies": [],
+            "details": "1. Create a new React application with TypeScript using Create React App or Vite\n2. Set up project structure with components/, pages/, hooks/, utils/, and types/ directories\n3. Configure TypeScript settings\n4. Install and configure React Router for navigation\n5. Set up environment-based configuration\n6. Create basic layout components (Header, Footer, Layout)\n7. Implement responsive viewport settings\n8. Configure absolute imports for cleaner code\n9. Create mock API service layer for UI development without backend",
+            "status": "in-progress",
+            "testStrategy": "Verify the React application builds and runs correctly. Test basic navigation with React Router and confirm mock API services work properly."
+          },
+          {
+            "id": 3,
+            "title": "Configure PWA Capabilities",
+            "description": "Set up Progressive Web App capabilities for the frontend to enable offline functionality and mobile installation.",
+            "dependencies": [],
+            "details": "1. Configure service worker for offline capabilities\n2. Create manifest.json with app information\n3. Add appropriate icons for different device sizes\n4. Implement offline fallback page\n5. Configure cache strategies for static assets\n6. Set up push notification infrastructure\n7. Add install prompt for mobile devices\n8. Implement basic offline data synchronization strategy",
+            "status": "in-progress",
+            "testStrategy": "Test PWA installation on mobile devices. Verify offline functionality works by disabling network and accessing the application."
+          },
+          {
+            "id": 4,
+            "title": "Implement Mock API Service Layer",
+            "description": "Create a comprehensive mock API service layer that simulates all backend functionality needed for UI development.",
+            "dependencies": [],
+            "details": "1. Design API interface based on UI requirements\n2. Create mock data structures for all entities (users, outlines, etc.)\n3. Implement mock authentication service\n4. Create mock CRUD operations for outlines and items\n5. Simulate latency and loading states\n6. Add mock error conditions for testing error handling\n7. Document API interface for later backend implementation\n8. Implement local storage persistence for mock data",
+            "status": "done",
+            "testStrategy": "Test all mock API endpoints to ensure they provide appropriate data. Verify error handling and loading states work correctly."
+          },
+          {
+            "id": 5,
+            "title": "Document Backend Requirements",
+            "description": "Based on UI prototype needs, document detailed requirements for the backend implementation.",
+            "dependencies": [
+              "1.2",
+              "1.4"
+            ],
+            "details": "1. Document all required API endpoints with request/response formats\n2. Define authentication requirements\n3. Specify database schema needs for user data and outlines\n4. Document caching requirements\n5. Define performance requirements for API responses\n6. Specify security requirements\n7. Document real-time sync requirements\n8. Create sequence diagrams for key workflows",
+            "status": "done",
+            "testStrategy": "Review documentation for completeness and clarity. Verify all UI functionality has corresponding backend requirements documented."
+          },
+          {
+            "id": 6,
+            "title": "Set up CI/CD Pipeline",
+            "description": "Configure continuous integration and deployment pipeline for automated testing and deployment.",
+            "dependencies": [],
+            "details": "1. Set up GitHub Actions or similar CI/CD service\n2. Create workflow for frontend tests\n3. Prepare for later backend test integration\n4. Configure linting and code quality checks\n5. Set up automated build process for frontend\n6. Configure deployment to staging environment\n7. Implement preview deployments for pull requests\n8. Add notifications for build/deployment status",
+            "status": "in-progress",
+            "testStrategy": "Verify CI/CD pipeline by making a small change, pushing to repository, and confirming that tests run and deployment occurs automatically."
+          }
+        ]
+      },
+      {
+        "id": 2,
+        "title": "Phase 1: Implement User Authentication UI",
+        "description": "Create UI components and mock services for user authentication, including registration, login, and profile management.",
+        "details": "1. Design and implement UI components (Agent A):\n   - Registration form with validation\n   - Login form with error handling\n   - Profile management page\n   - Password reset workflow\n2. Create mock authentication service:\n   - Simulate JWT token handling\n   - Mock user registration and validation\n   - Mock login/logout functionality\n   - Simulate password reset flow\n3. Document API requirements for backend implementation\n4. Design user experience flow for authentication process",
+        "testStrategy": "1. UI component tests for all authentication forms\n2. Test form validation and error handling\n3. Verify complete user flows with mock services\n4. Usability testing of authentication process\n5. Verify API requirements documentation is complete",
+        "priority": "high",
+        "dependencies": [
+          1
+        ],
+        "status": "pending",
+        "subtasks": []
+      },
+      {
+        "id": 3,
+        "title": "Phase 1: Design and Implement Outline UI",
+        "description": "Create UI components and mock services for the outline management interface with hierarchical data visualization.",
+        "details": "1. Design and implement UI components (Agent A):\n   - Outline list view\n   - Hierarchical outline item display\n   - Item creation and editing interface\n   - Drag-and-drop for hierarchy manipulation\n   - Context menus for item actions\n2. Create mock outline data service:\n   - Simulate hierarchical data structure\n   - Mock CRUD operations for outlines and items\n   - Simulate hierarchy manipulation (indent/outdent)\n   - Mock data persistence using local storage\n3. Document API requirements for backend implementation\n4. Design database schema requirements for hierarchical data",
+        "testStrategy": "1. UI component tests for outline visualization\n2. Test CRUD operations with mock data\n3. Verify hierarchy manipulation works correctly\n4. Performance testing with large mock outlines\n5. Usability testing of outline management interface",
+        "priority": "high",
+        "dependencies": [
+          1
+        ],
+        "status": "pending",
+        "subtasks": [
+          {
+            "id": 1,
+            "title": "Design Database Schema with ltree Extension",
+            "description": "Create the PostgreSQL database schema for hierarchical outline data using the ltree extension, including tables for outlines and outline items with proper relationships and indexes.",
+            "dependencies": [],
+            "details": "1. Create 'outlines' table with columns: id, title, user_id, created_at, updated_at\n2. Create 'outline_items' table with columns: id, outline_id, path (ltree), content, created_at, updated_at, position (for ordering siblings)\n3. Add appropriate indexes: btree on id, gist on path, btree on outline_id\n4. Add foreign key constraints between tables\n5. Create database migration scripts for schema creation\n6. Document the schema design with entity relationship diagrams",
+            "status": "pending",
+            "testStrategy": "1. Verify schema creation with test database\n2. Test ltree path operations (ancestors, descendants, siblings)\n3. Test index performance with explain analyze\n4. Validate foreign key constraints"
+          },
+          {
+            "id": 2,
+            "title": "Design and Implement Outline List View",
+            "description": "Create the UI component for displaying a list of user outlines with options to create, open, and delete outlines.",
+            "dependencies": [],
+            "details": "1. Design outline list UI with card-based layout\n2. Implement outline list component with React\n3. Create 'New Outline' button and dialog\n4. Add outline card with title, last modified date, and actions\n5. Implement outline deletion with confirmation\n6. Add search/filter functionality for outlines\n7. Create mock data service for outline list operations\n8. Document API requirements for backend implementation",
+            "status": "pending",
+            "testStrategy": "1. Test rendering of outline list with various data sizes\n2. Verify create, open, and delete operations work with mock data\n3. Test search/filter functionality\n4. Verify responsive design on different screen sizes"
+          },
+          {
+            "id": 3,
+            "title": "Implement Hierarchical Outline View",
+            "description": "Create the UI component for displaying and editing hierarchical outline items with proper indentation and visual structure.",
+            "dependencies": [
+              "3.2"
+            ],
+            "details": "1. Design hierarchical view with proper indentation and visual cues\n2. Implement recursive or flat rendering of hierarchical items\n3. Create item component with content display and edit capability\n4. Add visual indicators for item level and relationships\n5. Implement item selection and multi-selection\n6. Create mock data service for hierarchical data operations\n7. Optimize rendering for large outlines\n8. Document API requirements for backend implementation",
+            "status": "pending",
+            "testStrategy": "1. Test rendering of hierarchical data with various depths\n2. Verify selection and multi-selection functionality\n3. Test performance with large outlines (1000+ items)\n4. Verify visual hierarchy is clear and intuitive"
+          },
+          {
+            "id": 4,
+            "title": "Implement Item Creation and Editing",
+            "description": "Create UI components for adding new items to an outline and editing existing items with proper validation.",
+            "dependencies": [
+              "3.3"
+            ],
+            "details": "1. Design item creation interface with '+' button or keyboard shortcut\n2. Implement inline editing for existing items\n3. Create item toolbar with formatting options\n4. Add validation for item content\n5. Implement auto-focus for new items\n6. Create keyboard shortcuts for item creation and editing\n7. Add mock data service for item CRUD operations\n8. Document API requirements for backend implementation",
+            "status": "pending",
+            "testStrategy": "1. Test item creation in various positions in the hierarchy\n2. Verify editing functionality works correctly\n3. Test validation of item content\n4. Verify keyboard shortcuts work as expected"
+          },
+          {
+            "id": 5,
+            "title": "Implement Hierarchy Manipulation UI",
+            "description": "Create UI components and interactions for manipulating the outline hierarchy, including indent, outdent, and reordering.",
+            "dependencies": [
+              "3.3",
+              "3.4"
+            ],
+            "details": "1. Design UI for indent/outdent operations\n2. Implement drag-and-drop for item reordering\n3. Create keyboard shortcuts for hierarchy manipulation\n4. Add toolbar buttons for indent/outdent\n5. Implement visual feedback during hierarchy changes\n6. Create mock data service for hierarchy operations\n7. Add validation to prevent invalid hierarchy states\n8. Document API requirements for backend implementation",
+            "status": "pending",
+            "testStrategy": "1. Test indent/outdent operations in various scenarios\n2. Verify drag-and-drop reordering works correctly\n3. Test keyboard shortcuts for hierarchy manipulation\n4. Verify validation prevents invalid hierarchy states"
+          },
+          {
+            "id": 6,
+            "title": "Design and Document API Requirements",
+            "description": "Based on the UI implementation, document detailed API requirements for the backend implementation of outline data management.",
+            "dependencies": [
+              "3.2",
+              "3.3",
+              "3.4",
+              "3.5"
+            ],
+            "details": "1. Document all required API endpoints with request/response formats\n2. Define data models and relationships\n3. Specify performance requirements for large outlines\n4. Document hierarchy manipulation operations\n5. Define caching requirements for outline data\n6. Specify concurrency handling for simultaneous edits\n7. Create sequence diagrams for key workflows\n8. Document error handling requirements",
+            "status": "pending",
+            "testStrategy": "1. Review documentation for completeness and clarity\n2. Verify all UI functionality has corresponding API requirements\n3. Validate data models against UI needs\n4. Confirm performance requirements are realistic"
+          }
+        ]
+      },
+      {
+        "id": 4,
+        "title": "Phase 1: Develop Mobile-First UI Components",
+        "description": "Create a set of mobile-optimized UI components with large touch targets, swipe gestures, and responsive design for the prototype.",
+        "details": "1. Design and implement core UI components (Agent A):\n   - Outline item component (44px minimum touch target)\n   - Nested list view with proper indentation\n   - Touch-friendly buttons and controls\n   - Mobile-optimized input fields\n2. Implement mobile interactions:\n   - Swipe right for indent\n   - Swipe left for outdent\n   - Long press for multi-select\n   - Pull down to refresh/sync\n   - Tap '+' for new bullet\n   - Double tap to edit text\n3. Create mock services to simulate backend responses\n4. Ensure responsive design for various screen sizes\n5. Document API requirements for backend implementation",
+        "testStrategy": "1. UI component tests for all interactions\n2. Touch gesture testing on various mobile devices\n3. Responsive design tests across different screen sizes\n4. Performance testing with large mock outlines\n5. Usability testing with target users",
+        "priority": "high",
+        "dependencies": [
+          1
+        ],
+        "status": "pending",
+        "subtasks": [
+          {
+            "id": 1,
+            "title": "Create Outline Item Component with Touch Targets",
+            "description": "Develop the core outline item component with proper touch target sizing (minimum 44px) and basic styling for mobile devices.",
+            "dependencies": [],
+            "details": "Implement a React component for outline items with: 1) Minimum 44px height for touch targets, 2) Clear visual hierarchy with proper typography (16px+ base font), 3) Basic styling with appropriate padding and margins, 4) Container structure that will support nested items later, 5) Props interface for content, depth level, and interaction callbacks.",
+            "status": "pending",
+            "testStrategy": "Unit test component rendering with various content lengths and verify touch target dimensions meet accessibility standards across different device sizes."
+          },
+          {
+            "id": 2,
+            "title": "Implement Nested List View with Indentation",
+            "description": "Create a nested list view component that properly handles hierarchical outline data with visual indentation.",
+            "dependencies": [
+              "4.1"
+            ],
+            "details": "Build on the outline item component to create a nested list view that: 1) Renders hierarchical data with proper indentation, 2) Implements a recursive or iterative approach to handle unlimited nesting levels, 3) Uses visual cues (lines or spacing) to indicate hierarchy, 4) Maintains proper spacing on mobile screens, 5) Integrates with Zustand store for outline data management.",
+            "status": "pending",
+            "testStrategy": "Test with various nesting depths to ensure proper indentation and verify performance with deeply nested structures."
+          },
+          {
+            "id": 3,
+            "title": "Develop Touch-Friendly Buttons and Controls",
+            "description": "Create a set of touch-optimized UI controls including buttons, toggles, and action icons for the mobile interface.",
+            "dependencies": [],
+            "details": "Design and implement: 1) Primary action button component with 44px+ touch target, 2) Secondary and tertiary button variants, 3) Toggle switches optimized for touch, 4) Icon buttons with appropriate touch areas, 5) Floating action button for adding new items, 6) Visual feedback for touch interactions (pressed states), 7) Consistent styling system for all controls.",
+            "status": "pending",
+            "testStrategy": "Test touch interactions on various mobile devices and screen sizes to ensure consistent behavior and appropriate touch target sizes."
+          },
+          {
+            "id": 4,
+            "title": "Create Mobile-Optimized Input Fields",
+            "description": "Develop input field components optimized for mobile use with appropriate keyboard types and touch-friendly dimensions.",
+            "dependencies": [],
+            "details": "Implement input components with: 1) Minimum 44px height for touch targets, 2) Appropriate input types for different content (text, number, etc.), 3) Auto-focus and keyboard management, 4) Clear button for easy text clearing, 5) Visual states for focus, error, and disabled conditions, 6) Label positioning optimized for mobile screens, 7) Support for multiline text input for outline content.",
+            "status": "pending",
+            "testStrategy": "Test with various mobile keyboards and input scenarios, including validation states and multiline content entry."
+          },
+          {
+            "id": 5,
+            "title": "Implement Swipe Gestures for Indent/Outdent",
+            "description": "Add swipe gesture support for indenting (swipe right) and outdenting (swipe left) outline items.",
+            "dependencies": [
+              "4.1",
+              "4.2"
+            ],
+            "details": "Implement gesture handling with: 1) React gesture library integration (like react-swipeable), 2) Visual feedback during swipe action, 3) Threshold detection for gesture completion, 4) Animation for indent/outdent action, 5) Integration with Zustand state management to update outline structure, 6) Haptic feedback when available, 7) Fallback buttons for accessibility.",
+            "status": "pending",
+            "testStrategy": "Test swipe gestures on various devices to ensure consistent behavior, verify threshold sensitivity, and confirm proper state updates after gestures."
+          },
+          {
+            "id": 6,
+            "title": "Develop Additional Mobile Interactions",
+            "description": "Implement remaining mobile interactions including long press for multi-select, pull to refresh, tap actions, and double tap to edit.",
+            "dependencies": [
+              "4.1",
+              "4.2",
+              "4.3"
+            ],
+            "details": "Add the following interaction patterns: 1) Long press detection for multi-select mode, 2) Pull-down gesture for refresh/sync with visual indicator, 3) Tap '+' button to add new bullet points, 4) Double tap detection for entering edit mode, 5) Visual indicators for each interaction state, 6) Zustand state integration for all actions, 7) Consistent animation patterns across interactions.",
+            "status": "pending",
+            "testStrategy": "Comprehensive testing of all gesture interactions on multiple devices, verification of state changes, and usability testing to ensure intuitive behavior."
+          },
+          {
+            "id": 7,
+            "title": "Implement Responsive Design and Performance Optimization",
+            "description": "Ensure all components adapt to various screen sizes and implement virtualized lists for performance with large outlines.",
+            "dependencies": [
+              "4.1",
+              "4.2",
+              "4.3",
+              "4.4",
+              "4.5",
+              "4.6"
+            ],
+            "details": "Complete the mobile-first implementation with: 1) Media queries for adapting to different screen sizes, 2) Flexible layout that works on phones and tablets, 3) Integration of a virtualized list library (like react-window or react-virtualized) for handling large outlines, 4) Lazy loading of deeply nested content, 5) Performance optimizations including memoization of components, 6) Testing and refinement of touch interactions across device sizes, 7) Final styling and visual consistency review.",
+            "status": "pending",
+            "testStrategy": "Performance testing with large outlines (1000+ items), responsive design testing across device sizes from small phones to tablets, and load time optimization verification."
+          }
+        ]
+      },
+      {
+        "id": 5,
+        "title": "Phase 1: Implement Mock Real-time Sync UI",
+        "description": "Create UI components and mock services for simulating real-time synchronization across devices.",
+        "details": "1. Design and implement UI components (Agent A):\n   - Sync status indicators\n   - Conflict resolution interface\n   - Connection status display\n   - Sync history/log view\n2. Create mock sync service:\n   - Simulate WebSocket connections\n   - Mock real-time updates from other devices\n   - Simulate connection issues and recovery\n   - Mock conflict scenarios for testing resolution\n3. Document API requirements for backend WebSocket implementation\n4. Design user experience for sync-related interactions",
+        "testStrategy": "1. UI component tests for sync indicators and interfaces\n2. Test conflict resolution workflows\n3. Verify handling of simulated connection issues\n4. Usability testing of sync-related interactions\n5. Verify API requirements documentation is complete",
+        "priority": "medium",
+        "dependencies": [
+          3
+        ],
+        "status": "pending",
+        "subtasks": []
+      },
+      {
+        "id": 6,
+        "title": "Phase 1: Implement Voice Transcription UI",
+        "description": "Create UI components and mock services for voice-to-text transcription with simulated OpenAI Whisper API integration.",
+        "details": "1. Design and implement UI components (Agent A):\n   - Voice recording button with animation\n   - Transcription progress indicator\n   - Transcribed text display\n   - Error handling interface\n2. Create mock voice transcription service:\n   - Simulate audio recording\n   - Mock transcription with timed responses\n   - Simulate various transcription qualities\n   - Mock error conditions for testing\n3. Document API requirements for backend Whisper API integration\n4. Design user experience for voice input workflow",
+        "testStrategy": "1. UI component tests for recording and transcription display\n2. Test error handling and recovery\n3. Verify visual feedback during simulated transcription\n4. Usability testing of voice recording workflow\n5. Verify API requirements documentation is complete",
+        "priority": "high",
+        "dependencies": [
+          4
+        ],
+        "status": "pending",
+        "subtasks": []
+      },
+      {
+        "id": 7,
+        "title": "Phase 1: Implement Mock AI Outline Structuring UI",
+        "description": "Create UI components and mock services for AI-powered outline structuring with simulated Claude/GPT integration.",
+        "details": "1. Design and implement UI components (Agent A):\n   - AI structuring progress indicator\n   - Structured outline preview\n   - Accept/Reject/Edit interface for AI suggestions\n   - Feedback mechanism for AI improvements\n2. Create mock AI structuring service:\n   - Simulate AI processing of text input\n   - Mock structured outline generation\n   - Simulate learning from user feedback\n   - Mock various quality levels of AI suggestions\n3. Document API requirements for backend AI integration\n4. Design user experience for AI interaction workflow",
+        "testStrategy": "1. UI component tests for AI interaction interfaces\n2. Test accept/reject/edit workflows\n3. Verify handling of various mock AI suggestion qualities\n4. Usability testing of AI interaction workflow\n5. Verify API requirements documentation is complete",
+        "priority": "high",
+        "dependencies": [
+          3,
+          6
+        ],
+        "status": "pending",
+        "subtasks": []
+      },
+      {
+        "id": 8,
+        "title": "Phase 1: Implement Voice Workflow UI",
+        "description": "Create the complete voice input workflow UI with mock services for transcription, AI structuring, and edit capabilities.",
+        "details": "1. Design and implement integrated workflow UI (Agent A):\n   - Voice recording button and animation\n   - Real-time transcription display\n   - AI structuring progress indicator\n   - Organized outline preview\n   - Accept/Delete/Edit option interface\n   - Edit mode with voice or text modifications\n2. Create mock integrated service layer:\n   - Coordinate between mock voice transcription and AI structuring\n   - Simulate complete workflow with appropriate timing\n   - Mock various scenarios for testing\n3. Document API requirements for backend integration\n4. Design complete user experience flow",
+        "testStrategy": "1. UI component tests for all workflow steps\n2. Integration tests for complete voice workflow\n3. Usability testing with target users\n4. Performance testing for UI responsiveness\n5. Error handling and recovery testing",
+        "priority": "medium",
+        "dependencies": [
+          4,
+          6,
+          7
+        ],
+        "status": "pending",
+        "subtasks": []
+      },
+      {
+        "id": 9,
+        "title": "Phase 1: Implement Search UI",
+        "description": "Create UI components and mock services for searching across user content with highlighting and navigation.",
+        "details": "1. Design and implement UI components (Agent A):\n   - Search input with autocomplete\n   - Search results display\n   - Result highlighting\n   - Navigation controls for moving between results\n2. Create mock search service:\n   - Simulate search indexing\n   - Mock search results with highlighting\n   - Simulate typeahead/autocomplete suggestions\n   - Mock search history functionality\n3. Document API requirements for backend search implementation\n4. Design user experience for search workflow",
+        "testStrategy": "1. UI component tests for search interface\n2. Test result highlighting and navigation\n3. Verify autocomplete functionality\n4. Usability testing of search workflow\n5. Verify API requirements documentation is complete",
+        "priority": "medium",
+        "dependencies": [
+          3,
+          4
+        ],
+        "status": "pending",
+        "subtasks": []
+      },
+      {
+        "id": 10,
+        "title": "Phase 1: Implement Keyboard Shortcuts UI",
+        "description": "Create UI components and mock services for keyboard shortcuts and quick actions with visual guides.",
+        "details": "1. Design and implement UI components (Agent A):\n   - Keyboard shortcut guide/cheatsheet\n   - Visual indicators for available shortcuts\n   - Quick action menu interface\n   - Shortcut customization UI\n2. Create mock keyboard shortcut service:\n   - Implement shortcut detection and handling\n   - Mock customizable shortcuts storage\n   - Simulate context-sensitive actions\n3. Document API requirements for backend integration\n4. Design user experience for keyboard-driven workflow",
+        "testStrategy": "1. UI component tests for shortcut interfaces\n2. Test shortcut detection and handling\n3. Verify context-sensitive behavior\n4. Usability testing with keyboard-heavy users\n5. Verify API requirements documentation is complete",
+        "priority": "medium",
+        "dependencies": [
+          4
+        ],
+        "status": "pending",
+        "subtasks": []
+      },
+      {
+        "id": 11,
+        "title": "Phase 1: Implement Offline Mode UI",
+        "description": "Create UI components and mock services for offline functionality with simulated synchronization.",
+        "details": "1. Design and implement UI components (Agent A):\n   - Offline status indicators\n   - Sync queue display\n   - Network status monitoring\n   - Conflict resolution interface\n2. Create mock offline service:\n   - Implement local storage for offline data\n   - Simulate network disconnection and reconnection\n   - Mock sync queue management\n   - Simulate conflict scenarios\n3. Document API requirements for backend offline support\n4. Design user experience for offline workflow",
+        "testStrategy": "1. UI component tests for offline indicators and interfaces\n2. Test local storage functionality\n3. Verify handling of simulated network issues\n4. Usability testing of offline workflow\n5. Verify API requirements documentation is complete",
+        "priority": "medium",
+        "dependencies": [
+          3,
+          5
+        ],
+        "status": "pending",
+        "subtasks": []
+      },
+      {
+        "id": 12,
+        "title": "Phase 2: Backend Implementation and Integration",
+        "description": "Implement the backend services based on UI prototype requirements and integrate with the frontend.",
+        "details": "1. Backend implementation (Agent B):\n   - Set up FastAPI project structure\n   - Configure PostgreSQL with ltree extension\n   - Implement Redis caching\n   - Create API endpoints based on documented requirements\n   - Implement WebSocket for real-time sync\n   - Integrate with OpenAI Whisper and Claude/GPT APIs\n2. Integration phase:\n   - Replace mock services with real API calls\n   - Implement error handling for real-world scenarios\n   - Optimize performance for production use\n   - Conduct end-to-end testing\n3. Implement analytics and monitoring",
+        "testStrategy": "1. Unit tests for all backend services\n2. Integration tests for API endpoints\n3. End-to-end testing of complete workflows\n4. Performance testing with production-like data\n5. Security testing of authentication and data access\n6. Load testing for concurrent users",
+        "priority": "high",
+        "dependencies": [
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          8,
+          9,
+          10,
+          11
+        ],
+        "status": "pending",
+        "subtasks": []
+      },
+      {
+        "id": 13,
+        "title": "Phase 1: Build UI-First Mobile Prototype",
+        "description": "Create a comprehensive UI-first prototype with mobile components, mock data services, swipe gestures, voice workflow mockup, and API contract documentation based on UI needs.",
+        "details": "1. Design and implement core mobile UI components:\n   - Create responsive layout with mobile-first approach\n   - Implement swipe gesture controls for common actions\n   - Design touch-optimized navigation and interaction patterns\n   - Build voice input interface with visual feedback\n   - Develop offline mode indicators and sync status displays\n\n2. Implement mock data services:\n   - Create simulated backend responses for all UI interactions\n   - Implement local storage for offline functionality\n   - Design mock authentication flow with simulated user accounts\n   - Simulate real-time synchronization between devices\n   - Mock voice transcription with timed responses\n\n3. Document API contracts based on UI requirements:\n   - Define RESTful endpoints needed for each UI component\n   - Document WebSocket requirements for real-time features\n   - Specify authentication and authorization requirements\n   - Detail data structures and payload formats\n   - Outline error handling and status code expectations\n\n4. Create voice workflow mockup:\n   - Design voice recording interface with visual feedback\n   - Implement mock transcription display with simulated processing\n   - Create interface for reviewing and editing transcribed content\n   - Design AI-assisted structuring visualization\n   - Build voice command recognition simulation\n\n5. Integration of components:\n   - Ensure consistent design language across all components\n   - Implement navigation between different sections\n   - Create unified state management for the prototype\n   - Ensure responsive behavior across different device sizes\n   - Document component relationships and dependencies",
+        "testStrategy": "1. Component Testing:\n   - Verify all UI components render correctly on mobile devices\n   - Test touch interactions and swipe gestures on actual mobile devices\n   - Validate responsive behavior across different screen sizes\n   - Ensure accessibility standards are met for all components\n   - Verify visual feedback for all user interactions\n\n2. Mock Service Testing:\n   - Validate all mock services correctly simulate backend behavior\n   - Test offline functionality with network disconnection\n   - Verify authentication flow works with mock credentials\n   - Test synchronization simulation between multiple browser instances\n   - Validate voice transcription mock with various input scenarios\n\n3. Integration Testing:\n   - Verify navigation between all sections of the prototype\n   - Test complete user workflows from start to finish\n   - Validate state persistence across different components\n   - Ensure consistent styling and behavior throughout the application\n   - Test performance with realistic data volumes\n\n4. Usability Testing:\n   - Conduct user testing sessions with representative users\n   - Gather feedback on mobile interaction patterns\n   - Test voice workflow with different speaking patterns and accents\n   - Evaluate intuitiveness of swipe gestures and touch interactions\n   - Document usability findings and prioritize improvements\n\n5. Documentation Verification:\n   - Review API contract documentation for completeness\n   - Validate alignment between UI needs and documented endpoints\n   - Ensure all data structures are properly specified\n   - Verify error scenarios are documented\n   - Confirm documentation is sufficient for backend implementation",
+        "status": "pending",
+        "dependencies": [
+          1,
+          4
+        ],
+        "priority": "high",
+        "subtasks": [
+          {
+            "id": 1,
+            "title": "Set up React project with mobile-first configuration",
+            "description": "Initialize the React TypeScript project with proper mobile-first configuration, including viewport settings, touch event handling, and responsive design foundation.",
+            "dependencies": [],
+            "details": "Create a new React project with TypeScript using Create React App or Vite. Configure the project with: 1) Proper viewport meta tags for mobile devices, 2) Base CSS with mobile-first media queries, 3) Touch event polyfills if needed, 4) PWA manifest setup, 5) Install and configure necessary libraries like React Router, Zustand for state management, and a UI component library that supports mobile interactions.",
+            "status": "pending",
+            "testStrategy": "Verify the project builds and runs correctly on mobile devices. Test viewport configuration and responsive behavior on different screen sizes."
+          },
+          {
+            "id": 2,
+            "title": "Implement core mobile UI components",
+            "description": "Design and build the fundamental UI components optimized for mobile use with proper touch targets, responsive layouts, and mobile interaction patterns.",
+            "dependencies": [
+              "13.1"
+            ],
+            "details": "Create the following components: 1) Outline item component with 44px minimum touch target, 2) Nested list view with proper indentation, 3) Mobile-optimized input fields, 4) Navigation bar with touch-friendly controls, 5) Modal dialogs and popovers optimized for mobile, 6) Bottom action bar for common actions. Ensure all components follow a consistent design language and implement responsive behavior.",
+            "status": "pending",
+            "testStrategy": "Test all components on actual mobile devices to verify touch targets are appropriate. Validate responsive behavior across different screen sizes and orientations."
+          },
+          {
+            "id": 3,
+            "title": "Implement swipe gesture controls",
+            "description": "Add touch gesture support for common actions including swipe gestures, long press, and other mobile-specific interactions.",
+            "dependencies": [
+              "13.2"
+            ],
+            "details": "Implement the following gesture controls: 1) Swipe right for indent, 2) Swipe left for outdent, 3) Long press for multi-select, 4) Pull down to refresh/sync, 5) Tap '+' for new bullet, 6) Double tap to edit text. Use a gesture library like react-swipeable or hammer.js to handle touch events consistently across devices. Include visual feedback for gestures.",
+            "status": "pending",
+            "testStrategy": "Test all gesture interactions on multiple mobile devices. Verify the gestures feel natural and provide appropriate visual feedback."
+          },
+          {
+            "id": 4,
+            "title": "Create voice input interface with feedback",
+            "description": "Design and implement the voice recording interface with visual feedback and mock transcription display.",
+            "dependencies": [
+              "13.2"
+            ],
+            "details": "Build a voice input system with: 1) Voice recording button with visual recording indicator, 2) Animation showing voice input being processed, 3) Mock transcription display with simulated processing delays, 4) Interface for reviewing and editing transcribed content, 5) Visual feedback during voice recording (e.g., waveform or volume indicator), 6) Error states for when voice recognition 'fails'.",
+            "status": "pending",
+            "testStrategy": "Test the voice recording UI flow with simulated responses. Verify all visual feedback elements work correctly and the interface is intuitive."
+          },
+          {
+            "id": 5,
+            "title": "Implement mock data services and local storage",
+            "description": "Create simulated backend services that provide mock data for all UI interactions and implement local storage for offline functionality.",
+            "dependencies": [
+              "13.2"
+            ],
+            "details": "Develop mock services for: 1) User authentication with simulated JWT handling, 2) Data CRUD operations with local storage persistence, 3) Simulated network delays and loading states, 4) Offline data synchronization simulation, 5) Mock error scenarios and recovery flows. Use localStorage or IndexedDB for persistent storage, and create a service layer that mimics real API calls.",
+            "status": "pending",
+            "testStrategy": "Test all mock services with various scenarios including happy paths and error cases. Verify local storage works correctly for offline data persistence."
+          },
+          {
+            "id": 6,
+            "title": "Create offline mode indicators and sync status",
+            "description": "Develop UI components that show the application's online/offline status and synchronization progress.",
+            "dependencies": [
+              "13.2",
+              "13.5"
+            ],
+            "details": "Implement: 1) Network status indicator showing online/offline state, 2) Sync queue display showing pending changes, 3) Visual indicators for items that have local changes not yet synced, 4) Conflict resolution interface for simulated sync conflicts, 5) Toast notifications for sync events (success, failure, conflicts). Create a mock service that can simulate network disconnection and reconnection.",
+            "status": "pending",
+            "testStrategy": "Test offline indicators by toggling device network connection. Verify all sync status indicators update appropriately based on simulated network conditions."
+          },
+          {
+            "id": 7,
+            "title": "Implement navigation and state management",
+            "description": "Create a unified navigation system and state management solution that connects all components of the prototype.",
+            "dependencies": [
+              "13.2",
+              "13.3",
+              "13.4",
+              "13.5",
+              "13.6"
+            ],
+            "details": "Implement: 1) Navigation system using React Router with mobile-optimized transitions, 2) Global state management with Zustand to handle application state, 3) Persistent state that survives page reloads using local storage, 4) State synchronization between different parts of the application, 5) Loading and error states management, 6) Deep linking support for sharing specific views.",
+            "status": "pending",
+            "testStrategy": "Test navigation flows between all screens. Verify state is maintained correctly during navigation and after page reloads."
+          },
+          {
+            "id": 8,
+            "title": "Document API contracts based on UI requirements",
+            "description": "Create comprehensive API contract documentation that defines all endpoints, data structures, and behaviors needed to support the UI prototype.",
+            "dependencies": [
+              "13.5",
+              "13.7"
+            ],
+            "details": "Document the following: 1) RESTful endpoints needed for each UI component with HTTP methods, URL patterns, request/response formats, 2) WebSocket requirements for real-time features, 3) Authentication and authorization requirements, 4) Data structures and payload formats with JSON schema definitions, 5) Error handling and status code expectations, 6) Rate limiting and pagination requirements. Use OpenAPI/Swagger format for documentation.",
+            "status": "pending",
+            "testStrategy": "Review API documentation for completeness. Verify all UI interactions have corresponding API endpoints defined. Validate JSON schemas for accuracy."
+          }
+        ]
+      },
+      {
+        "id": 14,
+        "title": "Phase 2: Implement Backend API with TDD Methodology",
+        "description": "Build FastAPI endpoints following Agent A's API contracts from Phase 1, implement PostgreSQL with ltree for hierarchical data, and Redis caching for performance optimization.",
+        "details": "1. Review API contracts and requirements documented by Agent A in Phase 1:\n   - Analyze authentication API requirements from Task 2\n   - Study outline data structure API requirements from Task 3\n   - Review real-time sync API specifications from Task 5\n   - Examine offline mode API requirements from Task 11\n   - Understand search functionality API needs from Task 9\n\n2. Set up development environment:\n   - Configure FastAPI project structure with dependency injection\n   - Set up PostgreSQL database with ltree extension\n   - Configure Redis for caching\n   - Implement database migration system\n   - Create Docker compose setup for local development\n\n3. Implement backend services using Test-Driven Development:\n   - Write tests first for each endpoint based on API contracts\n   - Implement user authentication with JWT (JSON Web Tokens)\n   - Build hierarchical data storage using PostgreSQL ltree\n   - Create real-time synchronization with WebSockets\n   - Implement offline mode support with conflict resolution\n   - Develop search functionality with PostgreSQL full-text search\n   - Add Redis caching for frequently accessed data\n\n4. Optimize performance:\n   - Implement efficient database queries\n   - Configure appropriate Redis caching strategies\n   - Set up database indexes for common query patterns\n   - Implement connection pooling\n\n5. Document API implementation:\n   - Generate OpenAPI documentation\n   - Create usage examples for frontend integration\n   - Document caching strategies and performance considerations\n   - Provide deployment guidelines",
+        "testStrategy": "1. Unit Testing:\n   - Write comprehensive unit tests for all service functions\n   - Test database models and relationships\n   - Verify Redis caching functionality\n   - Test authentication and authorization logic\n\n2. Integration Testing:\n   - Test API endpoints against contract specifications\n   - Verify database interactions with actual PostgreSQL instance\n   - Test WebSocket functionality for real-time updates\n   - Validate Redis caching behavior in integration context\n\n3. Performance Testing:\n   - Benchmark API response times under various loads\n   - Test database query performance with large datasets\n   - Measure cache hit/miss rates and optimization effectiveness\n   - Verify connection pooling efficiency\n\n4. Contract Validation:\n   - Verify all endpoints match the API contracts from Phase 1\n   - Test error handling matches expected behavior\n   - Validate response formats against specifications\n   - Ensure all required functionality is implemented\n\n5. Documentation Verification:\n   - Review OpenAPI documentation for completeness\n   - Validate that all endpoints are properly documented\n   - Test example code provided in documentation\n   - Verify deployment instructions are accurate",
+        "status": "pending",
+        "dependencies": [
+          1,
+          2,
+          3,
+          5,
+          9,
+          11,
+          13
+        ],
+        "priority": "high",
+        "subtasks": [
+          {
+            "id": 1,
+            "title": "Set up FastAPI project structure with dependency injection",
+            "description": "Initialize the FastAPI project with proper folder structure, configure dependency injection, and set up the basic application framework.",
+            "dependencies": [],
+            "details": "Create a new FastAPI project with the following structure:\n- app/\n  - api/\n    - endpoints/\n    - dependencies.py\n    - router.py\n  - core/\n    - config.py\n    - security.py\n  - db/\n    - session.py\n    - models/\n    - repositories/\n  - services/\n  - schemas/\n  - main.py\n\nImplement dependency injection for database sessions, authentication, and caching. Configure CORS, middleware, and exception handlers. Set up environment variables for configuration management.",
+            "status": "pending",
+            "testStrategy": "Write unit tests to verify the application starts correctly, dependency injection works as expected, and configuration is properly loaded from environment variables."
+          },
+          {
+            "id": 2,
+            "title": "Configure PostgreSQL with ltree extension and Redis for caching",
+            "description": "Set up PostgreSQL database with ltree extension for hierarchical data storage and Redis for caching frequently accessed data.",
+            "dependencies": [
+              "14.1"
+            ],
+            "details": "Create Docker compose setup with PostgreSQL and Redis services. Configure PostgreSQL with ltree extension enabled. Implement database connection pooling and session management. Set up Redis connection with appropriate serialization/deserialization helpers. Create database migration system using Alembic. Implement base repository pattern for database operations and caching strategies for Redis.",
+            "status": "pending",
+            "testStrategy": "Create integration tests to verify database connections, ltree functionality, and Redis caching operations. Test connection pooling under load and verify proper database migration execution."
+          },
+          {
+            "id": 3,
+            "title": "Implement user authentication with JWT",
+            "description": "Build authentication endpoints following the API contracts from Phase 1, implementing JWT-based authentication with refresh token functionality.",
+            "dependencies": [
+              "14.1",
+              "14.2"
+            ],
+            "details": "Implement the following endpoints based on Task 2 requirements:\n- POST /auth/register\n- POST /auth/login\n- POST /auth/refresh\n- POST /auth/logout\n\nCreate JWT token generation and validation utilities. Implement password hashing and verification. Create database models for users and refresh tokens. Set up authentication dependencies for protected routes. Implement rate limiting for authentication endpoints.",
+            "status": "pending",
+            "testStrategy": "Write unit tests for token generation, validation, and password hashing. Create integration tests for each authentication endpoint. Test rate limiting functionality and token refresh flows. Verify security aspects like token expiration and proper error handling."
+          },
+          {
+            "id": 4,
+            "title": "Build hierarchical data storage using PostgreSQL ltree",
+            "description": "Implement the outline data structure API using PostgreSQL ltree for efficient hierarchical data operations.",
+            "dependencies": [
+              "14.2"
+            ],
+            "details": "Based on Task 3 requirements, implement:\n- Database models for outlines and outline items using ltree path\n- Repository layer for CRUD operations on hierarchical data\n- Service layer for business logic\n- API endpoints for outline management:\n  - GET /outlines\n  - POST /outlines\n  - GET /outlines/{id}\n  - PUT /outlines/{id}\n  - DELETE /outlines/{id}\n  - GET /outlines/{id}/items\n  - POST /outlines/{id}/items\n  - PUT /outlines/{id}/items/{item_id}\n  - DELETE /outlines/{id}/items/{item_id}\n  - PUT /outlines/{id}/items/{item_id}/move\n\nImplement efficient queries for tree operations like moving, indenting, and outdenting items.",
+            "status": "pending",
+            "testStrategy": "Write unit tests for repository and service methods. Create integration tests for each API endpoint. Test hierarchical operations like moving, indenting, and outdenting. Verify performance with large hierarchical structures."
+          },
+          {
+            "id": 5,
+            "title": "Create real-time synchronization with WebSockets",
+            "description": "Implement WebSocket-based real-time synchronization following the API specifications from Task 5.",
+            "dependencies": [
+              "14.3",
+              "14.4"
+            ],
+            "details": "Implement WebSocket connection handling with FastAPI. Create event-based system for real-time updates. Implement the following functionality:\n- WebSocket endpoint for real-time connections\n- Authentication for WebSocket connections\n- Broadcasting changes to connected clients\n- Handling client reconnection\n- Implementing conflict detection\n- Storing sync history\n\nCreate services to manage WebSocket connections and message broadcasting. Implement proper error handling and connection state management.",
+            "status": "pending",
+            "testStrategy": "Write unit tests for WebSocket message handling and broadcasting logic. Create integration tests simulating multiple connected clients. Test reconnection scenarios and conflict detection. Verify performance under load with many concurrent connections."
+          },
+          {
+            "id": 6,
+            "title": "Implement offline mode support with conflict resolution",
+            "description": "Build API endpoints and services for offline mode support with conflict resolution based on Task 11 requirements.",
+            "dependencies": [
+              "14.4",
+              "14.5"
+            ],
+            "details": "Implement version tracking for all data objects. Create conflict detection and resolution strategies. Implement the following endpoints:\n- POST /sync/changes - Submit local changes\n- GET /sync/changes - Get server changes since last sync\n- POST /sync/resolve - Resolve conflicts\n\nCreate data structures for tracking changes and detecting conflicts. Implement merge strategies for different conflict scenarios. Add timestamp and version tracking to all data models.",
+            "status": "pending",
+            "testStrategy": "Write unit tests for conflict detection and resolution algorithms. Create integration tests simulating offline changes and syncing. Test various conflict scenarios and verify correct resolution. Verify data integrity after conflict resolution."
+          },
+          {
+            "id": 7,
+            "title": "Develop search functionality with PostgreSQL full-text search and Redis caching",
+            "description": "Implement search API endpoints using PostgreSQL full-text search capabilities and optimize performance with Redis caching.",
+            "dependencies": [
+              "14.2",
+              "14.4"
+            ],
+            "details": "Based on Task 9 requirements, implement:\n- Full-text search configuration in PostgreSQL\n- Search service with query optimization\n- Redis caching for frequent searches\n- API endpoints:\n  - GET /search?q={query}\n  - GET /outlines/{id}/search?q={query}\n\nImplement search result highlighting. Create proper indexing for search performance. Implement cache invalidation strategies when data changes. Add pagination and sorting options for search results.",
+            "status": "pending",
+            "testStrategy": "Write unit tests for search query construction and result processing. Create integration tests for search endpoints with various query patterns. Test cache hit/miss scenarios and invalidation. Verify search performance with large datasets and complex queries."
+          }
+        ]
+      },
+      {
+        "id": 15,
+        "title": "Phase 3: Integrate Frontend and Backend with Real AI Services",
+        "description": "Connect the frontend UI components with real backend APIs, implement comprehensive testing across all layers, integrate actual voice AI services (Whisper + Claude), and deploy a production-ready application.",
+        "details": "1. Frontend-Backend Integration:\n   - Replace all mock services with real API calls to the FastAPI backend\n   - Implement proper error handling and loading states for API interactions\n   - Update authentication flow to use real JWT tokens\n   - Connect real-time sync UI to WebSocket endpoints\n   - Integrate offline mode with backend sync capabilities\n   - Update search functionality to use backend search API\n\n2. Voice AI Integration:\n   - Replace mock voice transcription with actual OpenAI Whisper API integration\n   - Implement audio recording, compression, and streaming to Whisper API\n   - Connect AI structuring UI to real Claude API for outline organization\n   - Implement proper error handling for AI service failures\n   - Add fallback mechanisms for when AI services are unavailable\n   - Optimize voice workflow for performance and user experience\n\n3. Comprehensive Testing Implementation:\n   - Develop unit tests for all React components using React Testing Library\n   - Create integration tests for frontend-backend interactions\n   - Implement end-to-end tests using Cypress or Playwright\n   - Set up automated test pipelines in CI/CD\n   - Perform cross-browser and cross-device testing\n   - Conduct performance testing and optimization\n\n4. Production Deployment Preparation:\n   - Configure production build process with code minification and optimization\n   - Implement proper environment variable management\n   - Set up monitoring and error tracking (e.g., Sentry)\n   - Configure CDN for static assets\n   - Implement proper caching strategies\n   - Create deployment documentation and runbooks\n   - Set up automated deployment pipeline",
+        "testStrategy": "1. Component Testing:\n   - Verify all UI components work correctly with real data from APIs\n   - Test error states and loading indicators\n   - Validate form submissions and data persistence\n   - Ensure responsive behavior across different devices\n\n2. Integration Testing:\n   - Test complete user flows from frontend to backend\n   - Verify authentication and authorization work end-to-end\n   - Test real-time sync with multiple clients\n   - Validate offline functionality with network interruptions\n   - Verify search functionality with real backend indexing\n\n3. Voice AI Testing:\n   - Test voice recording in various environments (quiet/noisy)\n   - Verify Whisper API integration with different accents and speech patterns\n   - Test Claude API integration with various input complexities\n   - Validate error handling when AI services are unavailable\n   - Measure and optimize response times\n\n4. End-to-End Testing:\n   - Create automated test scripts for critical user journeys\n   - Test application on multiple browsers and devices\n   - Verify PWA functionality including offline capabilities\n   - Test performance under load\n   - Validate data persistence across sessions\n\n5. Production Readiness:\n   - Conduct security testing including authentication and data protection\n   - Perform load testing to ensure scalability\n   - Verify monitoring and error tracking functionality\n   - Test deployment process in staging environment\n   - Conduct user acceptance testing with stakeholders",
+        "status": "pending",
+        "dependencies": [
+          13,
+          14
+        ],
+        "priority": "medium",
+        "subtasks": [
+          {
+            "id": 1,
+            "title": "Replace Mock Services with Real API Calls",
+            "description": "Replace all frontend mock services with real API calls to the FastAPI backend, including proper error handling and loading states.",
+            "dependencies": [],
+            "details": "1. Update API service layer to connect to real backend endpoints\n2. Replace mock authentication service with JWT token implementation\n3. Implement proper error handling with try/catch blocks for all API calls\n4. Add loading states and indicators for all async operations\n5. Update all components to handle API response formats\n6. Implement retry logic for failed API calls\n7. Create global error handling for API failures",
+            "status": "pending",
+            "testStrategy": "Write unit tests for API service functions, test error handling scenarios, verify loading states appear correctly, and create integration tests for API interactions."
+          },
+          {
+            "id": 2,
+            "title": "Implement WebSocket and Offline Sync Integration",
+            "description": "Connect real-time sync UI to WebSocket endpoints and implement offline mode with backend synchronization capabilities.",
+            "dependencies": [
+              "15.1"
+            ],
+            "details": "1. Implement WebSocket connection management\n2. Create event handlers for real-time data updates\n3. Develop conflict resolution logic for concurrent edits\n4. Implement offline data storage using IndexedDB\n5. Create sync queue for offline changes\n6. Develop background sync process when connection is restored\n7. Add connection status indicators in the UI",
+            "status": "pending",
+            "testStrategy": "Test WebSocket connection handling, verify offline data persistence, test sync reconciliation with simulated network conditions, and ensure UI correctly reflects connection status."
+          },
+          {
+            "id": 3,
+            "title": "Integrate OpenAI Whisper for Voice Transcription",
+            "description": "Replace mock voice transcription with actual OpenAI Whisper API integration, including audio recording, compression, and streaming.",
+            "dependencies": [
+              "15.1"
+            ],
+            "details": "1. Implement audio recording functionality with Web Audio API\n2. Add audio compression to optimize file size\n3. Create streaming interface to Whisper API\n4. Implement progress indicators for transcription process\n5. Add error handling for transcription failures\n6. Implement fallback to text input when API is unavailable\n7. Optimize audio quality settings for best transcription results",
+            "status": "pending",
+            "testStrategy": "Test audio recording in different browsers, verify compression maintains quality, test API integration with sample recordings, and ensure error states are handled gracefully."
+          },
+          {
+            "id": 4,
+            "title": "Integrate Claude API for AI-Powered Outline Organization",
+            "description": "Connect AI structuring UI to real Claude API for outline organization, with proper error handling and fallback mechanisms.",
+            "dependencies": [
+              "15.1"
+            ],
+            "details": "1. Implement Claude API client for outline structuring\n2. Create prompt templates for different organization tasks\n3. Add streaming response handling for real-time feedback\n4. Implement error handling for API failures\n5. Create fallback mechanisms using client-side logic\n6. Add user feedback mechanisms for AI suggestions\n7. Implement caching for common AI operations to reduce API calls",
+            "status": "pending",
+            "testStrategy": "Test API integration with various input types, verify streaming responses render correctly, test fallback mechanisms when API is unavailable, and ensure error handling works properly."
+          },
+          {
+            "id": 5,
+            "title": "Implement Comprehensive Testing Suite",
+            "description": "Develop unit, integration, and end-to-end tests for the entire application, and set up automated test pipelines in CI/CD.",
+            "dependencies": [
+              "15.1",
+              "15.2",
+              "15.3",
+              "15.4"
+            ],
+            "details": "1. Create unit tests for all React components using React Testing Library\n2. Develop integration tests for frontend-backend interactions\n3. Implement end-to-end tests using Cypress covering critical user flows\n4. Set up GitHub Actions for automated test runs\n5. Add cross-browser testing with BrowserStack or similar service\n6. Implement performance testing for critical operations\n7. Create test documentation and coverage reports",
+            "status": "pending",
+            "testStrategy": "Focus on test coverage for critical paths, implement snapshot testing for UI components, use mocks for external services in unit tests, and create realistic test data fixtures."
+          },
+          {
+            "id": 6,
+            "title": "Configure Production Deployment Pipeline",
+            "description": "Set up production build process, environment management, monitoring, and automated deployment pipeline.",
+            "dependencies": [
+              "15.5"
+            ],
+            "details": "1. Configure production build process with code minification\n2. Implement environment variable management for different environments\n3. Set up Sentry for error tracking and monitoring\n4. Configure CDN for static assets delivery\n5. Implement proper caching strategies for API responses\n6. Create deployment documentation and runbooks\n7. Set up CI/CD pipeline for automated deployments\n8. Configure database migration process for production",
+            "status": "pending",
+            "testStrategy": "Test production builds in staging environment, verify monitoring captures errors correctly, test CDN configuration with various assets, and ensure deployment pipeline correctly handles all steps."
+          }
+        ]
+      }
+    ],
+    "metadata": {
+      "created": "2025-08-13T22:24:45.471Z",
+      "updated": "2025-08-14T21:17:55.843Z",
+      "description": "Tasks for master context"
+    }
+  }
+}
