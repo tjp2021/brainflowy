@@ -1,5 +1,5 @@
 import { useEffect } from 'react';
-import { mockAuthService } from '@/services/api/mockAuth';
+import { authApi } from '@/services/api/apiClient';
 import { useAppStore } from '@/store/useAppStore';
 import type { User } from '@/types';
 
@@ -14,7 +14,7 @@ export const useAuth = () => {
     const initAuth = async () => {
       try {
         setLoading(true);
-        const currentUser = await mockAuthService.getCurrentUser();
+        const currentUser = await authApi.getCurrentUser();
         if (currentUser) {
           setUser(currentUser);
         }
@@ -35,7 +35,7 @@ export const useAuth = () => {
       setLoading(true);
       setError(null);
       
-      const response = await mockAuthService.login(email, password);
+      const response = await authApi.login(email, password);
       setUser(response.user);
       
       return response.user;
@@ -53,7 +53,7 @@ export const useAuth = () => {
       setLoading(true);
       setError(null);
       
-      const response = await mockAuthService.register(email, password, displayName);
+      const response = await authApi.register(email, password, displayName);
       setUser(response.user);
       
       return response.user;
@@ -69,7 +69,7 @@ export const useAuth = () => {
   const logout = async (): Promise<void> => {
     try {
       setLoading(true);
-      await mockAuthService.logout();
+      await authApi.logout();
       setUser(null);
     } catch (error) {
       console.error('Logout failed:', error);

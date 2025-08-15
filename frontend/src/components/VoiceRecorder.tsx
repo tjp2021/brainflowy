@@ -109,11 +109,11 @@ const VoiceRecorder: React.FC<VoiceRecorderProps> = ({
 
   const processAudio = async (audioBlob: Blob) => {
     try {
-      // Import mock service
-      const { mockVoiceService } = await import('@/services/api/mockVoice');
+      // Import API service
+      const { voiceApi } = await import('@/services/api/apiClient');
       
-      // Simulate sending audio to transcription service
-      const result = await mockVoiceService.transcribeAudio(audioBlob);
+      // Send audio to transcription service
+      const result = await voiceApi.transcribeAudio(audioBlob);
       
       setRecordingState('success');
       onTranscription(result.text);

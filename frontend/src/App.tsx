@@ -3,6 +3,7 @@ import AppRouter from './router/AppRouter'
 import { PwaInstallPrompt } from './components/PwaInstallPrompt'
 import { offlineSyncService } from './services/offline-sync'
 import { pushNotificationService } from './services/push-notifications'
+import './App.css'
 
 function App() {
   useEffect(() => {

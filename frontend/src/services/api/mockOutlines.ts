@@ -339,3 +339,6 @@ export const mockOutlineService = {
 
 // Initialize sample data
 initSampleData();
+
+// Export with alternate name for compatibility
+export const mockOutlinesService = mockOutlineService;

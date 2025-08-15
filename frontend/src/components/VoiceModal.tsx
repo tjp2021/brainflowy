@@ -27,29 +27,7 @@ const VoiceModal: React.FC<VoiceModalProps> = ({ isOpen, onClose, onAcceptStruct
   const analyserRef = useRef<AnalyserNode | null>(null);
 
   // Mock transcription data for demo
-  const mockTranscripts = [
-    "I need to plan the team offsite",
-    "I need to plan the team offsite for next quarter",
-    "I need to plan the team offsite for next quarter. We should book a venue, organize team building activities",
-    "I need to plan the team offsite for next quarter. We should book a venue, organize team building activities, and handle all the logistics",
-    "I need to plan the team offsite for next quarter. We should book a venue, organize team building activities, and handle all the logistics. Also need to coordinate with HR and set a proper budget"
-  ];
-
-  const mockStructuredData: OutlineItem[] = [
-    {
-      id: 'voice-1',
-      text: 'Team Offsite Planning - Q2',
-      level: 0,
-      expanded: true,
-      children: [
-        { id: 'voice-2', text: 'Venue booking and reservations', level: 1, expanded: false, children: [] },
-        { id: 'voice-3', text: 'Team building activities', level: 1, expanded: false, children: [] },
-        { id: 'voice-4', text: 'Logistics coordination', level: 1, expanded: false, children: [] },
-        { id: 'voice-5', text: 'HR coordination', level: 1, expanded: false, children: [] },
-        { id: 'voice-6', text: 'Budget planning and approval', level: 1, expanded: false, children: [] }
-      ]
-    }
-  ];
+  // Using real AI transcription - no mock data!
 
   useEffect(() => {
     if (!isOpen) {
@@ -145,18 +123,8 @@ const VoiceModal: React.FC<VoiceModalProps> = ({ isOpen, onClose, onAcceptStruct
       mediaRecorderRef.current.start();
       visualizeAudio(stream);
       
-      // Simulate real-time transcription
-      transcriptInterval.current = setInterval(() => {
-        setCurrentTranscriptIndex(prev => {
-          if (prev < mockTranscripts.length - 1) {
-            setTranscriptText(mockTranscripts[prev + 1]);
-            return prev + 1;
-          } else {
-            clearInterval(transcriptInterval.current!);
-            return prev;
-          }
-        });
-      }, 1000);
+      // Real transcription will happen when recording stops
+      // No need for mock simulation anymore!
       
     } catch (error) {
       console.error('Error accessing microphone:', error);
@@ -177,15 +145,15 @@ const VoiceModal: React.FC<VoiceModalProps> = ({ isOpen, onClose, onAcceptStruct
     setVoiceState('processing');
     
     try {
-      // Import mock service
-      const { mockVoiceService } = await import('@/services/api/mockVoice');
+      // Import API service
+      const { voiceApi } = await import('@/services/api/apiClient');
       
       // Get transcription
-      const result = await mockVoiceService.transcribeAudio(audioBlob);
+      const result = await voiceApi.transcribeAudio(audioBlob);
       setTranscriptText(result.text);
       
       // Get structured output
-      const structured = await mockVoiceService.structureText(result.text);
+      const structured = await voiceApi.structureText(result.text);
       
       // Convert to OutlineItem format
       const structuredItems: OutlineItem[] = structured.structured.map((item, index) => ({
@@ -207,10 +175,42 @@ const VoiceModal: React.FC<VoiceModalProps> = ({ isOpen, onClose, onAcceptStruct
     }
   };
 
-  const buildHierarchy = (_items: OutlineItem[]): OutlineItem[] => {
-    // For now, use mock data structure
-    // In production, this would properly build hierarchy from flat items
-    return mockStructuredData;
+  const buildHierarchy = (items: OutlineItem[]): OutlineItem[] => {
+    // Build actual hierarchy from the AI-structured items
+    const rootItems: OutlineItem[] = [];
+    const itemMap = new Map<string, OutlineItem>();
+    
+    // First pass: create map
+    items.forEach(item => {
+      itemMap.set(item.id, { ...item, children: [] });
+    });
+    
+    // Second pass: build hierarchy
+    items.forEach(item => {
+      const currentItem = itemMap.get(item.id)!;
+      if (item.level === 0) {
+        rootItems.push(currentItem);
+      } else {
+        // Find parent (previous item with lower level)
+        let parentFound = false;
+        for (let i = items.indexOf(item) - 1; i >= 0; i--) {
+          if (items[i].level < item.level) {
+            const parent = itemMap.get(items[i].id);
+            if (parent) {
+              parent.children.push(currentItem);
+              parentFound = true;
+              break;
+            }
+          }
+        }
+        // If no parent found, add as root
+        if (!parentFound) {
+          rootItems.push(currentItem);
+        }
+      }
+    });
+    
+    return rootItems;
   };
 
   const acceptStructure = () => {

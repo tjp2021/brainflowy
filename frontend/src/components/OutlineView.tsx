@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import OutlineMobile from './OutlineMobile';
 import OutlineDesktop from './OutlineDesktop';
 import type { OutlineItem } from '@/types/outline';
-import { mockOutlineService } from '@/services/api/mockOutlines';
+import { outlinesApi } from '@/services/api/apiClient';
 
 interface OutlineViewProps {
   outlineId?: string;
@@ -31,8 +31,8 @@ const OutlineView: React.FC<OutlineViewProps> = ({ outlineId }) => {
       setLoading(true);
       try {
         if (outlineId) {
-          const outline = await mockOutlineService.getOutline(outlineId);
-          const items = await mockOutlineService.getOutlineItems(outlineId);
+          const outline = await outlinesApi.getOutline(outlineId);
+          const items = await outlinesApi.getOutlineItems(outlineId);
           setTitle(outline.title);
           
           // Convert flat items to hierarchical structure

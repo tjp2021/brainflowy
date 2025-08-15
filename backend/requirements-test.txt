@@ -1,0 +1,23 @@
+# Core - Stable versions only
+fastapi==0.100.0
+uvicorn[standard]==0.23.1
+python-dotenv==1.0.0
+pydantic==2.1.1
+pydantic-settings==2.0.2
+
+# Authentication
+python-jose[cryptography]==3.3.0
+passlib[bcrypt]==1.7.4
+python-multipart==0.0.6
+bcrypt==4.0.1
+
+# Database
+azure-cosmos==4.5.1
+
+# Testing only
+pytest==7.4.0
+pytest-asyncio==0.21.1
+httpx==0.24.1
+
+# Required for test fixtures
+email-validator==2.0.0
