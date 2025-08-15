@@ -1,14 +1,10 @@
-import {
+import type {
   User,
   Outline,
   OutlineNode,
-  NodePosition,
-  NodeStyle,
   OutlineTemplate,
-  UserPreferences,
   Comment,
-  Attachment,
-  NodeMetadata
+  Attachment
 } from './types';
 
 // Helper function to generate unique IDs
@@ -92,18 +88,23 @@ export const generateMockNode = (
     content,
     type: nodeType,
     children: [],
-    parentId,
+    parentId: parentId || '',
     position: {
       x: Math.random() * 800,
       y: Math.random() * 600,
       order: 0
     },
-    style: {
+    style: depth === 0 ? {
       color: '#333333',
-      backgroundColor: depth === 0 ? '#f0f9ff' : undefined,
-      fontSize: depth === 0 ? 18 : 14,
-      fontWeight: depth === 0 ? 'bold' : 'normal',
-      shape: 'rectangle'
+      backgroundColor: '#f0f9ff',
+      fontSize: 18,
+      fontWeight: 'bold' as const,
+      shape: 'rectangle' as const
+    } : {
+      color: '#333333',
+      fontSize: 14,
+      fontWeight: 'normal' as const,
+      shape: 'rectangle' as const
     },
     metadata: {
       createdAt: randomDate(new Date('2024-01-01'), new Date()),
@@ -114,7 +115,7 @@ export const generateMockNode = (
       linkedNodes: []
     },
     isExpanded: true,
-    isCompleted: nodeType === 'task' ? Math.random() > 0.5 : undefined
+    ...(nodeType === 'task' && { isCompleted: Math.random() > 0.5 })
   };
   
   if (numChildren > 0) {

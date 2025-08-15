@@ -1,0 +1,165 @@
+name: Build Status Notifications
+
+on:
+  workflow_run:
+    workflows:
+      - "Frontend CI"
+      - "Backend CI"
+      - "Build and Release"
+      - "Deploy"
+    types:
+      - completed
+
+jobs:
+  slack-notification:
+    name: Slack Notification
+    runs-on: ubuntu-latest
+    if: ${{ secrets.SLACK_WEBHOOK_URL != '' }}
+    
+    steps:
+      - name: Send Slack notification
+        uses: 8398a7/action-slack@v3
+        with:
+          status: ${{ github.event.workflow_run.conclusion }}
+          text: |
+            Workflow: ${{ github.event.workflow_run.name }}
+            Status: ${{ github.event.workflow_run.conclusion }}
+            Branch: ${{ github.event.workflow_run.head_branch }}
+            Commit: ${{ github.event.workflow_run.head_commit.message }}
+          webhook_url: ${{ secrets.SLACK_WEBHOOK_URL }}
+          channel: '#ci-cd'
+          username: 'GitHub Actions'
+          icon_emoji: ':github:'
+          color: ${{ github.event.workflow_run.conclusion == 'success' && 'good' || 'danger' }}
+
+  discord-notification:
+    name: Discord Notification
+    runs-on: ubuntu-latest
+    if: ${{ secrets.DISCORD_WEBHOOK_URL != '' }}
+    
+    steps:
+      - name: Send Discord notification
+        env:
+          DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK_URL }}
+        uses: Ilshidur/action-discord@0.3.2
+        with:
+          args: |
+            **Build Status Update**
+            **Workflow:** ${{ github.event.workflow_run.name }}
+            **Status:** ${{ github.event.workflow_run.conclusion == 'success' && '✅ Success' || '❌ Failed' }}
+            **Branch:** ${{ github.event.workflow_run.head_branch }}
+            **Commit:** ${{ github.event.workflow_run.head_commit.message }}
+            **Author:** ${{ github.event.workflow_run.head_commit.author.name }}
+            **Run:** ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.event.workflow_run.id }}
+
+  email-notification:
+    name: Email Notification
+    runs-on: ubuntu-latest
+    if: github.event.workflow_run.conclusion == 'failure'
+    
+    steps:
+      - name: Send email notification
+        uses: dawidd6/action-send-mail@v3
+        with:
+          server_address: smtp.gmail.com
+          server_port: 465
+          secure: true
+          username: ${{ secrets.EMAIL_USERNAME }}
+          password: ${{ secrets.EMAIL_PASSWORD }}
+          subject: "❌ Build Failed: ${{ github.event.workflow_run.name }}"
+          to: ${{ secrets.EMAIL_RECIPIENTS }}
+          from: GitHub Actions <noreply@github.com>
+          body: |
+            Build failed in repository ${{ github.repository }}
+            
+            Workflow: ${{ github.event.workflow_run.name }}
+            Branch: ${{ github.event.workflow_run.head_branch }}
+            Commit: ${{ github.event.workflow_run.head_sha }}
+            Message: ${{ github.event.workflow_run.head_commit.message }}
+            Author: ${{ github.event.workflow_run.head_commit.author.name }}
+            
+            View the failed run: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.event.workflow_run.id }}
+
+  create-issue-on-failure:
+    name: Create Issue on Failure
+    runs-on: ubuntu-latest
+    if: github.event.workflow_run.conclusion == 'failure' && github.event.workflow_run.head_branch == 'main'
+    permissions:
+      issues: write
+    
+    steps:
+      - name: Create issue for failed build
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const title = `🚨 Build Failed: ${context.payload.workflow_run.name}`;
+            const body = `
+            ## Build Failure Report
+            
+            A build has failed on the main branch and requires immediate attention.
+            
+            ### Details
+            - **Workflow:** ${context.payload.workflow_run.name}
+            - **Branch:** ${context.payload.workflow_run.head_branch}
+            - **Commit SHA:** ${context.payload.workflow_run.head_sha}
+            - **Commit Message:** ${context.payload.workflow_run.head_commit.message}
+            - **Author:** ${context.payload.workflow_run.head_commit.author.name}
+            - **Time:** ${new Date(context.payload.workflow_run.created_at).toLocaleString()}
+            
+            ### Action Required
+            1. Review the [failed workflow run](${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.payload.workflow_run.id})
+            2. Fix the issue causing the build failure
+            3. Close this issue once resolved
+            
+            ### Affected Areas
+            Please check if this affects:
+            - [ ] Production deployment
+            - [ ] Staging environment
+            - [ ] Development workflow
+            - [ ] Other team members
+            
+            cc: @${context.payload.workflow_run.head_commit.author.username || context.payload.workflow_run.actor.login}
+            `;
+            
+            await github.rest.issues.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title: title,
+              body: body,
+              labels: ['bug', 'ci-cd', 'high-priority'],
+              assignees: [context.payload.workflow_run.actor.login]
+            });
+
+  update-pr-status:
+    name: Update PR Status
+    runs-on: ubuntu-latest
+    if: github.event.workflow_run.event == 'pull_request'
+    permissions:
+      pull-requests: write
+      statuses: write
+    
+    steps:
+      - name: Update PR with status
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const conclusion = context.payload.workflow_run.conclusion;
+            const workflowName = context.payload.workflow_run.name;
+            
+            // Get PR number from workflow run
+            const allArtifacts = await github.rest.actions.listWorkflowRunArtifacts({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              run_id: context.payload.workflow_run.id
+            });
+            
+            // Update commit status
+            await github.rest.repos.createCommitStatus({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              sha: context.payload.workflow_run.head_sha,
+              state: conclusion === 'success' ? 'success' : 'failure',
+              target_url: `${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.payload.workflow_run.id}`,
+              description: `${workflowName} ${conclusion}`,
+              context: `ci/${workflowName.toLowerCase().replace(/ /g, '-')}`
+            });

@@ -1,0 +1,39 @@
+# Default code owners for the entire repository
+* @timothyjoo
+
+# Frontend specific files
+/frontend/ @timothyjoo
+*.js @timothyjoo
+*.jsx @timothyjoo
+*.ts @timothyjoo
+*.tsx @timothyjoo
+*.css @timothyjoo
+*.scss @timothyjoo
+
+# Backend specific files
+/backend/ @timothyjoo
+*.py @timothyjoo
+requirements.txt @timothyjoo
+pyproject.toml @timothyjoo
+
+# Documentation
+*.md @timothyjoo
+/docs/ @timothyjoo
+
+# CI/CD and configuration
+/.github/ @timothyjoo
+.gitlab-ci.yml @timothyjoo
+Dockerfile @timothyjoo
+docker-compose.yml @timothyjoo
+.env.example @timothyjoo
+
+# Infrastructure and deployment
+/terraform/ @timothyjoo
+/kubernetes/ @timothyjoo
+/helm/ @timothyjoo
+
+# Security sensitive files require additional review
+.env* @timothyjoo
+*secret* @timothyjoo
+*credentials* @timothyjoo
+*token* @timothyjoo

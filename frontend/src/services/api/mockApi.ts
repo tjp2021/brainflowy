@@ -1,4 +1,4 @@
-import {
+import type {
   User,
   LoginRequest,
   RegisterRequest,
@@ -14,21 +14,19 @@ import {
   ImportOptions,
   RealtimeUpdate,
   OutlineStatistics,
-  Collaborator
+  Collaborator,
+  Attachment
 } from './types';
 
 import {
   mockUsers,
-  mockOutlines,
   mockTemplates,
   generateId,
   generateMockNode,
   getCurrentUser,
   setCurrentUser,
   getStoredOutlines,
-  saveOutlines,
-  generateMockComments,
-  generateMockAttachments
+  saveOutlines
 } from './mockData';
 
 // Configuration for mock behavior
@@ -189,7 +187,7 @@ export const authApi = {
     setCurrentUser(null);
   },
   
-  async refreshToken(refreshToken: string): Promise<AuthResponse> {
+  async refreshToken(_refreshToken: string): Promise<AuthResponse> {
     await simulateLatency();
     maybeThrowError();
     
@@ -351,7 +349,7 @@ export const outlinesApi = {
       id: `outline-${generateId()}`,
       userId: currentUser.id,
       title: data.title || 'Untitled',
-      description: data.description,
+      description: data.description || '',
       rootNode: data.rootNode || generateMockNode(data.title || 'Root', 0, 1),
       tags: data.tags || [],
       isPublic: data.isPublic || false,
@@ -435,12 +433,11 @@ export const outlinesApi = {
     
     const outline = await this.getOutline(id);
     
+    const { id: _, createdAt, updatedAt, lastAccessedAt, ...outlineData } = outline;
+    
     const duplicated = await this.createOutline({
-      ...outline,
-      title: `${outline.title} (Copy)`,
-      id: undefined,
-      createdAt: undefined,
-      updatedAt: undefined
+      ...outlineData,
+      title: `${outline.title} (Copy)`
     });
     
     return duplicated;
@@ -556,7 +553,7 @@ export const nodesApi = {
       children: [],
       parentId,
       position: node.position || { x: 0, y: 0, order: 0 },
-      style: node.style,
+      ...(node.style && { style: node.style }),
       metadata: {
         createdAt: new Date(),
         updatedAt: new Date(),
@@ -566,7 +563,7 @@ export const nodesApi = {
         linkedNodes: []
       },
       isExpanded: true,
-      isCompleted: node.isCompleted
+      ...(node.isCompleted !== undefined && { isCompleted: node.isCompleted })
     };
     
     // Find parent and add child
@@ -917,7 +914,7 @@ export const collaborationApi = {
     return collaborators;
   },
   
-  async inviteCollaborator(outlineId: string, email: string, role: 'viewer' | 'editor'): Promise<void> {
+  async inviteCollaborator(outlineId: string, email: string, _role: 'viewer' | 'editor'): Promise<void> {
     await simulateLatency();
     maybeThrowError();
     
@@ -990,9 +987,9 @@ export const commentsApi = {
       if (node.id === nodeId) {
         if (!node.metadata) {
           node.metadata = {
-            createdAt: node.metadata?.createdAt || new Date(),
+            createdAt: new Date(),
             updatedAt: new Date(),
-            createdBy: node.metadata?.createdBy || currentUser.id,
+            createdBy: currentUser.id,
             attachments: [],
             comments: [],
             linkedNodes: []
@@ -1122,7 +1119,7 @@ export const attachmentsApi = {
 class MockWebSocket {
   private listeners: Map<string, Set<(data: any) => void>> = new Map();
   private isConnected = false;
-  private outlineId?: string;
+  private outlineId: string | undefined = undefined;
   
   connect(outlineId: string): void {
     this.outlineId = outlineId;
