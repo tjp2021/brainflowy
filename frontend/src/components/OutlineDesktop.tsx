@@ -4,6 +4,7 @@ import {
   Folder, Settings, HelpCircle, MoreHorizontal 
 } from 'lucide-react';
 import type { OutlineItem } from '@/types/outline';
+import VoiceModal from './VoiceModal';
 
 interface OutlineDesktopProps {
   title?: string;
@@ -30,7 +31,7 @@ const OutlineDesktop: React.FC<OutlineDesktopProps> = ({
 }) => {
   const [outline, setOutline] = useState<OutlineItem[]>(initialItems);
   const [editingId, setEditingId] = useState<string | null>(null);
-  const [isVoiceMode, setIsVoiceMode] = useState(false);
+  const [showVoiceModal, setShowVoiceModal] = useState(false);
   const [selectedItems, setSelectedItems] = useState<Set<string>>(new Set());
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
@@ -176,6 +177,13 @@ const OutlineDesktop: React.FC<OutlineDesktopProps> = ({
     setOutline(updated);
     onItemsChange?.(updated);
     startEditing(newItem.id);
+  };
+
+  const handleAcceptStructure = (items: OutlineItem[]) => {
+    // Add structured items to outline
+    const updated = [...outline, ...items];
+    setOutline(updated);
+    onItemsChange?.(updated);
   };
 
   const addNewItemAfter = (afterId: string) => {
@@ -333,15 +341,15 @@ const OutlineDesktop: React.FC<OutlineDesktopProps> = ({
               </div>
               
               <button 
-                onClick={() => setIsVoiceMode(!isVoiceMode)}
+                onClick={() => setShowVoiceModal(true)}
                 className={`flex items-center space-x-2 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
-                  isVoiceMode 
+                  showVoiceModal 
                     ? 'bg-blue-500 text-white' 
                     : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                 }`}
               >
                 <Mic className="w-4 h-4" />
-                <span>{isVoiceMode ? 'Stop Voice' : 'Voice Mode'}</span>
+                <span>{showVoiceModal ? 'Stop Voice' : 'Voice Mode'}</span>
               </button>
               
               <button className="p-2 rounded-lg bg-gray-100 hover:bg-gray-200 transition-colors">
@@ -359,21 +367,6 @@ const OutlineDesktop: React.FC<OutlineDesktopProps> = ({
           </div>
         </div>
 
-        {/* Voice Mode Indicator */}
-        {isVoiceMode && (
-          <div className="bg-blue-50 border-b border-blue-200 px-6 py-3">
-            <div className="flex items-center space-x-3">
-              <div className="w-3 h-3 bg-red-500 rounded-full animate-pulse"></div>
-              <span className="text-blue-800 font-medium">Voice Mode Active - Speak to add structured content</span>
-              <button 
-                onClick={() => setIsVoiceMode(false)}
-                className="ml-auto text-blue-600 hover:text-blue-800 font-medium"
-              >
-                Stop Recording
-              </button>
-            </div>
-          </div>
-        )}
 
         {/* Outline Content */}
         <div className="flex-1 px-6 py-6 overflow-auto">
@@ -442,6 +435,13 @@ const OutlineDesktop: React.FC<OutlineDesktopProps> = ({
         </div>
       </div>
       </div>
+
+      {/* Voice Modal */}
+      <VoiceModal 
+        isOpen={showVoiceModal}
+        onClose={() => setShowVoiceModal(false)}
+        onAcceptStructure={handleAcceptStructure}
+      />
     </div>
   );
 };

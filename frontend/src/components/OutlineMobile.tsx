@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Plus, Mic, Search, Menu, ChevronRight, ChevronDown, ChevronLeft } from 'lucide-react';
 import type { OutlineItem, SwipeState } from '@/types/outline';
+import VoiceModal from './VoiceModal';
 
 interface OutlineMobileProps {
   title?: string;
@@ -15,7 +16,7 @@ const OutlineMobile: React.FC<OutlineMobileProps> = ({
 }) => {
   const [outline, setOutline] = useState<OutlineItem[]>(initialItems);
   const [editingId, setEditingId] = useState<string | null>(null);
-  const [isVoiceMode, setIsVoiceMode] = useState(false);
+  const [showVoiceModal, setShowVoiceModal] = useState(false);
   const [swipeState, setSwipeState] = useState<SwipeState>({ id: null, direction: null, startX: 0 });
   const [showInstructions, setShowInstructions] = useState(true);
   const textAreaRefs = useRef<{ [key: string]: HTMLTextAreaElement | null }>({});
@@ -189,10 +190,10 @@ const OutlineMobile: React.FC<OutlineMobileProps> = ({
     }
   };
 
-  const addNewItem = () => {
+  const addNewItem = (text: string = 'New item') => {
     const newItem: OutlineItem = {
       id: `item_${Date.now()}`,
-      text: 'New item',
+      text: text,
       level: 0,
       expanded: false,
       children: []
@@ -201,6 +202,13 @@ const OutlineMobile: React.FC<OutlineMobileProps> = ({
     setOutline(updated);
     onItemsChange?.(updated);
     startEditing(newItem.id);
+  };
+
+  const handleAcceptStructure = (items: OutlineItem[]) => {
+    // Add structured items to outline
+    const updated = [...outline, ...items];
+    setOutline(updated);
+    onItemsChange?.(updated);
   };
 
   return (
@@ -226,21 +234,6 @@ const OutlineMobile: React.FC<OutlineMobileProps> = ({
         </div>
       </div>
 
-      {/* Voice Mode Indicator */}
-      {isVoiceMode && (
-        <div className="bg-blue-50 border-b border-blue-200 px-4 py-3">
-          <div className="flex items-center space-x-2">
-            <div className="w-3 h-3 bg-red-500 rounded-full animate-pulse"></div>
-            <span className="text-blue-800 font-medium">Voice Mode Active</span>
-            <button 
-              onClick={() => setIsVoiceMode(false)}
-              className="ml-auto text-blue-600 hover:text-blue-800 font-medium"
-            >
-              Exit
-            </button>
-          </div>
-        </div>
-      )}
 
       {/* Main Content */}
       <div className="px-4 py-6">
@@ -303,7 +296,7 @@ const OutlineMobile: React.FC<OutlineMobileProps> = ({
 
         <div className="mt-6 mb-20">
           <button 
-            onClick={addNewItem}
+            onClick={() => addNewItem()}
             className="flex items-center space-x-2 w-full p-3 text-left text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors"
           >
             <Plus className="w-5 h-5" />
@@ -314,36 +307,31 @@ const OutlineMobile: React.FC<OutlineMobileProps> = ({
 
       {/* Bottom Action Bar */}
       <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 px-4 py-3">
-        <div className="flex items-center justify-center space-x-6">
+        <div className="flex items-center justify-center space-x-12">
           <button 
-            onClick={() => setIsVoiceMode(!isVoiceMode)}
-            className={`flex flex-col items-center space-y-1 p-3 rounded-xl transition-all ${
-              isVoiceMode 
-                ? 'bg-blue-500 text-white shadow-lg' 
-                : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
-            }`}
+            onClick={() => setShowVoiceModal(true)}
+            className="flex flex-col items-center space-y-1 p-4 rounded-xl text-gray-600 hover:text-gray-900 hover:bg-gray-100 transition-all"
           >
-            <Mic className="w-6 h-6" />
-            <span className="text-xs font-medium">Voice</span>
+            <Mic className="w-7 h-7" />
+            <span className="text-sm font-medium">Voice</span>
           </button>
           
-          <button 
-            onClick={addNewItem}
-            className="flex flex-col items-center space-y-1 p-3 rounded-xl text-gray-600 hover:text-gray-900 hover:bg-gray-100 transition-all"
-          >
-            <Plus className="w-6 h-6" />
-            <span className="text-xs font-medium">Add</span>
-          </button>
-          
-          <button className="flex flex-col items-center space-y-1 p-3 rounded-xl text-gray-600 hover:text-gray-900 hover:bg-gray-100 transition-all">
-            <Search className="w-6 h-6" />
-            <span className="text-xs font-medium">Search</span>
+          <button className="flex flex-col items-center space-y-1 p-4 rounded-xl text-gray-600 hover:text-gray-900 hover:bg-gray-100 transition-all">
+            <Search className="w-7 h-7" />
+            <span className="text-sm font-medium">Search</span>
           </button>
         </div>
       </div>
 
+      {/* Voice Modal */}
+      <VoiceModal 
+        isOpen={showVoiceModal}
+        onClose={() => setShowVoiceModal(false)}
+        onAcceptStructure={handleAcceptStructure}
+      />
+
       {/* Instructions */}
-      {!isVoiceMode && showInstructions && (
+      {showInstructions && (
         <div className="fixed bottom-20 left-4 right-4 bg-gray-900 text-white rounded-lg p-3 shadow-lg opacity-90">
           <div className="text-sm space-y-1">
             <div>• Swipe right to indent, left to outdent</div>
