@@ -32,11 +32,10 @@ def test_app() -> FastAPI:
     return app
 
 @pytest.fixture
-async def client(test_app: FastAPI) -> AsyncGenerator[AsyncClient, None]:
+def client(test_app: FastAPI):
     """Create an async test client"""
     transport = ASGITransport(app=test_app)
-    async with AsyncClient(transport=transport, base_url="http://test") as ac:
-        yield ac
+    return AsyncClient(transport=transport, base_url="http://test")
 
 @pytest.fixture
 def auth_headers() -> dict:

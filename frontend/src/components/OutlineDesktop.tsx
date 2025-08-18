@@ -138,7 +138,16 @@ const OutlineDesktop: React.FC<OutlineDesktopProps> = ({
   const startEditing = (itemId: string) => {
     setEditingId(itemId);
     setTimeout(() => {
-      textAreaRefs.current[itemId]?.focus();
+      const textarea = textAreaRefs.current[itemId];
+      if (textarea) {
+        textarea.focus();
+        // Clear "New item" placeholder text when starting to edit
+        if (textarea.value === 'New item') {
+          textarea.value = '';
+        }
+        // Select all text for easy replacement
+        textarea.select();
+      }
     }, 0);
   };
 
@@ -200,18 +209,99 @@ const OutlineDesktop: React.FC<OutlineDesktopProps> = ({
     console.log('Outdent item:', itemId);
   };
 
-  const handleKeyDown = (e: React.KeyboardEvent, itemId: string) => {
+  const handleKeyDown = async (e: React.KeyboardEvent, itemId: string) => {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
       const textarea = textAreaRefs.current[itemId];
       if (textarea) {
-        updateItemText(itemId, textarea.value);
+        const trimmedValue = textarea.value.trim();
+        
+        // If the text is empty or still "New Item", remove the item
+        if (!trimmedValue || trimmedValue === 'New Item') {
+          // Remove the empty item from local state
+          const removeEmptyItem = (items: OutlineItem[]): OutlineItem[] => {
+            return items.filter(item => {
+              if (item.id === itemId) {
+                return false; // Remove this item
+              }
+              if (item.children.length > 0) {
+                item.children = removeEmptyItem(item.children);
+              }
+              return true;
+            });
+          };
+          const updated = removeEmptyItem(outline);
+          setOutline(updated);
+          onItemsChange?.(updated);
+        } else {
+          // Save the text
+          await updateItemText(itemId, trimmedValue);
+          
+          // For new items (those with temporary IDs), create them in backend
+          if (itemId.startsWith('item_') && currentOutlineId) {
+            try {
+              const { outlinesApi } = await import('@/services/api/apiClient');
+              const item = outline.find(i => i.id === itemId) || 
+                         outline.flatMap(i => i.children).find(c => c.id === itemId);
+              
+              if (item) {
+                console.log('Creating new item in backend:', {
+                  content: trimmedValue,
+                  parentId: item.parentId || null,
+                  style: item.style,
+                  formatting: item.formatting
+                });
+                
+                const created = await outlinesApi.createItem(currentOutlineId, {
+                  content: trimmedValue,
+                  parentId: item.parentId || null,
+                  style: item.style,
+                  formatting: item.formatting
+                } as any);
+                
+                console.log('Item created successfully:', created);
+                
+                // Update the local item with the backend response
+                const updateId = (items: OutlineItem[]): OutlineItem[] => {
+                  return items.map(i => {
+                    if (i.id === itemId) {
+                      // Use the full response from backend to ensure sync
+                      return { 
+                        ...i, 
+                        id: created.id,
+                        text: created.content, // Use content from backend
+                        createdAt: created.createdAt,
+                        updatedAt: created.updatedAt
+                      };
+                    }
+                    if (i.children.length > 0) {
+                      return { ...i, children: updateId(i.children) };
+                    }
+                    return i;
+                  });
+                };
+                const updatedWithId = updateId(outline);
+                setOutline(updatedWithId);
+                onItemsChange?.(updatedWithId);
+                
+                // Create new item below current only if we saved valid text
+                // Use the new backend ID for the next item
+                if (!e.ctrlKey) {
+                  addNewItemAfter(created.id);
+                }
+              }
+            } catch (error) {
+              console.error('Failed to create item in backend:', error);
+            }
+          } else {
+            // For existing items, create new item below current
+            if (!e.ctrlKey) {
+              addNewItemAfter(itemId);
+            }
+          }
+        }
       }
       stopEditing();
-      // Create new item below current
-      if (!e.ctrlKey) {
-        addNewItemAfter(itemId);
-      }
     } else if (e.key === 'Escape') {
       stopEditing();
     } else if (e.key === 'Tab') {
@@ -273,7 +363,7 @@ const OutlineDesktop: React.FC<OutlineDesktopProps> = ({
     startEditing(newItem.id);
   };
 
-  const toggleItemStyle = (itemId: string, style: 'header' | 'code' | 'quote' | 'normal') => {
+  const toggleItemStyle = async (itemId: string, style: 'header' | 'code' | 'quote' | 'normal') => {
     const updateItems = (items: OutlineItem[]): OutlineItem[] => {
       return items.map(item => {
         if (item.id === itemId) {
@@ -295,6 +385,38 @@ const OutlineDesktop: React.FC<OutlineDesktopProps> = ({
     const updated = updateItems(outline);
     setOutline(updated);
     onItemsChange?.(updated);
+    
+    // Save style change to backend if item exists there
+    if (currentOutlineId && !itemId.startsWith('item_')) {
+      try {
+        const { outlinesApi } = await import('@/services/api/apiClient');
+        // Find the item to get its current text
+        const findItem = (items: OutlineItem[]): OutlineItem | null => {
+          for (const item of items) {
+            if (item.id === itemId) return item;
+            if (item.children.length > 0) {
+              const found = findItem(item.children);
+              if (found) return found;
+            }
+          }
+          return null;
+        };
+        
+        const item = findItem(updated);
+        if (item && item.text) {
+          await outlinesApi.updateItem(currentOutlineId, itemId, { 
+            content: item.text,
+            style: style,
+            ...(style === 'header' ? { formatting: { bold: true, size: 'large' } } :
+                style === 'code' ? { formatting: { size: 'medium' } } :
+                style === 'quote' ? { formatting: { italic: true, size: 'medium' } } :
+                {})
+          } as any);
+        }
+      } catch (error) {
+        console.error('Failed to save style change:', error);
+      }
+    }
   };
 
   const handleAcceptStructure = (items: OutlineItem[]) => {
@@ -564,7 +686,31 @@ const OutlineDesktop: React.FC<OutlineDesktopProps> = ({
                             textAreaRefs.current[item.id] = el;
                           }}
                           defaultValue={item.text}
-                          onBlur={stopEditing}
+                          onBlur={(e) => {
+                            const value = e.target.value.trim();
+                            // If the field is empty or still "New item", remove the item
+                            if (!value || value === 'New item') {
+                              // Remove the empty item
+                              const removeEmptyItem = (items: OutlineItem[]): OutlineItem[] => {
+                                return items.filter(i => {
+                                  if (i.id === item.id) {
+                                    return false;
+                                  }
+                                  if (i.children.length > 0) {
+                                    i.children = removeEmptyItem(i.children);
+                                  }
+                                  return true;
+                                });
+                              };
+                              const updated = removeEmptyItem(outline);
+                              setOutline(updated);
+                              onItemsChange?.(updated);
+                            } else if (value !== item.text) {
+                              // Update the text if it changed
+                              updateItemText(item.id, value);
+                            }
+                            stopEditing();
+                          }}
                           onKeyDown={(e) => handleKeyDown(e, item.id)}
                           className="w-full px-2 py-1 text-sm leading-relaxed bg-white border border-blue-300 rounded resize-none focus:outline-none focus:ring-1 focus:ring-blue-500"
                           rows={1}

@@ -99,6 +99,11 @@ const OutlineView: React.FC<OutlineViewProps> = ({ outlineId }) => {
         
         // Create new items in backend
         for (const item of newItems) {
+          // Skip items without text or with default "New Item" text
+          if (!item.text || item.text === 'New Item' || item.text.trim() === '') {
+            continue;
+          }
+          
           const created = await outlinesApi.createItem(currentOutlineId, {
             content: item.text,
             parentId: item.parentId || null,

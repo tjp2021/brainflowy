@@ -24,12 +24,45 @@ const OutlineMobile: React.FC<OutlineMobileProps> = ({
   const [selectedStyle, setSelectedStyle] = useState<'header' | 'code' | 'quote' | 'normal'>('normal');
   const [lastTapTime, setLastTapTime] = useState<number>(0);
   const [lastTappedId, setLastTappedId] = useState<string | null>(null);
+  const [currentOutlineId, setCurrentOutlineId] = useState<string | null>(null);
   const textAreaRefs = useRef<{ [key: string]: HTMLTextAreaElement | null }>({});
 
   useEffect(() => {
     // Hide instructions after 5 seconds
     const timer = setTimeout(() => setShowInstructions(false), 5000);
     return () => clearTimeout(timer);
+  }, []);
+
+  // Load user's outlines on mount
+  useEffect(() => {
+    const loadUserOutlines = async () => {
+      try {
+        const { outlinesApi, authApi } = await import('@/services/api/apiClient');
+        const user = await authApi.getCurrentUser();
+        
+        if (user) {
+          const outlines = await outlinesApi.getOutlines();
+          
+          // Create or load first outline
+          if (outlines.length > 0) {
+            setCurrentOutlineId(outlines[0].id);
+            const items = await outlinesApi.getOutlineItems(outlines[0].id);
+            setOutline(items as any);
+          } else {
+            // Create a new outline for the user
+            const newOutline = await outlinesApi.createOutline({
+              title: `Mobile Outline ${new Date().toLocaleDateString()}`,
+              userId: user.id
+            });
+            setCurrentOutlineId(newOutline.id);
+          }
+        }
+      } catch (error) {
+        console.error('Failed to load outlines:', error);
+      }
+    };
+    
+    loadUserOutlines();
   }, []);
 
   // Flatten outline for rendering
@@ -165,8 +198,15 @@ const OutlineMobile: React.FC<OutlineMobileProps> = ({
   const startEditing = (itemId: string) => {
     setEditingId(itemId);
     setTimeout(() => {
-      if (textAreaRefs.current[itemId]) {
-        textAreaRefs.current[itemId]?.focus();
+      const textarea = textAreaRefs.current[itemId];
+      if (textarea) {
+        textarea.focus();
+        // Clear "New item" placeholder text when starting to edit
+        if (textarea.value === 'New item') {
+          textarea.value = '';
+        }
+        // Select all text for easy replacement
+        textarea.select();
       }
     }, 0);
   };
@@ -175,11 +215,11 @@ const OutlineMobile: React.FC<OutlineMobileProps> = ({
     setEditingId(null);
   };
 
-  const updateItemText = (itemId: string, newText: string) => {
+  const updateItemText = async (itemId: string, newText: string) => {
     const updateItems = (items: OutlineItem[]): OutlineItem[] => {
       return items.map(item => {
         if (item.id === itemId) {
-          return { ...item, text: newText };
+          return { ...item, text: newText, updatedAt: new Date().toISOString() };
         }
         if (item.children.length > 0) {
           return { ...item, children: updateItems(item.children) };
@@ -190,14 +230,82 @@ const OutlineMobile: React.FC<OutlineMobileProps> = ({
     const updated = updateItems(outline);
     setOutline(updated);
     onItemsChange?.(updated);
+    
+    // Save to backend if we have an outline ID and it's not a new item
+    if (currentOutlineId && !itemId.startsWith('item_')) {
+      try {
+        const { outlinesApi } = await import('@/services/api/apiClient');
+        await outlinesApi.updateItem(currentOutlineId, itemId, { content: newText });
+      } catch (error) {
+        console.error('Failed to save item:', error);
+      }
+    }
   };
 
-  const handleKeyDown = (e: React.KeyboardEvent, itemId: string) => {
+  const handleKeyDown = async (e: React.KeyboardEvent, itemId: string) => {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
       const textarea = textAreaRefs.current[itemId];
       if (textarea) {
-        updateItemText(itemId, textarea.value);
+        const trimmedValue = textarea.value.trim();
+        
+        // If the text is empty or still "New Item", remove the item
+        if (!trimmedValue || trimmedValue === 'New Item') {
+          // Remove the empty item from local state
+          const removeEmptyItem = (items: OutlineItem[]): OutlineItem[] => {
+            return items.filter(item => {
+              if (item.id === itemId) {
+                return false; // Remove this item
+              }
+              if (item.children.length > 0) {
+                item.children = removeEmptyItem(item.children);
+              }
+              return true;
+            });
+          };
+          const updated = removeEmptyItem(outline);
+          setOutline(updated);
+          onItemsChange?.(updated);
+        } else {
+          // Save the text
+          await updateItemText(itemId, trimmedValue);
+          
+          // For new items (those with temporary IDs), create them in backend
+          if (itemId.startsWith('item_') && currentOutlineId) {
+            try {
+              const { outlinesApi } = await import('@/services/api/apiClient');
+              const item = outline.find(i => i.id === itemId) || 
+                         outline.flatMap(i => i.children).find(c => c.id === itemId);
+              
+              if (item) {
+                const created = await outlinesApi.createItem(currentOutlineId, {
+                  content: trimmedValue,
+                  parentId: item.parentId || null,
+                  style: item.style,
+                  formatting: item.formatting
+                } as any);
+                
+                // Update the local item with the backend ID
+                const updateId = (items: OutlineItem[]): OutlineItem[] => {
+                  return items.map(i => {
+                    if (i.id === itemId) {
+                      return { ...i, id: created.id };
+                    }
+                    if (i.children.length > 0) {
+                      return { ...i, children: updateId(i.children) };
+                    }
+                    return i;
+                  });
+                };
+                const updatedWithId = updateId(outline);
+                setOutline(updatedWithId);
+                onItemsChange?.(updatedWithId);
+              }
+            } catch (error) {
+              console.error('Failed to create item in backend:', error);
+            }
+          }
+        }
       }
       stopEditing();
     } else if (e.key === 'Escape') {

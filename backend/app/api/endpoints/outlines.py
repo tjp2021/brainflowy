@@ -200,8 +200,9 @@ async def create_item(
             detail="Outline not found"
         )
     
-    # Create new item
-    item_id = f"item_{int(datetime.utcnow().timestamp() * 1000)}"
+    # Create new item with unique ID (using microseconds and random component to avoid collisions)
+    import random
+    item_id = f"item_{int(datetime.utcnow().timestamp() * 1000000)}_{random.randint(100, 999)}"
     
     # Calculate order (number of siblings)
     items = outline.get("items", [])
