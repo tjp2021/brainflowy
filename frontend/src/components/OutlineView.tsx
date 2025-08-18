@@ -13,6 +13,8 @@ const OutlineView: React.FC<OutlineViewProps> = ({ outlineId }) => {
   const [items, setItems] = useState<OutlineItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [title, setTitle] = useState('Work Notes');
+  const [currentOutlineId, setCurrentOutlineId] = useState<string | null>(outlineId || null);
+  const [saving, setSaving] = useState(false);
 
   // Check if mobile view
   useEffect(() => {
@@ -30,21 +32,39 @@ const OutlineView: React.FC<OutlineViewProps> = ({ outlineId }) => {
     const loadOutline = async () => {
       setLoading(true);
       try {
+        const { authApi } = await import('@/services/api/apiClient');
+        const user = await authApi.getCurrentUser();
+        
+        if (!user) {
+          // Not logged in - use sample data
+          setItems(getSampleOutlineData());
+          setLoading(false);
+          return;
+        }
+
         if (outlineId) {
+          // Load existing outline
           const outline = await outlinesApi.getOutline(outlineId);
           const items = await outlinesApi.getOutlineItems(outlineId);
           setTitle(outline.title);
+          setCurrentOutlineId(outlineId);
           
           // Convert flat items to hierarchical structure
           const hierarchicalItems = convertToHierarchical(items);
           setItems(hierarchicalItems);
         } else {
-          // Load default sample data
-          setItems(getSampleOutlineData());
+          // Create a new outline for the user
+          const newOutline = await outlinesApi.createOutline({
+            title: `Outline ${new Date().toLocaleDateString()}`,
+            userId: user.id
+          });
+          setCurrentOutlineId(newOutline.id);
+          setTitle(newOutline.title);
+          setItems([]);
         }
       } catch (error) {
         console.error('Failed to load outline:', error);
-        // Use sample data as fallback
+        // Use sample data as fallback for demo purposes
         setItems(getSampleOutlineData());
       } finally {
         setLoading(false);
@@ -57,13 +77,53 @@ const OutlineView: React.FC<OutlineViewProps> = ({ outlineId }) => {
   const handleItemsChange = async (updatedItems: OutlineItem[]) => {
     setItems(updatedItems);
     
-    // Save to mock API
-    if (outlineId) {
+    // Save to backend if we have an outline ID
+    if (currentOutlineId) {
+      setSaving(true);
       try {
-        // In a real app, we'd update the items in the backend
-        console.log('Saving items:', updatedItems);
+        // Find new items (temporary IDs start with 'item_' or 'voice-')
+        const findNewItems = (items: OutlineItem[]): OutlineItem[] => {
+          const newItems: OutlineItem[] = [];
+          items.forEach(item => {
+            if (item.id.startsWith('item_') || item.id.startsWith('voice-')) {
+              newItems.push(item);
+            }
+            if (item.children?.length > 0) {
+              newItems.push(...findNewItems(item.children));
+            }
+          });
+          return newItems;
+        };
+        
+        const newItems = findNewItems(updatedItems);
+        
+        // Create new items in backend
+        for (const item of newItems) {
+          const created = await outlinesApi.createItem(currentOutlineId, {
+            content: item.text,
+            parentId: item.parentId || null,
+            style: item.style,
+            formatting: item.formatting
+          } as any);
+          
+          // Update local ID with backend ID
+          const updateId = (items: OutlineItem[]): OutlineItem[] => {
+            return items.map(i => {
+              if (i.id === item.id) {
+                return { ...i, id: created.id };
+              }
+              if (i.children?.length > 0) {
+                return { ...i, children: updateId(i.children) };
+              }
+              return i;
+            });
+          };
+          setItems(prev => updateId(prev));
+        }
       } catch (error) {
         console.error('Failed to save items:', error);
+      } finally {
+        setSaving(false);
       }
     }
   };
@@ -76,18 +136,27 @@ const OutlineView: React.FC<OutlineViewProps> = ({ outlineId }) => {
     );
   }
 
-  return isMobile ? (
-    <OutlineMobile 
-      title={title}
-      initialItems={items} 
-      onItemsChange={handleItemsChange}
-    />
-  ) : (
-    <OutlineDesktop 
-      title={title}
-      initialItems={items} 
-      onItemsChange={handleItemsChange}
-    />
+  return (
+    <>
+      {saving && (
+        <div className="fixed top-4 right-4 bg-blue-500 text-white px-3 py-1 rounded-lg text-sm z-50">
+          Saving...
+        </div>
+      )}
+      {isMobile ? (
+        <OutlineMobile 
+          title={title}
+          initialItems={items} 
+          onItemsChange={handleItemsChange}
+        />
+      ) : (
+        <OutlineDesktop 
+          title={title}
+          initialItems={items} 
+          onItemsChange={handleItemsChange}
+        />
+      )}
+    </>
   );
 };
 
@@ -114,19 +183,39 @@ function getSampleOutlineData(): OutlineItem[] {
       text: 'Marketing Campaign',
       level: 0,
       expanded: true,
+      style: 'header',
+      formatting: { bold: true, size: 'large' },
       children: [
         {
           id: '2',
           text: 'Social Media Strategy',
           level: 1,
           expanded: true,
+          style: 'header',
+          formatting: { bold: true, size: 'medium' },
           children: [
             { id: '3', text: 'Instagram content calendar', level: 2, expanded: false, children: [] },
-            { id: '4', text: 'TikTok video series', level: 2, expanded: false, children: [] }
+            { id: '4', text: 'TikTok video series', level: 2, expanded: false, children: [] },
+            { 
+              id: '4a', 
+              text: 'const videoConfig = { format: "vertical", duration: 60 };', 
+              level: 2, 
+              expanded: false, 
+              style: 'code',
+              children: [] 
+            }
           ]
         },
         { id: '5', text: 'Budget planning', level: 1, expanded: false, children: [] },
-        { id: '6', text: 'Team assignments', level: 1, expanded: false, children: [] }
+        { 
+          id: '6', 
+          text: 'As Steve Jobs said, "Innovation distinguishes between a leader and a follower."', 
+          level: 1, 
+          expanded: false, 
+          style: 'quote',
+          formatting: { italic: true },
+          children: [] 
+        }
       ]
     },
     {
@@ -134,6 +223,8 @@ function getSampleOutlineData(): OutlineItem[] {
       text: 'Product Launch',
       level: 0,
       expanded: false,
+      style: 'header',
+      formatting: { bold: true, size: 'large' },
       children: [
         { id: '8', text: 'Beta testing feedback', level: 1, expanded: false, children: [] },
         { id: '9', text: 'Launch timeline', level: 1, expanded: false, children: [] }
@@ -141,12 +232,21 @@ function getSampleOutlineData(): OutlineItem[] {
     },
     {
       id: '10',
-      text: 'Weekly team meeting agenda',
+      text: 'Technical Implementation',
       level: 0,
       expanded: true,
+      style: 'header',
+      formatting: { bold: true, size: 'large' },
       children: [
-        { id: '11', text: 'Project updates', level: 1, expanded: false, children: [] },
-        { id: '12', text: 'Blockers and issues', level: 1, expanded: false, children: [] }
+        { id: '11', text: 'API endpoints to implement', level: 1, expanded: false, children: [] },
+        { 
+          id: '12', 
+          text: 'async function fetchUserData() { return await api.get("/users"); }', 
+          level: 1, 
+          expanded: false, 
+          style: 'code',
+          children: [] 
+        }
       ]
     }
   ];

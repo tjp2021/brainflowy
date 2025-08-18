@@ -214,6 +214,8 @@ async def create_item(
         "parentId": item_data.parentId,
         "outlineId": outline_id,
         "order": order,
+        "style": item_data.style,
+        "formatting": item_data.formatting,
         "createdAt": datetime.utcnow().isoformat(),
         "updatedAt": datetime.utcnow().isoformat()
     }
@@ -259,6 +261,10 @@ async def update_item(
                 item["parentId"] = update_data.parentId
             if update_data.order is not None:
                 item["order"] = update_data.order
+            if update_data.style is not None:
+                item["style"] = update_data.style
+            if update_data.formatting is not None:
+                item["formatting"] = update_data.formatting
             item["updatedAt"] = datetime.utcnow().isoformat()
             item_found = True
             updated_item = item

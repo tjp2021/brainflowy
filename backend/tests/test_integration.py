@@ -1,10 +1,12 @@
 """
 Integration tests for complete user workflows.
-These ensure all components work together correctly.
+These ensure all components work together correctly from frontend to backend.
 """
 import pytest
 from httpx import AsyncClient
 import base64
+import time
+import json
 
 @pytest.mark.integration
 class TestUserJourney:
@@ -15,7 +17,7 @@ class TestUserJourney:
         """Test complete flow: register -> login -> create outline -> add items"""
         # Step 1: Register new user
         user_data = {
-            "email": "journey@example.com",
+            "email": f"journey_{time.time()}@example.com",
             "password": "SecurePass123!",
             "displayName": "Journey User"
         }

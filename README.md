@@ -1,19 +1,25 @@
-# BrainFlowy
+# BrainFlowy 🧠
 
-A modern mind mapping and note-taking application built with React TypeScript frontend and FastAPI Python backend.
+A modern, AI-powered hierarchical note-taking application with voice input capabilities.
 
 ## Overview
 
-BrainFlowy is designed to help users create, organize, and visualize their thoughts through intuitive mind maps and structured notes. The application features a clean, modern interface with powerful functionality for knowledge management and creative thinking.
+BrainFlowy revolutionizes note-taking by combining hierarchical outline management with cutting-edge AI technology. Speak naturally and watch as your thoughts are automatically transcribed and intelligently organized into structured outlines using OpenAI Whisper and Claude 3.5 Sonnet.
 
-## Features
+## ✨ Key Features
 
-- **Interactive Mind Maps**: Create dynamic, visual representations of your ideas
-- **Rich Note-Taking**: Write and organize detailed notes with formatting support  
-- **Real-time Collaboration**: Work together with others in real-time
-- **Export Options**: Export your mind maps and notes in various formats
-- **Cloud Sync**: Keep your data synchronized across devices
-- **Custom Themes**: Personalize your workspace with custom themes and layouts
+### AI-Powered Voice Input (NEW! ✅)
+- **Real-time Voice Transcription**: Powered by OpenAI Whisper for accurate speech-to-text
+- **Intelligent Text Structuring**: Claude 3.5 Sonnet automatically organizes your thoughts
+- **Multi-language Support**: Transcribe in dozens of languages
+- **Smart Hierarchy**: AI understands context and creates logical groupings
+
+### Core Functionality
+- **Hierarchical Outline Management**: Create, organize, and navigate nested outlines
+- **Mobile-First Design**: Optimized for touch interactions and mobile devices
+- **Real-time Sync**: Keep your notes synchronized across devices
+- **Offline Support**: Continue working without internet connection
+- **PWA Capabilities**: Install as a native app on any device
 
 ## Technology Stack
 
@@ -26,12 +32,12 @@ BrainFlowy is designed to help users create, organize, and visualize their thoug
 - **D3.js** for mind map visualizations
 
 ### Backend
-- **FastAPI** with Python 3.11+
-- **PostgreSQL** for data persistence
-- **SQLAlchemy** for ORM
-- **Alembic** for database migrations
-- **Redis** for caching and session management
-- **JWT** for authentication
+- **FastAPI** with Python 3.12
+- **Azure Cosmos DB** for scalable document storage
+- **JWT** for secure authentication
+- **OpenAI API** for Whisper voice transcription
+- **Anthropic API** for Claude text structuring
+- **Pydantic** for data validation
 
 ### DevOps
 - **Docker** for containerization

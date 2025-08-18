@@ -156,7 +156,7 @@ const VoiceModal: React.FC<VoiceModalProps> = ({ isOpen, onClose, onAcceptStruct
       const structured = await voiceApi.structureText(result.text);
       
       // Convert to OutlineItem format
-      const structuredItems: OutlineItem[] = structured.structured.map((item, index) => ({
+      const structuredItems: OutlineItem[] = structured.structured.map((item: any, index: number) => ({
         id: `voice-${Date.now()}-${index}`,
         text: item.content,
         level: item.level,

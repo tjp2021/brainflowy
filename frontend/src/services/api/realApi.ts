@@ -3,12 +3,10 @@
  * Connects to the actual backend API instead of using mocks
  */
 
-import { config, getApiUrl } from '@/utils/config';
+import { getApiUrl } from '@/utils/config';
 import type { 
   AuthResponse, 
-  User, 
-  LoginRequest, 
-  RegisterRequest,
+  User,
   Outline,
   OutlineItem,
   CreateOutlineRequest,

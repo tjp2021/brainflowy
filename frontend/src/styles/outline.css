@@ -1,0 +1,78 @@
+/* Outline-specific styles for deep nesting support */
+
+/* Mobile outline container with horizontal scroll for deep nesting */
+@media (max-width: 768px) {
+  .outline-mobile-container {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+  
+  .outline-mobile-content {
+    min-width: fit-content;
+  }
+  
+  /* Visual indicator for horizontal scrollability */
+  .outline-mobile-container::-webkit-scrollbar {
+    height: 4px;
+  }
+  
+  .outline-mobile-container::-webkit-scrollbar-track {
+    background: #f1f1f1;
+  }
+  
+  .outline-mobile-container::-webkit-scrollbar-thumb {
+    background: #888;
+    border-radius: 2px;
+  }
+}
+
+/* Desktop outline with better deep nesting support */
+@media (min-width: 769px) {
+  .outline-desktop-container {
+    overflow-x: auto;
+  }
+  
+  .outline-desktop-content {
+    min-width: fit-content;
+  }
+}
+
+/* Depth indicators with alternating subtle backgrounds */
+.outline-item-depth-0 { background: transparent; }
+.outline-item-depth-1 { background: rgba(0, 0, 0, 0.01); }
+.outline-item-depth-2 { background: rgba(0, 0, 0, 0.02); }
+.outline-item-depth-3 { background: rgba(0, 0, 0, 0.01); }
+.outline-item-depth-4 { background: rgba(0, 0, 0, 0.02); }
+.outline-item-depth-5 { background: rgba(0, 0, 0, 0.01); }
+
+/* Style-specific formatting */
+.outline-item-header {
+  font-weight: bold;
+  font-size: 1.125rem;
+}
+
+.outline-item-code {
+  font-family: ui-monospace, SFMono-Regular, "SF Mono", Consolas, "Liberation Mono", Menlo, monospace;
+  font-size: 0.875rem;
+  background: #f6f8fa;
+  padding: 0.25rem 0.5rem;
+  border-radius: 0.25rem;
+}
+
+.outline-item-quote {
+  font-style: italic;
+  color: #57606a;
+  border-left: 3px solid #d0d7de;
+  padding-left: 1rem;
+}
+
+/* Long press animation for mobile */
+@keyframes longPressIndicator {
+  0% { transform: scale(1); opacity: 1; }
+  50% { transform: scale(0.95); opacity: 0.8; }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+.long-press-active {
+  animation: longPressIndicator 0.5s ease-in-out;
+}

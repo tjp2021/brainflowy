@@ -21,11 +21,13 @@ export interface NodeMetadata {
 export interface User {
   id: string;
   email: string;
-  name: string;
+  name?: string;
+  displayName?: string;
+  fullName?: string;
   avatar?: string;
-  settings: UserSettings;
-  createdAt: Date;
-  updatedAt: Date;
+  settings?: UserSettings;
+  createdAt?: Date | string;
+  updatedAt?: Date | string;
 }
 
 export interface UserSettings {

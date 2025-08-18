@@ -49,7 +49,7 @@ const HomePage: React.FC = () => {
         <div className="user-stats" style={{ marginTop: '2rem', padding: '1rem', backgroundColor: '#f5f5f5', borderRadius: '8px' }}>
           <h3>Your Account</h3>
           <p><strong>Email:</strong> {user.email}</p>
-          <p><strong>Member since:</strong> {new Date(user.createdAt).toLocaleDateString()}</p>
+          <p><strong>Member since:</strong> {user.createdAt ? new Date(user.createdAt).toLocaleDateString() : 'Unknown'}</p>
         </div>
       </div>
     );

@@ -102,11 +102,12 @@ const initSampleData = () => {
 };
 
 export const mockOutlineService = {
-  async getOutlines(userId: string): Promise<Outline[]> {
+  async getOutlines(userId?: string): Promise<Outline[]> {
     await simulateDelay();
     
-    const userOutlines = Array.from(mockOutlines.values())
-      .filter(outline => outline.userId === userId);
+    const userOutlines = userId 
+      ? Array.from(mockOutlines.values()).filter(outline => outline.userId === userId)
+      : Array.from(mockOutlines.values());
     
     return userOutlines;
   },
@@ -122,13 +123,13 @@ export const mockOutlineService = {
     return outline;
   },
 
-  async createOutline(title: string, userId: string): Promise<Outline> {
+  async createOutline(data: { title: string; userId: string }): Promise<Outline> {
     await simulateDelay();
     
     const outline: Outline = {
       id: `outline_${Date.now()}`,
-      title,
-      userId,
+      title: data.title,
+      userId: data.userId,
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
       itemCount: 0,

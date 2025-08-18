@@ -181,6 +181,57 @@ export interface SearchFilters {
   nodeTypes?: string[];
 }
 
+// Outline Item types (for the actual implementation)
+export interface OutlineItem {
+  id: string;
+  content: string;
+  parentId?: string | null;
+  outlineId: string;
+  order: number;
+  children: OutlineItem[];
+  style?: 'header' | 'code' | 'quote' | 'normal';
+  formatting?: {
+    bold?: boolean;
+    italic?: boolean;
+    size?: 'large' | 'medium' | 'small';
+  };
+  createdAt: string;
+  updatedAt: string;
+}
+
+// Request types for outline operations
+export interface CreateOutlineRequest {
+  title: string;
+  userId: string;
+}
+
+export interface UpdateOutlineRequest {
+  title?: string;
+}
+
+export interface CreateItemRequest {
+  content: string;
+  parentId?: string | null;
+  style?: 'header' | 'code' | 'quote' | 'normal';
+  formatting?: {
+    bold?: boolean;
+    italic?: boolean;
+    size?: 'large' | 'medium' | 'small';
+  };
+}
+
+export interface UpdateItemRequest {
+  content?: string;
+  parentId?: string | null;
+  order?: number;
+  style?: 'header' | 'code' | 'quote' | 'normal';
+  formatting?: {
+    bold?: boolean;
+    italic?: boolean;
+    size?: 'large' | 'medium' | 'small';
+  };
+}
+
 // Export types
 export interface ExportOptions {
   format: 'json' | 'markdown' | 'pdf' | 'png' | 'svg' | 'freemind';

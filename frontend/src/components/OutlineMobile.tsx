@@ -2,6 +2,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { Plus, Mic, Search, Menu, ChevronRight, ChevronDown, ChevronLeft } from 'lucide-react';
 import type { OutlineItem, SwipeState } from '@/types/outline';
 import VoiceModal from './VoiceModal';
+import '../styles/outline.css';
 
 interface OutlineMobileProps {
   title?: string;
@@ -19,6 +20,10 @@ const OutlineMobile: React.FC<OutlineMobileProps> = ({
   const [showVoiceModal, setShowVoiceModal] = useState(false);
   const [swipeState, setSwipeState] = useState<SwipeState>({ id: null, direction: null, startX: 0 });
   const [showInstructions, setShowInstructions] = useState(true);
+  const [longPressTimer, setLongPressTimer] = useState<NodeJS.Timeout | null>(null);
+  const [selectedStyle, setSelectedStyle] = useState<'header' | 'code' | 'quote' | 'normal'>('normal');
+  const [lastTapTime, setLastTapTime] = useState<number>(0);
+  const [lastTappedId, setLastTappedId] = useState<string | null>(null);
   const textAreaRefs = useRef<{ [key: string]: HTMLTextAreaElement | null }>({});
 
   useEffect(() => {
@@ -47,6 +52,17 @@ const OutlineMobile: React.FC<OutlineMobileProps> = ({
       direction: null,
       startX: touch.clientX
     });
+    
+    // Set up long press detection
+    const timer = setTimeout(() => {
+      // Long press detected - toggle expand/collapse
+      toggleExpanded(itemId);
+      // Vibrate if available
+      if ('vibrate' in navigator) {
+        navigator.vibrate(50);
+      }
+    }, 500); // 500ms for long press
+    setLongPressTimer(timer);
   };
 
   const handleTouchMove = (e: React.TouchEvent, itemId: string) => {
@@ -62,6 +78,12 @@ const OutlineMobile: React.FC<OutlineMobileProps> = ({
   };
 
   const handleTouchEnd = (_e: React.TouchEvent, itemId: string) => {
+    // Clear long press timer
+    if (longPressTimer) {
+      clearTimeout(longPressTimer);
+      setLongPressTimer(null);
+    }
+    
     if (swipeState.id !== itemId) return;
     
     if (swipeState.direction === 'right') {
@@ -190,18 +212,46 @@ const OutlineMobile: React.FC<OutlineMobileProps> = ({
     }
   };
 
-  const addNewItem = (text: string = 'New item') => {
+  const addNewItem = (text: string = 'New item', style?: 'header' | 'code' | 'quote' | 'normal') => {
     const newItem: OutlineItem = {
       id: `item_${Date.now()}`,
       text: text,
       level: 0,
       expanded: false,
-      children: []
+      children: [],
+      style: style || selectedStyle,
+      formatting: (style || selectedStyle) === 'header' ? { bold: true, size: 'large' as const } : 
+                 (style || selectedStyle) === 'quote' ? { italic: true, size: 'medium' as const } :
+                 undefined
     };
     const updated = [...outline, newItem];
     setOutline(updated);
     onItemsChange?.(updated);
     startEditing(newItem.id);
+  };
+
+  const toggleItemStyle = (itemId: string, style: 'header' | 'code' | 'quote' | 'normal') => {
+    const updateItems = (items: OutlineItem[]): OutlineItem[] => {
+      return items.map(item => {
+        if (item.id === itemId) {
+          return { 
+            ...item, 
+            style: style,
+            formatting: style === 'header' ? { bold: true, size: 'large' as const } : 
+                       style === 'code' ? { size: 'medium' as const } :
+                       style === 'quote' ? { italic: true, size: 'medium' as const } :
+                       undefined
+          };
+        }
+        if (item.children.length > 0) {
+          return { ...item, children: updateItems(item.children) };
+        }
+        return item;
+      });
+    };
+    const updated = updateItems(outline);
+    setOutline(updated);
+    onItemsChange?.(updated);
   };
 
   const handleAcceptStructure = (items: OutlineItem[]) => {
@@ -236,8 +286,8 @@ const OutlineMobile: React.FC<OutlineMobileProps> = ({
 
 
       {/* Main Content */}
-      <div className="px-4 py-6">
-        <div className="space-y-1">
+      <div className="px-4 py-6 outline-mobile-container">
+        <div className="space-y-1 outline-mobile-content">
           {flatItems.map((item) => (
             <div
               key={item.id}
@@ -281,8 +331,27 @@ const OutlineMobile: React.FC<OutlineMobileProps> = ({
                     />
                   ) : (
                     <div
-                      onClick={() => startEditing(item.id)}
-                      className="p-2 text-base leading-relaxed text-gray-900 cursor-text rounded hover:bg-gray-100 transition-colors group-hover:bg-gray-50"
+                      onClick={() => {
+                        const now = Date.now();
+                        if (lastTappedId === item.id && now - lastTapTime < 300) {
+                          // Double tap detected - cycle through styles
+                          const styles: Array<'normal' | 'header' | 'code' | 'quote'> = ['normal', 'header', 'code', 'quote'];
+                          const currentIndex = styles.indexOf(item.style || 'normal');
+                          const nextStyle = styles[(currentIndex + 1) % styles.length];
+                          toggleItemStyle(item.id, nextStyle);
+                        } else {
+                          // Single tap - start editing
+                          startEditing(item.id);
+                        }
+                        setLastTapTime(now);
+                        setLastTappedId(item.id);
+                      }}
+                      className={`p-2 leading-relaxed cursor-text rounded hover:bg-gray-100 transition-colors group-hover:bg-gray-50 ${
+                        item.style === 'header' ? 'text-lg font-bold text-gray-900' :
+                        item.style === 'code' ? 'font-mono text-sm bg-gray-100 text-gray-800' :
+                        item.style === 'quote' ? 'italic text-gray-700 border-l-4 border-gray-400 pl-4' :
+                        'text-base text-gray-900'
+                      }`}
                       style={{ minHeight: '44px', display: 'flex', alignItems: 'center' }}
                     >
                       {item.text}
@@ -307,19 +376,56 @@ const OutlineMobile: React.FC<OutlineMobileProps> = ({
 
       {/* Bottom Action Bar */}
       <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 px-4 py-3">
-        <div className="flex items-center justify-center space-x-12">
-          <button 
-            onClick={() => setShowVoiceModal(true)}
-            className="flex flex-col items-center space-y-1 p-4 rounded-xl text-gray-600 hover:text-gray-900 hover:bg-gray-100 transition-all"
-          >
-            <Mic className="w-7 h-7" />
-            <span className="text-sm font-medium">Voice</span>
-          </button>
+        <div className="flex items-center justify-between">
+          {/* Style Selector */}
+          <div className="flex items-center space-x-1">
+            <button 
+              onClick={() => setSelectedStyle('normal')}
+              className={`px-3 py-1.5 rounded text-sm ${
+                selectedStyle === 'normal' ? 'bg-blue-100 text-blue-700' : 'text-gray-600'
+              }`}
+            >
+              Normal
+            </button>
+            <button 
+              onClick={() => setSelectedStyle('header')}
+              className={`px-3 py-1.5 rounded text-sm font-bold ${
+                selectedStyle === 'header' ? 'bg-blue-100 text-blue-700' : 'text-gray-600'
+              }`}
+            >
+              Header
+            </button>
+            <button 
+              onClick={() => setSelectedStyle('code')}
+              className={`px-3 py-1.5 rounded text-sm font-mono ${
+                selectedStyle === 'code' ? 'bg-blue-100 text-blue-700' : 'text-gray-600'
+              }`}
+            >
+              Code
+            </button>
+            <button 
+              onClick={() => setSelectedStyle('quote')}
+              className={`px-3 py-1.5 rounded text-sm italic ${
+                selectedStyle === 'quote' ? 'bg-blue-100 text-blue-700' : 'text-gray-600'
+              }`}
+            >
+              Quote
+            </button>
+          </div>
           
-          <button className="flex flex-col items-center space-y-1 p-4 rounded-xl text-gray-600 hover:text-gray-900 hover:bg-gray-100 transition-all">
-            <Search className="w-7 h-7" />
-            <span className="text-sm font-medium">Search</span>
-          </button>
+          {/* Action Buttons */}
+          <div className="flex items-center space-x-4">
+            <button 
+              onClick={() => setShowVoiceModal(true)}
+              className="p-2 rounded-xl text-gray-600 hover:text-gray-900 hover:bg-gray-100 transition-all"
+            >
+              <Mic className="w-6 h-6" />
+            </button>
+            
+            <button className="p-2 rounded-xl text-gray-600 hover:text-gray-900 hover:bg-gray-100 transition-all">
+              <Search className="w-6 h-6" />
+            </button>
+          </div>
         </div>
       </div>
 
@@ -335,8 +441,9 @@ const OutlineMobile: React.FC<OutlineMobileProps> = ({
         <div className="fixed bottom-20 left-4 right-4 bg-gray-900 text-white rounded-lg p-3 shadow-lg opacity-90">
           <div className="text-sm space-y-1">
             <div>• Swipe right to indent, left to outdent</div>
-            <div>• Tap to edit, Enter to save</div>
-            <div>• Tap arrow to expand/collapse</div>
+            <div>• Long press to expand/collapse</div>
+            <div>• Tap to edit, Double-tap to change style</div>
+            <div>• Select style below for new items</div>
           </div>
         </div>
       )}

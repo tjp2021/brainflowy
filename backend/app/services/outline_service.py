@@ -8,8 +8,25 @@ class OutlineService:
     
     def build_item_tree(self, items: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
         """Build hierarchical tree structure from flat items list"""
-        # Create a map for quick lookup
-        item_map = {item["id"]: {**item, "children": []} for item in items}
+        # Create a map for quick lookup, preserving all fields including style and formatting
+        item_map = {}
+        for item in items:
+            # Ensure all fields are preserved
+            item_copy = {
+                "id": item.get("id"),
+                "content": item.get("content"),
+                "parentId": item.get("parentId"),
+                "outlineId": item.get("outlineId"),
+                "order": item.get("order", 0),
+                "style": item.get("style"),
+                "formatting": item.get("formatting"),
+                "createdAt": item.get("createdAt"),
+                "updatedAt": item.get("updatedAt"),
+                "children": []
+            }
+            # Remove None values but keep empty strings
+            item_copy = {k: v for k, v in item_copy.items() if v is not None or k == "parentId"}
+            item_map[item["id"]] = item_copy
         root_items = []
         
         # Build tree structure

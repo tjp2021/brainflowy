@@ -12,6 +12,8 @@ class OutlineItem(BaseModel):
     outlineId: str
     order: int = 0
     children: List['OutlineItem'] = []
+    style: Optional[str] = None  # 'header', 'code', 'quote', 'normal'
+    formatting: Optional[Dict[str, Any]] = None  # {'bold': true, 'italic': true, 'size': 'large'}
     createdAt: datetime = Field(default_factory=datetime.utcnow)
     updatedAt: datetime = Field(default_factory=datetime.utcnow)
 
@@ -44,6 +46,8 @@ class ItemCreate(BaseModel):
     """Schema for creating an outline item"""
     content: str
     parentId: Optional[str] = None
+    style: Optional[str] = None
+    formatting: Optional[Dict[str, Any]] = None
 
 
 class ItemUpdate(BaseModel):
@@ -51,6 +55,8 @@ class ItemUpdate(BaseModel):
     content: Optional[str] = None
     parentId: Optional[str] = None
     order: Optional[int] = None
+    style: Optional[str] = None
+    formatting: Optional[Dict[str, Any]] = None
 
 
 # Allow forward references

@@ -8,6 +8,13 @@ export interface OutlineItem {
   order?: number;
   createdAt?: string;
   updatedAt?: string;
+  // Enhanced properties for styling
+  style?: 'header' | 'code' | 'quote' | 'normal';
+  formatting?: {
+    bold?: boolean;
+    italic?: boolean;
+    size?: 'large' | 'medium' | 'small';
+  } | undefined;
 }
 
 export interface Outline {

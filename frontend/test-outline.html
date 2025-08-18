@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BrainFlowy - Outline Test</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+        }
+        h1 {
+            color: #333;
+            border-bottom: 2px solid #3b82f6;
+            padding-bottom: 10px;
+        }
+        .instructions {
+            background: #f0f9ff;
+            border: 1px solid #3b82f6;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 20px 0;
+        }
+        .test-section {
+            margin: 30px 0;
+            padding: 20px;
+            background: #fafafa;
+            border-radius: 5px;
+        }
+        .test-section h2 {
+            color: #1f2937;
+            margin-bottom: 15px;
+        }
+        .style-examples {
+            margin: 20px 0;
+        }
+        .style-example {
+            margin: 10px 0;
+            padding: 10px;
+            background: white;
+            border-radius: 4px;
+        }
+        .style-header {
+            font-size: 1.125rem;
+            font-weight: bold;
+            color: #111827;
+        }
+        .style-code {
+            font-family: ui-monospace, SFMono-Regular, "SF Mono", Consolas, "Liberation Mono", Menlo, monospace;
+            font-size: 0.875rem;
+            background: #f6f8fa;
+            padding: 4px 8px;
+            border-radius: 4px;
+            color: #1f2937;
+        }
+        .style-quote {
+            font-style: italic;
+            color: #57606a;
+            border-left: 3px solid #d0d7de;
+            padding-left: 16px;
+        }
+        .style-normal {
+            font-size: 1rem;
+            color: #111827;
+        }
+        .feature-list {
+            list-style: none;
+            padding: 0;
+        }
+        .feature-list li {
+            padding: 8px 0;
+            border-bottom: 1px solid #e5e7eb;
+        }
+        .feature-list li:last-child {
+            border-bottom: none;
+        }
+        .status {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 0.875rem;
+            margin-left: 10px;
+        }
+        .status.working {
+            background: #10b981;
+            color: white;
+        }
+        .status.partial {
+            background: #f59e0b;
+            color: white;
+        }
+        .status.broken {
+            background: #ef4444;
+            color: white;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🧠 BrainFlowy - Feature Test Page</h1>
+        
+        <div class="instructions">
+            <h3>✅ Testing Instructions</h3>
+            <p>Open the main app at <a href="http://localhost:5173" target="_blank">http://localhost:5173</a> and test these features:</p>
+        </div>
+
+        <div class="test-section">
+            <h2>📝 Outline Style System</h2>
+            <div class="style-examples">
+                <div class="style-example">
+                    <div class="style-header">Header Style - Bold and larger text for sections</div>
+                </div>
+                <div class="style-example">
+                    <div class="style-code">const code = "Monospace font with background";</div>
+                </div>
+                <div class="style-example">
+                    <div class="style-quote">Quote style with italic text and left border for emphasis</div>
+                </div>
+                <div class="style-example">
+                    <div class="style-normal">Normal style for regular content</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="test-section">
+            <h2>📱 Mobile Features (resize browser < 768px)</h2>
+            <ul class="feature-list">
+                <li>✅ Long press (500ms) to expand/collapse <span class="status working">WORKING</span></li>
+                <li>✅ Swipe right to indent <span class="status working">WORKING</span></li>
+                <li>✅ Swipe left to outdent <span class="status working">WORKING</span></li>
+                <li>✅ Double-tap to cycle styles <span class="status working">NEW</span></li>
+                <li>✅ Style selector in bottom bar <span class="status working">WORKING</span></li>
+                <li>✅ Horizontal scroll for deep nesting <span class="status working">WORKING</span></li>
+            </ul>
+        </div>
+
+        <div class="test-section">
+            <h2>💻 Desktop Features</h2>
+            <ul class="feature-list">
+                <li>⚠️ Sidebar outlines from backend <span class="status partial">PARTIAL</span></li>
+                <li>✅ Keyboard shortcuts:
+                    <ul style="margin-left: 20px; margin-top: 5px;">
+                        <li>Cmd/Ctrl+B → Header style</li>
+                        <li>Cmd/Ctrl+E → Code style</li>
+                        <li>Cmd/Ctrl+I → Quote style</li>
+                        <li>Tab → Indent</li>
+                        <li>Shift+Tab → Outdent</li>
+                    </ul>
+                </li>
+                <li>✅ Style selector buttons <span class="status working">WORKING</span></li>
+                <li>✅ Click to edit, Enter to save <span class="status working">WORKING</span></li>
+            </ul>
+        </div>
+
+        <div class="test-section">
+            <h2>🎙️ Voice Features</h2>
+            <ul class="feature-list">
+                <li>✅ OpenAI Whisper transcription <span class="status working">WORKING</span></li>
+                <li>✅ Claude text structuring <span class="status working">WORKING</span></li>
+                <li>✅ Real-time recording <span class="status working">WORKING</span></li>
+            </ul>
+        </div>
+
+        <div class="test-section">
+            <h2>⚠️ Known Issues</h2>
+            <ul class="feature-list">
+                <li>❌ Search functionality not connected</li>
+                <li>❌ Settings/Help buttons not functional</li>
+                <li>⚠️ Sidebar shows hardcoded items if not logged in</li>
+                <li>⚠️ Need to be logged in for backend features</li>
+            </ul>
+        </div>
+
+        <div class="test-section">
+            <h2>🔧 How to Test</h2>
+            <ol>
+                <li><strong>Create items with different styles:</strong> Use the style selector, then click "Add new item"</li>
+                <li><strong>Change existing item styles:</strong> 
+                    <ul>
+                        <li>Mobile: Double-tap an item</li>
+                        <li>Desktop: Click item, then use Cmd/Ctrl+B/E/I</li>
+                    </ul>
+                </li>
+                <li><strong>Test nesting:</strong> Create deeply nested items and see horizontal scrolling</li>
+                <li><strong>Test voice:</strong> Click microphone, speak, and see AI structuring</li>
+            </ol>
+        </div>
+    </div>
+</body>
+</html>

@@ -1,10 +1,13 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { 
   Plus, Mic, Search, ChevronRight, ChevronDown, ChevronLeft, 
   Folder, Settings, HelpCircle, MoreHorizontal 
 } from 'lucide-react';
+import { useAuth } from '@/hooks/useAuth';
 import type { OutlineItem } from '@/types/outline';
 import VoiceModal from './VoiceModal';
+import '../styles/outline.css';
 
 interface OutlineDesktopProps {
   title?: string;
@@ -21,21 +24,27 @@ interface OutlineDesktopProps {
 const OutlineDesktop: React.FC<OutlineDesktopProps> = ({ 
   title = 'Work Notes',
   initialItems = [],
-  onItemsChange,
-  sidebarItems = [
-    { id: 'work', name: 'Work Notes', icon: Folder, active: true },
-    { id: 'personal', name: 'Personal', icon: Folder, active: false },
-    { id: 'projects', name: 'Projects', icon: Folder, active: false },
-    { id: 'archive', name: 'Archive', icon: Folder, active: false },
-  ]
+  onItemsChange
 }) => {
+  const navigate = useNavigate();
+  const { logout } = useAuth();
   const [outline, setOutline] = useState<OutlineItem[]>(initialItems);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [showVoiceModal, setShowVoiceModal] = useState(false);
   const [selectedItems, setSelectedItems] = useState<Set<string>>(new Set());
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
+  const [selectedStyle, setSelectedStyle] = useState<'header' | 'code' | 'quote' | 'normal'>('normal');
+  const [userOutlines, setUserOutlines] = useState<any[]>([]);
+  const [currentOutlineId, setCurrentOutlineId] = useState<string | null>(null);
+  const [outlineTitle, setOutlineTitle] = useState(title);
   const textAreaRefs = useRef<{ [key: string]: HTMLTextAreaElement | null }>({});
+
+  // Handle logout
+  const handleLogout = async () => {
+    await logout();
+    navigate('/');
+  };
 
   // Flatten outline for rendering
   const flattenOutline = (items: OutlineItem[], result: OutlineItem[] = []): OutlineItem[] => {
@@ -49,6 +58,65 @@ const OutlineDesktop: React.FC<OutlineDesktopProps> = ({
   };
 
   const flatItems = flattenOutline(outline);
+
+  // Load user's outlines on mount
+  useEffect(() => {
+    const loadUserOutlines = async () => {
+      try {
+        const { outlinesApi } = await import('@/services/api/apiClient');
+        const outlines = await outlinesApi.getOutlines();
+        setUserOutlines(outlines);
+        
+        // Load first outline if available
+        if (outlines.length > 0 && !currentOutlineId) {
+          setCurrentOutlineId(outlines[0].id);
+          setOutlineTitle(outlines[0].title);
+          const items = await outlinesApi.getOutlineItems(outlines[0].id);
+          setOutline(items as any);
+        }
+      } catch (error) {
+        console.error('Failed to load outlines:', error);
+      }
+    };
+    
+    loadUserOutlines();
+  }, []);
+
+  const selectOutline = async (outlineId: string) => {
+    try {
+      const { outlinesApi } = await import('@/services/api/apiClient');
+      const outline = await outlinesApi.getOutline(outlineId);
+      const items = await outlinesApi.getOutlineItems(outlineId);
+      
+      setCurrentOutlineId(outlineId);
+      setOutlineTitle(outline.title);
+      setOutline(items as any);
+    } catch (error) {
+      console.error('Failed to load outline:', error);
+    }
+  };
+
+  const createNewOutline = async () => {
+    try {
+      const { outlinesApi, authApi } = await import('@/services/api/apiClient');
+      const user = await authApi.getCurrentUser();
+      
+      if (!user) {
+        console.error('User not authenticated');
+        return;
+      }
+      
+      const newOutline = await outlinesApi.createOutline({
+        title: `New Outline ${new Date().toLocaleDateString()}`,
+        userId: user.id
+      });
+      
+      setUserOutlines([...userOutlines, newOutline]);
+      await selectOutline(newOutline.id);
+    } catch (error) {
+      console.error('Failed to create outline:', error);
+    }
+  };
 
   const toggleExpanded = (itemId: string) => {
     const updateItems = (items: OutlineItem[]): OutlineItem[] => {
@@ -78,7 +146,7 @@ const OutlineDesktop: React.FC<OutlineDesktopProps> = ({
     setEditingId(null);
   };
 
-  const updateItemText = (itemId: string, newText: string) => {
+  const updateItemText = async (itemId: string, newText: string) => {
     const updateItems = (items: OutlineItem[]): OutlineItem[] => {
       return items.map(item => {
         if (item.id === itemId) {
@@ -93,6 +161,16 @@ const OutlineDesktop: React.FC<OutlineDesktopProps> = ({
     const updated = updateItems(outline);
     setOutline(updated);
     onItemsChange?.(updated);
+    
+    // Save to backend if we have an outline ID
+    if (currentOutlineId) {
+      try {
+        const { outlinesApi } = await import('@/services/api/apiClient');
+        await outlinesApi.updateItem(currentOutlineId, itemId, { content: newText });
+      } catch (error) {
+        console.error('Failed to save item:', error);
+      }
+    }
   };
 
   const indentItem = (itemId: string) => {
@@ -143,6 +221,18 @@ const OutlineDesktop: React.FC<OutlineDesktopProps> = ({
       } else {
         indentItem(itemId);
       }
+    } else if (e.metaKey || e.ctrlKey) {
+      // Keyboard shortcuts for styles
+      if (e.key === 'b') {
+        e.preventDefault();
+        toggleItemStyle(itemId, 'header');
+      } else if (e.key === 'e') {
+        e.preventDefault();
+        toggleItemStyle(itemId, 'code');
+      } else if (e.key === 'i') {
+        e.preventDefault();
+        toggleItemStyle(itemId, 'quote');
+      }
     }
   };
 
@@ -163,7 +253,7 @@ const OutlineDesktop: React.FC<OutlineDesktopProps> = ({
     }
   };
 
-  const addNewItem = () => {
+  const addNewItem = (style?: 'header' | 'code' | 'quote' | 'normal') => {
     const newItem: OutlineItem = {
       id: `item_${Date.now()}`,
       text: 'New item',
@@ -171,12 +261,40 @@ const OutlineDesktop: React.FC<OutlineDesktopProps> = ({
       expanded: false,
       children: [],
       createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString()
+      updatedAt: new Date().toISOString(),
+      style: style || selectedStyle,
+      formatting: (style || selectedStyle) === 'header' ? { bold: true, size: 'large' as const } : 
+                 (style || selectedStyle) === 'quote' ? { italic: true, size: 'medium' as const } :
+                 undefined
     };
     const updated = [...outline, newItem];
     setOutline(updated);
     onItemsChange?.(updated);
     startEditing(newItem.id);
+  };
+
+  const toggleItemStyle = (itemId: string, style: 'header' | 'code' | 'quote' | 'normal') => {
+    const updateItems = (items: OutlineItem[]): OutlineItem[] => {
+      return items.map(item => {
+        if (item.id === itemId) {
+          return { 
+            ...item, 
+            style: style,
+            formatting: style === 'header' ? { bold: true, size: 'large' as const } : 
+                       style === 'code' ? { size: 'medium' as const } :
+                       style === 'quote' ? { italic: true, size: 'medium' as const } :
+                       undefined
+          };
+        }
+        if (item.children.length > 0) {
+          return { ...item, children: updateItems(item.children) };
+        }
+        return item;
+      });
+    };
+    const updated = updateItems(outline);
+    setOutline(updated);
+    onItemsChange?.(updated);
   };
 
   const handleAcceptStructure = (items: OutlineItem[]) => {
@@ -195,7 +313,9 @@ const OutlineDesktop: React.FC<OutlineDesktopProps> = ({
       expanded: false,
       children: [],
       createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString()
+      updatedAt: new Date().toISOString(),
+      style: selectedStyle,
+      formatting: selectedStyle === 'header' ? { bold: true, size: 'large' as const } : undefined
     };
 
     const insertAfter = (items: OutlineItem[]): OutlineItem[] => {
@@ -227,7 +347,7 @@ const OutlineDesktop: React.FC<OutlineDesktopProps> = ({
           <div className="flex items-center space-x-6">
             <nav className="flex items-center space-x-6">
               <a href="/outlines" className="text-gray-700 hover:text-gray-900">My Outlines</a>
-              <button className="text-gray-700 hover:text-gray-900">Logout</button>
+              <button onClick={handleLogout} className="text-gray-700 hover:text-gray-900">Logout</button>
             </nav>
           </div>
         </div>
@@ -272,23 +392,28 @@ const OutlineDesktop: React.FC<OutlineDesktopProps> = ({
             </button>
           ) : (
             <>
-              {sidebarItems.map((item) => (
+              {/* User's Outlines */}
+              <div className="mb-2 px-3 py-1">
+                <div className="text-xs font-semibold text-gray-500 uppercase tracking-wider">My Outlines</div>
+              </div>
+              {userOutlines.map((outline) => (
                 <button
-                  key={item.id}
+                  key={outline.id}
+                  onClick={() => selectOutline(outline.id)}
                   className={`w-full flex items-center space-x-3 px-3 py-2 rounded-lg text-left transition-colors ${
-                    item.active 
+                    currentOutlineId === outline.id 
                       ? 'bg-blue-50 text-blue-700 border border-blue-200' 
                       : 'text-gray-700 hover:bg-gray-100'
                   }`}
                 >
-                  <item.icon className="w-4 h-4" />
-                  <span className="text-sm font-medium">{item.name}</span>
+                  <Folder className="w-4 h-4" />
+                  <span className="text-sm font-medium">{outline.title}</span>
                 </button>
               ))}
               
               <div className="mt-4 pt-4 border-t border-gray-200">
                 <button 
-                  onClick={addNewItem}
+                  onClick={createNewOutline}
                   className="w-full flex items-center space-x-3 px-3 py-2 rounded-lg text-left text-gray-700 hover:bg-gray-100 transition-colors"
                 >
                   <Plus className="w-4 h-4" />
@@ -322,7 +447,7 @@ const OutlineDesktop: React.FC<OutlineDesktopProps> = ({
         <div className="bg-white border-b border-gray-200 px-6 py-3">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-4">
-              <h1 className="text-xl font-semibold text-gray-900">{title}</h1>
+              <h1 className="text-xl font-semibold text-gray-900">{outlineTitle}</h1>
               <div className="text-sm text-gray-500">
                 <span>Last edited 2 hours ago</span>
               </div>
@@ -358,19 +483,55 @@ const OutlineDesktop: React.FC<OutlineDesktopProps> = ({
             </div>
           </div>
 
-          {/* Keyboard Shortcuts Hint */}
-          <div className="mt-2 flex items-center space-x-4 text-xs text-gray-500">
-            <span><kbd className="px-1 bg-gray-100 rounded">Tab</kbd> to indent</span>
-            <span><kbd className="px-1 bg-gray-100 rounded">Shift+Tab</kbd> to outdent</span>
-            <span><kbd className="px-1 bg-gray-100 rounded">Enter</kbd> for new item</span>
-            <span><kbd className="px-1 bg-gray-100 rounded">Ctrl+Click</kbd> to multi-select</span>
+          {/* Style Selector and Keyboard Shortcuts */}
+          <div className="mt-2 flex items-center justify-between">
+            <div className="flex items-center space-x-1">
+              <button 
+                onClick={() => setSelectedStyle('normal')}
+                className={`px-2 py-1 rounded text-xs ${
+                  selectedStyle === 'normal' ? 'bg-blue-100 text-blue-700' : 'text-gray-600 hover:bg-gray-100'
+                }`}
+              >
+                Normal
+              </button>
+              <button 
+                onClick={() => setSelectedStyle('header')}
+                className={`px-2 py-1 rounded text-xs font-bold ${
+                  selectedStyle === 'header' ? 'bg-blue-100 text-blue-700' : 'text-gray-600 hover:bg-gray-100'
+                }`}
+              >
+                Header
+              </button>
+              <button 
+                onClick={() => setSelectedStyle('code')}
+                className={`px-2 py-1 rounded text-xs font-mono ${
+                  selectedStyle === 'code' ? 'bg-blue-100 text-blue-700' : 'text-gray-600 hover:bg-gray-100'
+                }`}
+              >
+                Code
+              </button>
+              <button 
+                onClick={() => setSelectedStyle('quote')}
+                className={`px-2 py-1 rounded text-xs italic ${
+                  selectedStyle === 'quote' ? 'bg-blue-100 text-blue-700' : 'text-gray-600 hover:bg-gray-100'
+                }`}
+              >
+                Quote
+              </button>
+            </div>
+            <div className="flex items-center space-x-3 text-xs text-gray-500">
+              <span><kbd className="px-1 bg-gray-100 rounded">Tab</kbd> indent</span>
+              <span><kbd className="px-1 bg-gray-100 rounded">⌘B</kbd> header</span>
+              <span><kbd className="px-1 bg-gray-100 rounded">⌘E</kbd> code</span>
+              <span><kbd className="px-1 bg-gray-100 rounded">⌘I</kbd> quote</span>
+            </div>
           </div>
         </div>
 
 
         {/* Outline Content */}
-        <div className="flex-1 px-6 py-6 overflow-auto">
-          <div className="max-w-4xl">
+        <div className="flex-1 px-6 py-6 overflow-auto outline-desktop-container">
+          <div className="max-w-4xl outline-desktop-content">
             <div className="space-y-1">
               {flatItems.map((item) => (
                 <div
@@ -411,7 +572,12 @@ const OutlineDesktop: React.FC<OutlineDesktopProps> = ({
                       ) : (
                         <div
                           onClick={(e) => handleItemClick(e, item.id)}
-                          className="px-2 py-1 text-sm leading-relaxed text-gray-900 cursor-text rounded hover:bg-gray-100 transition-colors"
+                          className={`px-2 py-1 leading-relaxed cursor-text rounded hover:bg-gray-100 transition-colors ${
+                            item.style === 'header' ? 'text-base font-bold text-gray-900' :
+                            item.style === 'code' ? 'font-mono text-xs bg-gray-100 text-gray-800' :
+                            item.style === 'quote' ? 'italic text-sm text-gray-700 border-l-4 border-gray-400 pl-3' :
+                            'text-sm text-gray-900'
+                          }`}
                         >
                           {item.text}
                         </div>
@@ -424,7 +590,7 @@ const OutlineDesktop: React.FC<OutlineDesktopProps> = ({
 
             <div className="mt-4">
               <button 
-                onClick={addNewItem}
+                onClick={() => addNewItem()}
                 className="flex items-center space-x-2 px-3 py-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors"
               >
                 <Plus className="w-4 h-4" />
