@@ -172,10 +172,12 @@ const OutlineDesktop: React.FC<OutlineDesktopProps> = ({
     onItemsChange?.(updated);
     
     // Save to backend if we have an outline ID
-    if (currentOutlineId) {
+    // Only update if it's not a temporary ID (temporary IDs start with 'item_' followed by timestamp)
+    if (currentOutlineId && !itemId.match(/^item_\d{13}$/)) {
       try {
         const { outlinesApi } = await import('@/services/api/apiClient');
-        await outlinesApi.updateItem(currentOutlineId, itemId, { content: newText });
+        const response = await outlinesApi.updateItem(currentOutlineId, itemId, { content: newText });
+        console.log('Item updated in backend:', response);
       } catch (error) {
         console.error('Failed to save item:', error);
       }
