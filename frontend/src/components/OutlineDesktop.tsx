@@ -2,8 +2,27 @@ import React, { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { 
   Plus, Mic, Search, ChevronRight, ChevronDown, ChevronLeft, 
-  Folder, Settings, HelpCircle, MoreHorizontal 
+  Folder, Settings, HelpCircle, MoreHorizontal, GripVertical 
 } from 'lucide-react';
+import {
+  DndContext,
+  DragOverlay,
+  closestCenter,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  DragStartEvent,
+  DragEndEvent,
+  DragOverEvent,
+} from '@dnd-kit/core';
+import {
+  SortableContext,
+  sortableKeyboardCoordinates,
+  verticalListSortingStrategy,
+  useSortable,
+} from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
 import { useAuth } from '@/hooks/useAuth';
 import type { OutlineItem } from '@/types/outline';
 import VoiceModal from './VoiceModal';
