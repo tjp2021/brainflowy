@@ -39,6 +39,8 @@ const OutlineDesktop: React.FC<OutlineDesktopProps> = ({
   const [currentOutlineId, setCurrentOutlineId] = useState<string | null>(null);
   const [outlineTitle, setOutlineTitle] = useState(title);
   const [isLoadingOutlines, setIsLoadingOutlines] = useState(false);
+  const [showNewOutlineDialog, setShowNewOutlineDialog] = useState(false);
+  const [newOutlineName, setNewOutlineName] = useState('');
   const textAreaRefs = useRef<{ [key: string]: HTMLTextAreaElement | null }>({});
 
   // Handle logout
@@ -141,7 +143,7 @@ const OutlineDesktop: React.FC<OutlineDesktopProps> = ({
     }
   };
 
-  const createNewOutline = async () => {
+  const createNewOutline = async (outlineName?: string) => {
     try {
       const { outlinesApi, authApi } = await import('@/services/api/apiClient');
       const user = await authApi.getCurrentUser();
@@ -152,14 +154,22 @@ const OutlineDesktop: React.FC<OutlineDesktopProps> = ({
       }
       
       const newOutline = await outlinesApi.createOutline({
-        title: `New Outline ${new Date().toLocaleDateString()}`,
+        title: outlineName || `New Outline ${new Date().toLocaleDateString()}`,
         userId: user.id
       });
       
       setUserOutlines([...userOutlines, newOutline]);
       await selectOutline(newOutline.id);
+      setShowNewOutlineDialog(false);
+      setNewOutlineName('');
     } catch (error) {
       console.error('Failed to create outline:', error);
+    }
+  };
+
+  const handleNewOutlineSubmit = () => {
+    if (newOutlineName.trim()) {
+      createNewOutline(newOutlineName.trim());
     }
   };
 
@@ -740,13 +750,53 @@ const OutlineDesktop: React.FC<OutlineDesktopProps> = ({
               
               <div className="mt-4 pt-4 border-t border-gray-200">
                 <button 
-                  onClick={createNewOutline}
+                  onClick={() => setShowNewOutlineDialog(true)}
                   className="w-full flex items-center space-x-3 px-3 py-2 rounded-lg text-left text-gray-700 hover:bg-gray-100 transition-colors"
                 >
                   <Plus className="w-4 h-4" />
                   <span className="text-sm">New Outline</span>
                 </button>
               </div>
+              
+              {/* New Outline Dialog */}
+              {showNewOutlineDialog && (
+                <div className="absolute top-0 left-0 right-0 bg-white border border-gray-200 rounded-lg shadow-lg p-4 m-4 z-50">
+                  <h3 className="text-sm font-semibold mb-2">Create New Outline</h3>
+                  <input
+                    type="text"
+                    placeholder="Outline name"
+                    value={newOutlineName}
+                    onChange={(e) => setNewOutlineName(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') {
+                        handleNewOutlineSubmit();
+                      } else if (e.key === 'Escape') {
+                        setShowNewOutlineDialog(false);
+                        setNewOutlineName('');
+                      }
+                    }}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-1 focus:ring-blue-500"
+                    autoFocus
+                  />
+                  <div className="flex justify-end space-x-2 mt-3">
+                    <button
+                      onClick={() => {
+                        setShowNewOutlineDialog(false);
+                        setNewOutlineName('');
+                      }}
+                      className="px-3 py-1 text-sm text-gray-600 hover:text-gray-800"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      onClick={handleNewOutlineSubmit}
+                      className="px-3 py-1 text-sm bg-blue-500 text-white rounded hover:bg-blue-600"
+                    >
+                      Create
+                    </button>
+                  </div>
+                </div>
+              )}
             </>
           )}
         </div>
