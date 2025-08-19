@@ -148,6 +148,72 @@ const OutlineDesktop: React.FC<OutlineDesktopProps> = ({
     }
   }, [isLoadingOutlines, userOutlines.length]);
 
+  // Global keyboard shortcuts
+  useEffect(() => {
+    const handleGlobalKeyDown = (e: KeyboardEvent) => {
+      // Cmd/Ctrl+A - Select all items
+      if ((e.metaKey || e.ctrlKey) && e.key === 'a') {
+        // Don't prevent default if user is in a text field
+        const target = e.target as HTMLElement;
+        if (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA') {
+          return;
+        }
+        
+        e.preventDefault();
+        const allItemIds = new Set<string>();
+        const collectAllIds = (items: OutlineItem[]) => {
+          items.forEach(item => {
+            allItemIds.add(item.id);
+            if (item.children && item.children.length > 0) {
+              collectAllIds(item.children);
+            }
+          });
+        };
+        collectAllIds(outline);
+        setSelectedItems(allItemIds);
+      }
+      
+      // Delete key - Delete selected items
+      if (e.key === 'Delete' || e.key === 'Backspace') {
+        // Don't delete if user is typing in a text field
+        const target = e.target as HTMLElement;
+        if (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA') {
+          return;
+        }
+        
+        if (selectedItems.size > 0) {
+          e.preventDefault();
+          // Confirm deletion
+          if (window.confirm(`Delete ${selectedItems.size} selected item(s)?`)) {
+            const deleteSelectedItems = (items: OutlineItem[]): OutlineItem[] => {
+              return items.filter(item => {
+                // Keep item if not selected
+                if (!selectedItems.has(item.id)) {
+                  // But check children
+                  if (item.children && item.children.length > 0) {
+                    item.children = deleteSelectedItems(item.children);
+                  }
+                  return true;
+                }
+                return false; // Remove selected items
+              });
+            };
+            
+            const updated = deleteSelectedItems(outline);
+            setOutline(updated);
+            onItemsChange?.(updated);
+            setSelectedItems(new Set()); // Clear selection after deletion
+          }
+        }
+      }
+    };
+    
+    document.addEventListener('keydown', handleGlobalKeyDown);
+    return () => {
+      document.removeEventListener('keydown', handleGlobalKeyDown);
+    };
+  }, [outline, selectedItems, onItemsChange]);
+
   const selectOutline = async (outlineId: string) => {
     try {
       const { outlinesApi } = await import('@/services/api/apiClient');
@@ -551,18 +617,88 @@ const OutlineDesktop: React.FC<OutlineDesktopProps> = ({
       return;
     }
     
-    // Handle keyboard shortcuts for styles
-    if (e.metaKey || e.ctrlKey) {
-      if (e.key === 'b') {
-        e.preventDefault();
-        toggleItemStyle(itemId, 'header');
-      } else if (e.key === 'e') {
-        e.preventDefault();
-        toggleItemStyle(itemId, 'code');
-      } else if (e.key === 'i') {
-        e.preventDefault();
-        toggleItemStyle(itemId, 'quote');
-      }
+    // Handle Cmd/Ctrl+B for bold/header style
+    if ((e.metaKey || e.ctrlKey) && e.key === 'b') {
+      e.preventDefault();
+      const updateStyle = (items: OutlineItem[]): OutlineItem[] => {
+        return items.map(item => {
+          if (item.id === itemId) {
+            const newStyle = item.style === 'header' ? 'normal' : 'header';
+            return { 
+              ...item, 
+              style: newStyle,
+              formatting: newStyle === 'header' ? { bold: true, size: 'large' as const } : undefined
+            };
+          }
+          if (item.children.length > 0) {
+            return { ...item, children: updateStyle(item.children) };
+          }
+          return item;
+        });
+      };
+      const updated = updateStyle(outline);
+      setOutline(updated);
+      onItemsChange?.(updated);
+      
+      // Also update selectedStyle for this editing session
+      setSelectedStyle(prevStyle => prevStyle === 'header' ? 'normal' : 'header');
+      return;
+    }
+    
+    // Handle Cmd/Ctrl+I for italic/quote style
+    if ((e.metaKey || e.ctrlKey) && e.key === 'i') {
+      e.preventDefault();
+      const updateStyle = (items: OutlineItem[]): OutlineItem[] => {
+        return items.map(item => {
+          if (item.id === itemId) {
+            const newStyle = item.style === 'quote' ? 'normal' : 'quote';
+            return { 
+              ...item, 
+              style: newStyle,
+              formatting: newStyle === 'quote' ? { italic: true } : undefined
+            };
+          }
+          if (item.children.length > 0) {
+            return { ...item, children: updateStyle(item.children) };
+          }
+          return item;
+        });
+      };
+      const updated = updateStyle(outline);
+      setOutline(updated);
+      onItemsChange?.(updated);
+      
+      // Also update selectedStyle for this editing session
+      setSelectedStyle(prevStyle => prevStyle === 'quote' ? 'normal' : 'quote');
+      return;
+    }
+    
+    // Handle Cmd/Ctrl+E for code style
+    if ((e.metaKey || e.ctrlKey) && e.key === 'e') {
+      e.preventDefault();
+      const updateStyle = (items: OutlineItem[]): OutlineItem[] => {
+        return items.map(item => {
+          if (item.id === itemId) {
+            const newStyle = item.style === 'code' ? 'normal' : 'code';
+            return { 
+              ...item, 
+              style: newStyle,
+              formatting: newStyle === 'code' ? { monospace: true } : undefined
+            };
+          }
+          if (item.children.length > 0) {
+            return { ...item, children: updateStyle(item.children) };
+          }
+          return item;
+        });
+      };
+      const updated = updateStyle(outline);
+      setOutline(updated);
+      onItemsChange?.(updated);
+      
+      // Also update selectedStyle for this editing session
+      setSelectedStyle(prevStyle => prevStyle === 'code' ? 'normal' : 'code');
+      return;
     }
   };
 
