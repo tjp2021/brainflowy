@@ -17,7 +17,7 @@ import type {
 
 // Helper for auth headers
 const getAuthHeaders = (): HeadersInit => {
-  const token = sessionStorage.getItem('accessToken');
+  const token = localStorage.getItem('accessToken') || sessionStorage.getItem('accessToken');
   return {
     'Content-Type': 'application/json',
     ...(token ? { 'Authorization': `Bearer ${token}` } : {})
@@ -46,9 +46,9 @@ export const authService = {
     
     // Store tokens
     if (data.accessToken) {
-      sessionStorage.setItem('accessToken', data.accessToken);
-      sessionStorage.setItem('refreshToken', data.refreshToken);
-      sessionStorage.setItem('user', JSON.stringify(data.user));
+      localStorage.setItem('accessToken', data.accessToken);
+      localStorage.setItem('refreshToken', data.refreshToken);
+      localStorage.setItem('user', JSON.stringify(data.user));
     }
     
     return data;
@@ -65,9 +65,9 @@ export const authService = {
     
     // Store tokens
     if (data.accessToken) {
-      sessionStorage.setItem('accessToken', data.accessToken);
-      sessionStorage.setItem('refreshToken', data.refreshToken);
-      sessionStorage.setItem('user', JSON.stringify(data.user));
+      localStorage.setItem('accessToken', data.accessToken);
+      localStorage.setItem('refreshToken', data.refreshToken);
+      localStorage.setItem('user', JSON.stringify(data.user));
     }
     
     return data;
@@ -81,6 +81,9 @@ export const authService = {
       });
     } finally {
       // Clear local storage regardless of server response
+      localStorage.removeItem('accessToken');
+      localStorage.removeItem('refreshToken');
+      localStorage.removeItem('user');
       sessionStorage.removeItem('accessToken');
       sessionStorage.removeItem('refreshToken');
       sessionStorage.removeItem('user');
@@ -88,7 +91,7 @@ export const authService = {
   },
 
   async getCurrentUser(): Promise<User | null> {
-    const token = sessionStorage.getItem('accessToken');
+    const token = localStorage.getItem('accessToken') || sessionStorage.getItem('accessToken');
     if (!token) return null;
     
     try {
@@ -98,6 +101,7 @@ export const authService = {
       
       if (!response.ok) {
         // Token might be expired
+        localStorage.clear();
         sessionStorage.clear();
         return null;
       }
@@ -109,7 +113,7 @@ export const authService = {
   },
 
   async refreshToken(): Promise<AuthResponse> {
-    const refreshToken = sessionStorage.getItem('refreshToken');
+    const refreshToken = localStorage.getItem('refreshToken') || sessionStorage.getItem('refreshToken');
     if (!refreshToken) throw new Error('No refresh token');
     
     const response = await fetch(getApiUrl('/auth/refresh'), {
@@ -150,7 +154,7 @@ export const outlineService = {
   },
 
   async createOutline(data: CreateOutlineRequest): Promise<Outline> {
-    const user = JSON.parse(sessionStorage.getItem('user') || '{}');
+    const user = JSON.parse(localStorage.getItem('user') || sessionStorage.getItem('user') || '{}');
     const response = await fetch(getApiUrl('/outlines'), {
       method: 'POST',
       headers: getAuthHeaders(),
@@ -232,7 +236,7 @@ export const voiceService = {
     const formData = new FormData();
     formData.append('audio', audioBlob, 'recording.webm');
     
-    const token = sessionStorage.getItem('accessToken');
+    const token = localStorage.getItem('accessToken') || sessionStorage.getItem('accessToken');
     const url = getApiUrl('/voice/transcribe');
     console.log('🎤 Real API: Calling backend at:', url);
     

@@ -8,34 +8,54 @@ test.describe('TDD: Backend Integration & Authentication', () => {
     // Click on "Sign up" or "Register" link
     await page.click('text=Sign up');
     
-    // Fill registration form
-    await page.fill('input[name="email"]', 'test@example.com');
+    // Fill registration form with unique email
+    const uniqueEmail = `test${Date.now()}@example.com`;
+    await page.fill('input[name="email"]', uniqueEmail);
     await page.fill('input[name="password"]', 'SecurePass123!');
     await page.fill('input[name="confirmPassword"]', 'SecurePass123!');
     
     // Submit registration
     await page.click('button[type="submit"]');
     
-    // Should redirect to dashboard or login
-    await expect(page).toHaveURL(/\/(dashboard|outlines|login)/);
+    // Wait for navigation after registration
+    await page.waitForURL(/\/(dashboard|outlines|login)/, { timeout: 10000 });
     
     // If redirected to login, verify account was created
     if (page.url().includes('login')) {
-      await page.fill('input[name="email"]', 'test@example.com');
+      await page.fill('input[name="email"]', uniqueEmail);
       await page.fill('input[name="password"]', 'SecurePass123!');
       await page.click('button[type="submit"]');
+      await page.waitForURL(/\/outlines/, { timeout: 5000 });
     }
     
     // Should be authenticated and see outline page
-    await expect(page.locator('text=My Outlines')).toBeVisible();
+    await expect(page.locator('text=My Outlines').first()).toBeVisible();
   });
 
   test('User can login with existing credentials', async ({ page }) => {
+    // First create a user
+    const testEmail = `test${Date.now()}@example.com`;
+    const testPassword = 'TestPass123!';
+    
+    // Register first
+    await page.goto('http://localhost:5176');
+    await page.click('text=Sign up');
+    await page.fill('input[name="email"]', testEmail);
+    await page.fill('input[name="password"]', testPassword);
+    await page.fill('input[name="confirmPassword"]', testPassword);
+    await page.click('button[type="submit"]');
+    await page.waitForURL(/\/outlines/, { timeout: 10000 });
+    
+    // Logout
+    await page.click('text=Logout');
+    await page.waitForURL(/\/(login|\/)/, { timeout: 10000 });
+    
+    // Now test login
     await page.goto('http://localhost:5176');
     
     // Fill login form
-    await page.fill('input[name="email"]', 'existing@example.com');
-    await page.fill('input[name="password"]', 'ExistingPass123!');
+    await page.fill('input[name="email"]', testEmail);
+    await page.fill('input[name="password"]', testPassword);
     
     // Submit login
     await page.click('button[type="submit"]');
@@ -63,10 +83,15 @@ test.describe('TDD: Backend Integration & Authentication', () => {
   });
 
   test('Session persists across page refreshes', async ({ page }) => {
-    // Login first
+    // Create and login
+    const testEmail = `test${Date.now()}@example.com`;
+    const testPassword = 'TestPass123!';
+    
     await page.goto('http://localhost:5176');
-    await page.fill('input[name="email"]', 'existing@example.com');
-    await page.fill('input[name="password"]', 'ExistingPass123!');
+    await page.click('text=Sign up');
+    await page.fill('input[name="email"]', testEmail);
+    await page.fill('input[name="password"]', testPassword);
+    await page.fill('input[name="confirmPassword"]', testPassword);
     await page.click('button[type="submit"]');
     
     // Wait for successful login
@@ -84,10 +109,15 @@ test.describe('TDD: Backend Integration & Authentication', () => {
   });
 
   test('Outline items persist to database', async ({ page }) => {
-    // Login
+    // Create and login
+    const testEmail = `test${Date.now()}@example.com`;
+    const testPassword = 'TestPass123!';
+    
     await page.goto('http://localhost:5176');
-    await page.fill('input[name="email"]', 'existing@example.com');
-    await page.fill('input[name="password"]', 'ExistingPass123!');
+    await page.click('text=Sign up');
+    await page.fill('input[name="email"]', testEmail);
+    await page.fill('input[name="password"]', testPassword);
+    await page.fill('input[name="confirmPassword"]', testPassword);
     await page.click('button[type="submit"]');
     await expect(page).toHaveURL(/\/outlines/);
     
@@ -109,10 +139,15 @@ test.describe('TDD: Backend Integration & Authentication', () => {
   });
 
   test('Multiple outlines can be created and switched', async ({ page }) => {
-    // Login
+    // Create and login
+    const testEmail = `test${Date.now()}@example.com`;
+    const testPassword = 'TestPass123!';
+    
     await page.goto('http://localhost:5176');
-    await page.fill('input[name="email"]', 'existing@example.com');
-    await page.fill('input[name="password"]', 'ExistingPass123!');
+    await page.click('text=Sign up');
+    await page.fill('input[name="email"]', testEmail);
+    await page.fill('input[name="password"]', testPassword);
+    await page.fill('input[name="confirmPassword"]', testPassword);
     await page.click('button[type="submit"]');
     await expect(page).toHaveURL(/\/outlines/);
     
@@ -152,10 +187,15 @@ test.describe('TDD: Backend Integration & Authentication', () => {
   });
 
   test('Logout clears session and redirects to login', async ({ page }) => {
-    // Login
+    // Create and login
+    const testEmail = `test${Date.now()}@example.com`;
+    const testPassword = 'TestPass123!';
+    
     await page.goto('http://localhost:5176');
-    await page.fill('input[name="email"]', 'existing@example.com');
-    await page.fill('input[name="password"]', 'ExistingPass123!');
+    await page.click('text=Sign up');
+    await page.fill('input[name="email"]', testEmail);
+    await page.fill('input[name="password"]', testPassword);
+    await page.fill('input[name="confirmPassword"]', testPassword);
     await page.click('button[type="submit"]');
     await expect(page).toHaveURL(/\/outlines/);
     
@@ -173,10 +213,25 @@ test.describe('TDD: Backend Integration & Authentication', () => {
   });
 
   test('Invalid credentials show error message', async ({ page }) => {
+    // Create a user first
+    const testEmail = `test${Date.now()}@example.com`;
+    const testPassword = 'TestPass123!';
+    
     await page.goto('http://localhost:5176');
+    await page.click('text=Sign up');
+    await page.fill('input[name="email"]', testEmail);
+    await page.fill('input[name="password"]', testPassword);
+    await page.fill('input[name="confirmPassword"]', testPassword);
+    await page.click('button[type="submit"]');
+    await page.waitForURL(/\/outlines/);
+    
+    // Logout
+    await page.click('text=Logout');
+    await page.waitForURL(/\/(login|\/)/);
     
     // Try to login with wrong password
-    await page.fill('input[name="email"]', 'existing@example.com');
+    await page.goto('http://localhost:5176');
+    await page.fill('input[name="email"]', testEmail);
     await page.fill('input[name="password"]', 'WrongPassword');
     await page.click('button[type="submit"]');
     
@@ -188,10 +243,15 @@ test.describe('TDD: Backend Integration & Authentication', () => {
   });
 
   test('Auto-save works for outline changes', async ({ page }) => {
-    // Login
+    // Create and login
+    const testEmail = `test${Date.now()}@example.com`;
+    const testPassword = 'TestPass123!';
+    
     await page.goto('http://localhost:5176');
-    await page.fill('input[name="email"]', 'existing@example.com');
-    await page.fill('input[name="password"]', 'ExistingPass123!');
+    await page.click('text=Sign up');
+    await page.fill('input[name="email"]', testEmail);
+    await page.fill('input[name="password"]', testPassword);
+    await page.fill('input[name="confirmPassword"]', testPassword);
     await page.click('button[type="submit"]');
     await expect(page).toHaveURL(/\/outlines/);
     

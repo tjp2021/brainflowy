@@ -16,8 +16,8 @@ const LoginPage: React.FC = () => {
     
     try {
       await login(email, password);
-      // Successfully logged in, navigate to home
-      navigate('/');
+      // Successfully logged in, navigate to outlines
+      navigate('/outlines');
     } catch (error) {
       // Error handling is done in the useAuth hook
       console.error('Login failed:', error);
@@ -39,6 +39,7 @@ const LoginPage: React.FC = () => {
             <input
               type="email"
               id="email"
+              name="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
@@ -50,6 +51,7 @@ const LoginPage: React.FC = () => {
             <input
               type="password"
               id="password"
+              name="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               required
@@ -61,7 +63,7 @@ const LoginPage: React.FC = () => {
           </button>
         </form>
         <p className="signup-link">
-          Don't have an account? <a href="/register">Sign Up</a>
+          Don't have an account? <a href="/register">Sign up</a>
         </p>
       </div>
     </div>

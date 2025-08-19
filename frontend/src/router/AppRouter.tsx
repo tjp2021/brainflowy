@@ -23,15 +23,15 @@ const router = createBrowserRouter([
         path: 'register',
         element: <RegisterPage />,
       },
+      {
+        path: 'outlines',
+        element: <OutlinePage />,
+      },
+      {
+        path: 'outlines/:outlineId',
+        element: <OutlinePage />,
+      },
     ],
-  },
-  {
-    path: 'outlines',
-    element: <OutlinePage />,
-  },
-  {
-    path: 'outlines/:outlineId',
-    element: <OutlinePage />,
   },
 ]);
 

@@ -30,8 +30,8 @@ const RegisterPage: React.FC = () => {
     
     try {
       await register(email, password, displayName || email.split('@')[0]);
-      // Successfully registered, navigate to home
-      navigate('/');
+      // Successfully registered, navigate to outlines
+      navigate('/outlines');
     } catch (error) {
       // Error handling is done in the useAuth hook
       console.error('Registration failed:', error);
@@ -87,6 +87,7 @@ const RegisterPage: React.FC = () => {
             <input
               type="email"
               id="email"
+              name="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
@@ -100,6 +101,7 @@ const RegisterPage: React.FC = () => {
             <input
               type="password"
               id="password"
+              name="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               required
@@ -114,6 +116,7 @@ const RegisterPage: React.FC = () => {
             <input
               type="password"
               id="confirmPassword"
+              name="confirmPassword"
               value={confirmPassword}
               onChange={(e) => setConfirmPassword(e.target.value)}
               required
