@@ -155,33 +155,41 @@ const OutlineDesktop: React.FC<OutlineDesktopProps> = ({
     setEditingId(null);
   };
 
-  const updateItemText = async (itemId: string, newText: string) => {
-    const updateItems = (items: OutlineItem[]): OutlineItem[] => {
-      return items.map(item => {
-        if (item.id === itemId) {
-          return { ...item, text: newText, updatedAt: new Date().toISOString() };
-        }
-        if (item.children.length > 0) {
-          return { ...item, children: updateItems(item.children) };
-        }
-        return item;
+  const updateItemText = (itemId: string, newText: string): Promise<void> => {
+    return new Promise((resolve) => {
+      setOutline(prevOutline => {
+        const updateItems = (items: OutlineItem[]): OutlineItem[] => {
+          return items.map(item => {
+            if (item.id === itemId) {
+              console.log(`Updating item ${itemId} text to: "${newText}"`);
+              return { ...item, text: newText, updatedAt: new Date().toISOString() };
+            }
+            if (item.children.length > 0) {
+              return { ...item, children: updateItems(item.children) };
+            }
+            return item;
+          });
+        };
+        const updated = updateItems(prevOutline);
+        onItemsChange?.(updated);
+        
+        // Resolve after state update
+        setTimeout(() => resolve(), 0);
+        return updated;
       });
-    };
-    const updated = updateItems(outline);
-    setOutline(updated);
-    onItemsChange?.(updated);
-    
-    // Save to backend if we have an outline ID
-    // Only update if it's not a temporary ID (temporary IDs start with 'item_' followed by timestamp)
-    if (currentOutlineId && !itemId.match(/^item_\d{13}$/)) {
-      try {
-        const { outlinesApi } = await import('@/services/api/apiClient');
-        const response = await outlinesApi.updateItem(currentOutlineId, itemId, { content: newText });
-        console.log('Item updated in backend:', response);
-      } catch (error) {
-        console.error('Failed to save item:', error);
+    }).then(async () => {
+      // Save to backend if we have an outline ID
+      // Only update if it's not a temporary ID (temporary IDs start with 'item_' followed by timestamp)
+      if (currentOutlineId && !itemId.match(/^item_\d{13}$/)) {
+        try {
+          const { outlinesApi } = await import('@/services/api/apiClient');
+          const response = await outlinesApi.updateItem(currentOutlineId, itemId, { content: newText });
+          console.log('Item updated in backend:', response);
+        } catch (error) {
+          console.error('Failed to save item:', error);
+        }
       }
-    }
+    });
   };
 
   const indentItem = (itemId: string) => {
@@ -212,109 +220,227 @@ const OutlineDesktop: React.FC<OutlineDesktopProps> = ({
   };
 
   const handleKeyDown = async (e: React.KeyboardEvent, itemId: string) => {
+    // Handle Enter key first (most common case)
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
-      const textarea = textAreaRefs.current[itemId];
-      if (textarea) {
-        const trimmedValue = textarea.value.trim();
-        
-        // If the text is empty or still "New Item", remove the item
-        if (!trimmedValue || trimmedValue === 'New Item') {
-          // Remove the empty item from local state
-          const removeEmptyItem = (items: OutlineItem[]): OutlineItem[] => {
-            return items.filter(item => {
+      const textarea = e.target as HTMLTextAreaElement;
+      const trimmedValue = textarea.value.trim();
+      
+      // If the text is empty, remove the item
+      if (!trimmedValue || trimmedValue === '') {
+        setEditingId(null);
+        // Remove the empty item
+        const removeEmptyItem = (items: OutlineItem[]): OutlineItem[] => {
+          return items.filter(item => {
+            if (item.id === itemId) {
+              return false; // Remove this item
+            }
+            if (item.children.length > 0) {
+              item.children = removeEmptyItem(item.children);
+            }
+            return true;
+          });
+        };
+        const updated = removeEmptyItem(outline);
+        setOutline(updated);
+        onItemsChange?.(updated);
+        return;
+      }
+      
+      // Update the item text directly in state before creating a new item
+      // This ensures the text is saved synchronously
+      const updateAndCreateNew = () => {
+        setOutline(prevOutline => {
+          const updateItems = (items: OutlineItem[]): OutlineItem[] => {
+            return items.map(item => {
               if (item.id === itemId) {
-                return false; // Remove this item
+                console.log(`Saving item ${itemId} with text: "${trimmedValue}"`);
+                return { ...item, text: trimmedValue, updatedAt: new Date().toISOString() };
               }
               if (item.children.length > 0) {
-                item.children = removeEmptyItem(item.children);
+                return { ...item, children: updateItems(item.children) };
               }
-              return true;
+              return item;
             });
           };
-          const updated = removeEmptyItem(outline);
-          setOutline(updated);
-          onItemsChange?.(updated);
-        } else {
-          // Save the text
-          await updateItemText(itemId, trimmedValue);
+          const updated = updateItems(prevOutline);
           
-          // For new items (those with temporary IDs), create them in backend
-          if (itemId.startsWith('item_') && currentOutlineId) {
-            try {
-              const { outlinesApi } = await import('@/services/api/apiClient');
-              const item = outline.find(i => i.id === itemId) || 
-                         outline.flatMap(i => i.children).find(c => c.id === itemId);
-              
-              if (item) {
-                console.log('Creating new item in backend:', {
-                  content: trimmedValue,
-                  parentId: item.parentId || null,
-                  style: item.style,
-                  formatting: item.formatting
-                });
-                
-                const created = await outlinesApi.createItem(currentOutlineId, {
-                  content: trimmedValue,
-                  parentId: item.parentId || null,
-                  style: item.style,
-                  formatting: item.formatting
-                } as any);
-                
-                console.log('Item created successfully:', created);
-                
-                // Update the local item with the backend response
-                const updateId = (items: OutlineItem[]): OutlineItem[] => {
-                  return items.map(i => {
-                    if (i.id === itemId) {
-                      // Use the full response from backend to ensure sync
-                      return { 
-                        ...i, 
-                        id: created.id,
-                        text: created.content, // Use content from backend
-                        createdAt: created.createdAt,
-                        updatedAt: created.updatedAt
-                      };
-                    }
-                    if (i.children.length > 0) {
-                      return { ...i, children: updateId(i.children) };
-                    }
-                    return i;
-                  });
-                };
-                const updatedWithId = updateId(outline);
-                setOutline(updatedWithId);
-                onItemsChange?.(updatedWithId);
-                
-                // Create new item below current only if we saved valid text
-                // Use the new backend ID for the next item
-                if (!e.ctrlKey) {
-                  addNewItemAfter(created.id);
-                }
+          // Now add the new item after updating the current one
+          const newItem: OutlineItem = {
+            id: `item_${Date.now()}`,
+            text: '',
+            level: 0,
+            expanded: false,
+            children: [],
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString(),
+            style: selectedStyle,
+            formatting: selectedStyle === 'header' ? { bold: true, size: 'large' as const } : undefined
+          };
+          
+          const insertAfter = (items: OutlineItem[]): OutlineItem[] => {
+            for (let i = 0; i < items.length; i++) {
+              if (items[i].id === itemId) {
+                newItem.level = items[i].level;
+                items.splice(i + 1, 0, newItem);
+                // Set the new item to be edited after a short delay
+                setTimeout(() => startEditing(newItem.id), 50);
+                return items;
               }
-            } catch (error) {
-              console.error('Failed to create item in backend:', error);
+              if (items[i].children.length > 0) {
+                items[i].children = insertAfter(items[i].children);
+              }
             }
-          } else {
-            // For existing items, create new item below current
-            if (!e.ctrlKey) {
-              addNewItemAfter(itemId);
-            }
-          }
+            return items;
+          };
+          
+          const finalUpdated = insertAfter(updated);
+          onItemsChange?.(finalUpdated);
+          return finalUpdated;
+        });
+        
+        // Stop editing the current item
+        setEditingId(null);
+      };
+      
+      updateAndCreateNew();
+      
+      // Handle backend sync for new items
+      if (itemId.startsWith('item_') && currentOutlineId) {
+        try {
+          const { outlinesApi } = await import('@/services/api/apiClient');
+          const created = await outlinesApi.createItem(currentOutlineId, {
+            content: trimmedValue,
+            parentId: null,
+            style: selectedStyle,
+            formatting: selectedStyle === 'header' ? { bold: true, size: 'large' } : undefined
+          } as any);
+          
+          // Update the local item with the backend ID
+          setOutline(prevOutline => {
+            const updateId = (items: OutlineItem[]): OutlineItem[] => {
+              return items.map(i => {
+                if (i.id === itemId) {
+                  return { 
+                    ...i, 
+                    id: created.id,
+                    text: created.content,
+                    createdAt: created.createdAt,
+                    updatedAt: created.updatedAt
+                  };
+                }
+                if (i.children.length > 0) {
+                  return { ...i, children: updateId(i.children) };
+                }
+                return i;
+              });
+            };
+            return updateId(prevOutline);
+          });
+        } catch (error) {
+          console.error('Failed to create item in backend:', error);
         }
       }
-      stopEditing();
-    } else if (e.key === 'Escape') {
-      stopEditing();
-    } else if (e.key === 'Tab') {
-      e.preventDefault();
-      if (e.shiftKey) {
-        outdentItem(itemId);
+      return;
+    }
+    
+    // Handle Escape key
+    if (e.key === 'Escape') {
+      const textarea = e.target as HTMLTextAreaElement;
+      const trimmedValue = textarea.value.trim();
+      
+      if (trimmedValue && trimmedValue !== '') {
+        // Save the text before exiting
+        await updateItemText(itemId, trimmedValue);
       } else {
-        indentItem(itemId);
+        // Remove empty item
+        const removeEmptyItem = (items: OutlineItem[]): OutlineItem[] => {
+          return items.filter(item => {
+            if (item.id === itemId) {
+              return false;
+            }
+            if (item.children.length > 0) {
+              item.children = removeEmptyItem(item.children);
+            }
+            return true;
+          });
+        };
+        const updated = removeEmptyItem(outline);
+        setOutline(updated);
+        onItemsChange?.(updated);
       }
-    } else if (e.metaKey || e.ctrlKey) {
-      // Keyboard shortcuts for styles
+      
+      stopEditing();
+      return;
+    }
+    
+    // Handle Tab for indentation
+    if (e.key === 'Tab' && !e.shiftKey) {
+      e.preventDefault();
+      // Indent the current item (make it a child of the previous item)
+      const indentItem = (items: OutlineItem[], targetId: string, prevItem: OutlineItem | null = null): OutlineItem[] => {
+        for (let i = 0; i < items.length; i++) {
+          if (items[i].id === targetId && prevItem) {
+            // Remove from current position
+            const [removed] = items.splice(i, 1);
+            removed.level = prevItem.level + 1;
+            removed.parentId = prevItem.id;
+            // Add as child of previous item
+            if (!prevItem.children) prevItem.children = [];
+            prevItem.children.push(removed);
+            prevItem.expanded = true;
+            return items;
+          }
+          prevItem = items[i];
+          if (items[i].children.length > 0) {
+            items[i].children = indentItem(items[i].children, targetId, items[i]);
+          }
+        }
+        return items;
+      };
+      const updated = indentItem([...outline], itemId);
+      setOutline(updated);
+      onItemsChange?.(updated);
+      return;
+    }
+    
+    // Handle Shift+Tab for outdentation
+    if (e.key === 'Tab' && e.shiftKey) {
+      e.preventDefault();
+      // Outdent the current item (move it up one level)
+      const outdentItem = (items: OutlineItem[], targetId: string, parent: OutlineItem | null = null): OutlineItem[] => {
+        for (let i = 0; i < items.length; i++) {
+          if (items[i].id === targetId && parent) {
+            // This is the item to outdent, and it has a parent
+            return items; // Can't outdent top-level items
+          }
+          
+          if (items[i].children.length > 0) {
+            for (let j = 0; j < items[i].children.length; j++) {
+              if (items[i].children[j].id === targetId) {
+                // Found the item in children - move it out
+                const [removed] = items[i].children.splice(j, 1);
+                removed.level = items[i].level;
+                removed.parentId = items[i].parentId;
+                // Insert after parent
+                const parentIndex = items.indexOf(items[i]);
+                items.splice(parentIndex + 1, 0, removed);
+                return items;
+              }
+            }
+            items[i].children = outdentItem(items[i].children, targetId, items[i]);
+          }
+        }
+        return items;
+      };
+      const updated = outdentItem([...outline], itemId);
+      setOutline(updated);
+      onItemsChange?.(updated);
+      return;
+    }
+    
+    // Handle keyboard shortcuts for styles
+    if (e.metaKey || e.ctrlKey) {
       if (e.key === 'b') {
         e.preventDefault();
         toggleItemStyle(itemId, 'header');
@@ -348,7 +474,7 @@ const OutlineDesktop: React.FC<OutlineDesktopProps> = ({
   const addNewItem = (style?: 'header' | 'code' | 'quote' | 'normal') => {
     const newItem: OutlineItem = {
       id: `item_${Date.now()}`,
-      text: 'New item',
+      text: '',
       level: 0,
       expanded: false,
       children: [],
@@ -566,7 +692,7 @@ const OutlineDesktop: React.FC<OutlineDesktopProps> = ({
       </div>
 
       {/* Main Content */}
-      <div className="flex-1 flex flex-col">
+      <div className="flex-1 flex flex-col relative z-10">
         {/* Top Toolbar */}
         <div className="bg-white border-b border-gray-200 px-6 py-3">
           <div className="flex items-center justify-between">
@@ -611,7 +737,11 @@ const OutlineDesktop: React.FC<OutlineDesktopProps> = ({
           <div className="mt-2 flex items-center justify-between">
             <div className="flex items-center space-x-1">
               <button 
-                onClick={() => setSelectedStyle('normal')}
+                onMouseDown={(e) => e.preventDefault()}
+                onClick={() => {
+                  setSelectedStyle('normal');
+                  if (editingId) toggleItemStyle(editingId, 'normal');
+                }}
                 className={`px-2 py-1 rounded text-xs ${
                   selectedStyle === 'normal' ? 'bg-blue-100 text-blue-700' : 'text-gray-600 hover:bg-gray-100'
                 }`}
@@ -619,7 +749,11 @@ const OutlineDesktop: React.FC<OutlineDesktopProps> = ({
                 Normal
               </button>
               <button 
-                onClick={() => setSelectedStyle('header')}
+                onMouseDown={(e) => e.preventDefault()}
+                onClick={() => {
+                  setSelectedStyle('header');
+                  if (editingId) toggleItemStyle(editingId, 'header');
+                }}
                 className={`px-2 py-1 rounded text-xs font-bold ${
                   selectedStyle === 'header' ? 'bg-blue-100 text-blue-700' : 'text-gray-600 hover:bg-gray-100'
                 }`}
@@ -627,7 +761,11 @@ const OutlineDesktop: React.FC<OutlineDesktopProps> = ({
                 Header
               </button>
               <button 
-                onClick={() => setSelectedStyle('code')}
+                onMouseDown={(e) => e.preventDefault()}
+                onClick={() => {
+                  setSelectedStyle('code');
+                  if (editingId) toggleItemStyle(editingId, 'code');
+                }}
                 className={`px-2 py-1 rounded text-xs font-mono ${
                   selectedStyle === 'code' ? 'bg-blue-100 text-blue-700' : 'text-gray-600 hover:bg-gray-100'
                 }`}
@@ -635,7 +773,11 @@ const OutlineDesktop: React.FC<OutlineDesktopProps> = ({
                 Code
               </button>
               <button 
-                onClick={() => setSelectedStyle('quote')}
+                onMouseDown={(e) => e.preventDefault()}
+                onClick={() => {
+                  setSelectedStyle('quote');
+                  if (editingId) toggleItemStyle(editingId, 'quote');
+                }}
                 className={`px-2 py-1 rounded text-xs italic ${
                   selectedStyle === 'quote' ? 'bg-blue-100 text-blue-700' : 'text-gray-600 hover:bg-gray-100'
                 }`}
@@ -690,6 +832,7 @@ const OutlineDesktop: React.FC<OutlineDesktopProps> = ({
                           defaultValue={item.text}
                           onBlur={(e) => {
                             const value = e.target.value.trim();
+                            console.log('onBlur - value:', value, 'item.text:', item.text, 'item.id:', item.id);
                             // If the field is empty or still "New item", remove the item
                             if (!value || value === 'New item') {
                               // Remove the empty item
@@ -715,7 +858,8 @@ const OutlineDesktop: React.FC<OutlineDesktopProps> = ({
                           }}
                           onKeyDown={(e) => handleKeyDown(e, item.id)}
                           className="w-full px-2 py-1 text-sm leading-relaxed bg-white border border-blue-300 rounded resize-none focus:outline-none focus:ring-1 focus:ring-blue-500"
-                          rows={1}
+                          rows={item.style === 'code' ? 5 : 1}
+                          placeholder=""
                         />
                       ) : (
                         <div

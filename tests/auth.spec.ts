@@ -84,7 +84,7 @@ test.describe('Authentication', () => {
     const response = await responsePromise;
     if (response) {
       if (response.status() === 200) {
-        await expect(page).toHaveURL(/.*outlines/);
+        await expect(page).toHaveURL('http://localhost:5176/');
       }
     }
   });
@@ -116,7 +116,7 @@ test.describe('Authentication', () => {
     const response = await responsePromise;
     if (response) {
       if (response.status() === 200 || response.status() === 201) {
-        await expect(page).toHaveURL(/.*outlines|.*login/);
+        await expect(page).toHaveURL('http://localhost:5176/');
       }
     }
   });
