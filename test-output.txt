@@ -1,0 +1,1722 @@
+
+Running 324 tests using 5 workers
+
+TEST 01: Basic page load
+TEST 03: Trying to activate input field
+TEST 02: Finding input elements
+  ✓  2 [chromium] › tests/ai-integration.spec.ts:9:7 › AI Integration and Chat Features › should display AI chat interface (807ms)
+  ✓  3 [chromium] › tests/ai-integration.spec.ts:23:7 › AI Integration and Chat Features › should send message to AI (814ms)
+Page title: BrainFlowy
+Page contains "My Outlines": [33mtrue[39m
+Textareas found: [33m0[39m
+Text inputs found: [33m1[39m
+ContentEditable elements found: [33m0[39m
+Found "Marketing Campaign", double-clicking...
+Outline-related elements found: [33m42[39m
+Has "Marketing Campaign" text: [33mtrue[39m
+Has "Social Media Strategy" text: [33mtrue[39m
+✓ Page loads successfully
+  ✓  1 [chromium] › tests/01-basic-load.spec.ts:3:5 › 01: App loads and shows outline page (920ms)
+Total interactive elements: [33m1[39m
+  ✓  4 [chromium] › tests/02-find-inputs.spec.ts:3:5 › 02: Find input elements on page (943ms)
+Elements with focus after double-click: [33m1[39m
+  ✓  7 [chromium] › tests/ai-integration.spec.ts:74:7 › AI Integration and Chat Features › should show typing indicator while AI responds (652ms)
+Found 43 potential outline elements
+Clicking first outline element...
+  ✓  6 [chromium] › tests/ai-integration.spec.ts:51:7 › AI Integration and Chat Features › should display AI response (653ms)
+  ✓  8 [chromium] › tests/ai-integration.spec.ts:94:7 › AI Integration and Chat Features › should apply AI suggestions to outline (634ms)
+  ✓  9 [chromium] › tests/ai-integration.spec.ts:120:7 › AI Integration and Chat Features › should show chat history (638ms)
+Visible textareas after click: [33m0[39m
+Visible inputs after click: [33m1[39m
+Trying Tab key to focus an element...
+  ✓  11 [chromium] › tests/ai-integration.spec.ts:170:7 › AI Integration and Chat Features › should handle AI error responses (641ms)
+  ✓  10 [chromium] › tests/ai-integration.spec.ts:144:7 › AI Integration and Chat Features › should clear chat history (645ms)
+  ✓  12 [chromium] › tests/ai-integration.spec.ts:195:7 › AI Integration and Chat Features › should provide context-aware suggestions (627ms)
+  ✓  13 [chromium] › tests/ai-integration.spec.ts:222:7 › AI Integration and Chat Features › should export chat conversation (630ms)
+Focused elements after Tab: [33m1[39m
+  ✓  5 [chromium] › tests/03-activate-input.spec.ts:3:5 › 03: Activate input by clicking existing item (2.4s)
+  ✓  15 [chromium] › tests/auth.spec.ts:32:7 › Authentication › should display register page (654ms)
+  ✓  16 [chromium] › tests/auth.spec.ts:50:7 › Authentication › should navigate between login and register pages (767ms)
+  ✓  18 [chromium] › tests/auth.spec.ts:92:7 › Authentication › should handle registration form submission (814ms)
+  ✓  14 [chromium] › tests/auth.spec.ts:9:7 › Authentication › should display login page (1.1s)
+  ✓  19 [chromium] › tests/auth.spec.ts:124:7 › Authentication › should show validation errors for invalid input (645ms)
+  ✓  21 [chromium] › tests/auth.spec.ts:172:7 › Authentication › should handle logout functionality (590ms)
+  ✓  22 [chromium] › tests/basic.spec.ts:4:7 › BrainFlowy Application › homepage loads successfully (576ms)
+  ✓  23 [chromium] › tests/basic.spec.ts:14:7 › BrainFlowy Application › can navigate and interact with basic elements (565ms)
+  ✓  24 [chromium] › tests/basic.spec.ts:25:7 › BrainFlowy Application › responsive design works on mobile viewport (584ms)
+=== TESTING CORE BULLET CREATION ===
+Found 0 textareas
+  ✘  25 [chromium] › tests/core-outline-test.spec.ts:4:7 › Core Outline Functionality › creates nested bullets with different styles (615ms)
+  ✓  20 [chromium] › tests/auth.spec.ts:136:7 › Authentication › should maintain session after login (1.7s)
+  ✓  27 [chromium] › tests/data-persistence.spec.ts:39:7 › Data Persistence and Synchronization › should persist data in sessionStorage (596ms)
+  ✓  26 [chromium] › tests/data-persistence.spec.ts:9:7 › Data Persistence and Synchronization › should persist data in localStorage (1.1s)
+  ✓  28 [chromium] › tests/data-persistence.spec.ts:75:7 › Data Persistence and Synchronization › should sync data with backend (605ms)
+  ✓  29 [chromium] › tests/data-persistence.spec.ts:51:7 › Data Persistence and Synchronization › should persist user preferences (1.7s)
+  ✓  30 [chromium] › tests/data-persistence.spec.ts:96:7 › Data Persistence and Synchronization › should handle offline mode (1.6s)
+  ✓  32 [chromium] › tests/data-persistence.spec.ts:141:7 › Data Persistence and Synchronization › should handle concurrent edits (1.3s)
+  ✓  33 [chromium] › tests/data-persistence.spec.ts:174:7 › Data Persistence and Synchronization › should auto-save periodically (635ms)
+  ✓  34 [chromium] › tests/data-persistence.spec.ts:195:7 › Data Persistence and Synchronization › should export data (641ms)
+  ✓  35 [chromium] › tests/data-persistence.spec.ts:211:7 › Data Persistence and Synchronization › should import data (634ms)
+  ✓  31 [chromium] › tests/data-persistence.spec.ts:120:7 › Data Persistence and Synchronization › should queue actions when offline (2.6s)
+  ✓  36 [chromium] › tests/data-persistence.spec.ts:239:7 › Data Persistence and Synchronization › should handle data conflicts (630ms)
+  ✓  37 [chromium] › tests/data-persistence.spec.ts:269:7 › Data Persistence and Synchronization › should validate data integrity (639ms)
+
+=== TEST 1: Page loads ===
+  ✘  17 [chromium] › tests/auth.spec.ts:67:7 › Authentication › should handle login form submission (5.9s)
+  ✓  39 [chromium] › tests/data-persistence.spec.ts:308:7 › Data Persistence and Synchronization › should handle storage quota exceeded (648ms)
+Page URL: http://localhost:5176/login
+Page title: BrainFlowy
+✓ Page loaded, title: BrainFlowy
+
+=== TEST 2: Check existing content ===
+  ✘  40 [chromium] › tests/debug.spec.ts:4:7 › Debug Tests › check what is on login page (659ms)
+✓ Has "My Outlines": [33mtrue[39m
+
+=== TEST 3: Find demo content ===
+✓ Found "Marketing Campaign": [33mtrue[39m
+
+=== TEST 4: Double-click Marketing Campaign ===
+  ✓  42 [chromium] › tests/keyboard-shortcuts.spec.ts:26:7 › Keyboard Shortcuts and Navigation › should indent with Tab key (611ms)
+✓ Something has focus after double-click: [33mtrue[39m
+
+=== TEST 5: Type in focused element ===
+✓ Typed "EDITED TEXT"
+
+✓ Test complete!
+  ✓  41 [chromium] › tests/iterative-test.spec.ts:3:5 › Iterative Outline Test (1.2s)
+  ✓  43 [chromium] › tests/keyboard-shortcuts.spec.ts:9:7 › Keyboard Shortcuts and Navigation › should navigate with arrow keys (624ms)
+  ✓  44 [chromium] › tests/keyboard-shortcuts.spec.ts:42:7 › Keyboard Shortcuts and Navigation › should outdent with Shift+Tab (619ms)
+  ✓  45 [chromium] › tests/keyboard-shortcuts.spec.ts:60:7 › Keyboard Shortcuts and Navigation › should create new item with Enter key (615ms)
+  ✓  46 [chromium] › tests/keyboard-shortcuts.spec.ts:76:7 › Keyboard Shortcuts and Navigation › should delete item with Delete key (609ms)
+  ✓  47 [chromium] › tests/keyboard-shortcuts.spec.ts:92:7 › Keyboard Shortcuts and Navigation › should undo with Ctrl+Z / Cmd+Z (604ms)
+  ✓  38 [chromium] › tests/data-persistence.spec.ts:289:7 › Data Persistence and Synchronization › should clean up old data (2.7s)
+  ✓  48 [chromium] › tests/keyboard-shortcuts.spec.ts:110:7 › Keyboard Shortcuts and Navigation › should redo with Ctrl+Shift+Z / Cmd+Shift+Z (603ms)
+  ✓  51 [chromium] › tests/keyboard-shortcuts.spec.ts:156:7 › Keyboard Shortcuts and Navigation › should select all with Ctrl+A / Cmd+A (617ms)
+  ✓  52 [chromium] › tests/keyboard-shortcuts.spec.ts:173:7 › Keyboard Shortcuts and Navigation › should copy with Ctrl+C / Cmd+C (593ms)
+  ✓  53 [chromium] › tests/keyboard-shortcuts.spec.ts:191:7 › Keyboard Shortcuts and Navigation › should paste with Ctrl+V / Cmd+V (619ms)
+  ✓  49 [chromium] › tests/keyboard-shortcuts.spec.ts:131:7 › Keyboard Shortcuts and Navigation › should save with Ctrl+S / Cmd+S (1.2s)
+API REQUEST: GET http://localhost:5176/src/services/api/apiClient.ts
+API RESPONSE: [33m200[39m http://localhost:5176/src/services/api/apiClient.ts
+API REQUEST: GET http://localhost:5176/src/services/api/mockAuth.ts
+API REQUEST: GET http://localhost:5176/src/services/api/mockOutlines.ts
+API REQUEST: GET http://localhost:5176/src/services/api/mockVoice.ts
+API REQUEST: GET http://localhost:5176/src/services/api/realApi.ts
+API RESPONSE: [33m200[39m http://localhost:5176/src/services/api/mockVoice.ts
+API RESPONSE: [33m200[39m http://localhost:5176/src/services/api/realApi.ts
+API RESPONSE: [33m200[39m http://localhost:5176/src/services/api/mockAuth.ts
+API RESPONSE: [33m200[39m http://localhost:5176/src/services/api/mockOutlines.ts
+API REQUEST: GET http://localhost:8001/api/v1/outlines
+API REQUEST: GET http://localhost:8001/api/v1/outlines
+API RESPONSE: [33m403[39m http://localhost:8001/api/v1/outlines
+CONSOLE ERROR: Failed to load resource: the server responded with a status of 403 (Forbidden)
+API RESPONSE: [33m403[39m http://localhost:8001/api/v1/outlines
+CONSOLE ERROR: Failed to load resource: the server responded with a status of 403 (Forbidden)
+CONSOLE ERROR: Failed to load outlines: Error: Not authenticated
+    at handleResponse (http://localhost:5176/src/services/api/realApi.ts:12:11)
+    at async loadUserOutlines (http://localhost:5176/src/components/OutlineDesktop.tsx:72:26)
+CONSOLE ERROR: Failed to load outlines: Error: Not authenticated
+    at handleResponse (http://localhost:5176/src/services/api/realApi.ts:12:11)
+    at async loadUserOutlines (http://localhost:5176/src/components/OutlineDesktop.tsx:72:26)
+  ✘  54 [chromium] › tests/keyboard-shortcuts.spec.ts:210:7 › Keyboard Shortcuts and Navigation › should navigate between panes with Tab (631ms)
+  ✓  56 [chromium] › tests/keyboard-shortcuts.spec.ts:239:7 › Keyboard Shortcuts and Navigation › should close modals with Escape (672ms)
+=== DEBUGGING OUTLINE CREATION ===
+Clicking plus button...
+CONSOLE ERROR: User not authenticated
+  ✓  55 [chromium] › tests/keyboard-shortcuts.spec.ts:224:7 › Keyboard Shortcuts and Navigation › should show keyboard shortcuts help with ? or F1 (1.2s)
+=== STARTING FULL OUTLINE FUNCTIONALITY TEST ===
+ERROR: No input became focused after clicking plus button
+
+Total textareas in DOM: 0
+
+=== END DEBUG ===
+  ✓  57 [chromium] › tests/outline-debug.spec.ts:3:5 › debug outline functionality (1.2s)
+Initial page content (first 300 chars): BrainFlowy
+My OutlinesLogout
+BrainFlowy
+My Outlines
+New Outline
+Settings
+Help
+Work Notes
+Last edited 2 hours ago
+Voice Mode
+NormalHeaderCodeQuote
+Tab indent⌘B header⌘E code⌘I quote
+Marketing Campaign
+Social Media Strategy
+Instagram content calendar
+TikTok video series
+const videoConfig = { format: "
+=== TESTING COMPLEX OPERATIONS ===
+  ✓  59 [chromium] › tests/outline-full-functionality.spec.ts:269:7 › Full Outline Functionality - Create, Style, Nest, and Persist › should handle complex operations: delete, reorder, and style changes (636ms)
+Found input with selector: input[type="text"]
+Page loaded, looking for elements...
+Page text: BrainFlowy
+My OutlinesLogout
+BrainFlowy
+My Outlines
+New Outline
+Settings
+Help
+Work Notes
+Last edited 2 hours ago
+Voice Mode
+NormalHeaderCodeQuote
+Tab indent⌘B header⌘E code⌘I quote
+Marketing Campaign
+Social Media Strategy
+Instagram content calendar
+TikTok video series
+const videoConfig = { format: "vertical", duration: 60 };
+Budget planning
+As Steve Jobs said, "Innovation distinguishes between a leader and a follower."
+Product Launch
+Technical Implementation
+API endpoints to implement
+async func
+Strategy succeeded, looking for input
+Strategy succeeded, looking for input
+  ✓  62 [chromium] › tests/outline-nesting.spec.ts:136:7 › Outline Nesting and Hierarchy › should handle complex nested structures (1.0s)
+=== TESTING REAL OUTLINE INTERFACE ===
+Found "Marketing Campaign": [33mtrue[39m
+Number of textareas found: [33m0[39m
+Double-clicking on Marketing Campaign item...
+Input focused after double-click: [33mtrue[39m
+Typing new text...
+Item updated: [33mfalse[39m
+Plus buttons found: [33m2[39m
+Clicking plus button...
+
+--- Checking if items were created ---
+"Test Item - Normal Style": NOT FOUND ✗
+"Test Item - Indented Child": NOT FOUND ✗
+"Test Item - Header Style": NOT FOUND ✗
+"const test = "code style"": NOT FOUND ✗
+
+--- Testing persistence ---
+Items before reload: [33m0[39m
+  ✘  50 [chromium] › tests/keyboard-shortcuts.spec.ts:143:7 › Keyboard Shortcuts and Navigation › should search with Ctrl+F / Cmd+F (5.9s)
+  ✓  64 [chromium] › tests/outline.spec.ts:9:7 › Outline Management › should display outline page (643ms)
+  ✓  65 [chromium] › tests/outline.spec.ts:18:7 › Outline Management › should create a new outline (1.2s)
+Items after reload: [33m0[39m
+
+--- Checking persistence of test items ---
+"Test Item - Normal Style": NOT PERSISTED ✗
+"Test Item - Indented Child": NOT PERSISTED ✗
+"Test Item - Header Style": NOT PERSISTED ✗
+"const test = "code style"": NOT PERSISTED ✗
+
+Screenshots saved: outline-page-actual.png and outline-page-after-test.png
+  ✓  63 [chromium] › tests/outline-real-test.spec.ts:4:7 › Real Outline Functionality Test › interact with actual outline interface (4.9s)
+  ✘  60 [chromium] › tests/outline-nesting.spec.ts:4:7 › Outline Nesting and Hierarchy › should create nested bullet hierarchy with Tab key (6.3s)
+  ✓  67 [chromium] › tests/outline.spec.ts:62:7 › Outline Management › should edit outline items (591ms)
+  ✓  68 [chromium] › tests/outline.spec.ts:81:7 › Outline Management › should delete outline items (629ms)
+  ✓  66 [chromium] › tests/outline.spec.ts:38:7 › Outline Management › should add items to outline (1.3s)
+  ✓  69 [chromium] › tests/outline.spec.ts:100:7 › Outline Management › should indent/outdent items (598ms)
+  ✓  70 [chromium] › tests/outline.spec.ts:120:7 › Outline Management › should expand/collapse items with children (621ms)
+  ✓  72 [chromium] › tests/outline.spec.ts:166:7 › Outline Management › should switch between different outlines (624ms)
+  ✓  71 [chromium] › tests/outline.spec.ts:137:7 › Outline Management › should save outline changes (1.1s)
+  ✓  74 [chromium] › tests/responsive.spec.ts:6:7 › Responsive Design - Desktop › should display desktop layout (598ms)
+  ✓  76 [chromium] › tests/responsive.spec.ts:40:7 › Responsive Design - Desktop › should display multi-column layout on desktop (103ms)
+  ✓  73 [chromium] › tests/outline.spec.ts:184:7 › Outline Management › should search within outline (1.1s)
+  ✓  75 [chromium] › tests/responsive.spec.ts:21:7 › Responsive Design - Desktop › should show all navigation items on desktop (583ms)
+  ✓  78 [chromium] › tests/responsive.spec.ts:71:7 › Responsive Design - Tablet › should toggle sidebar on tablet (112ms)
+  ✓  80 [chromium] › tests/responsive.spec.ts:114:7 › Responsive Design - Mobile › should have touch-friendly button sizes (116ms)
+  ✓  77 [chromium] › tests/responsive.spec.ts:55:7 › Responsive Design - Tablet › should display tablet layout (603ms)
+  ✓  81 [chromium] › tests/responsive.spec.ts:140:7 › Responsive Design - Mobile › should stack content vertically on mobile (90ms)
+  ✓  83 [chromium] › tests/responsive.spec.ts:177:7 › Responsive Design - Mobile › should handle touch gestures on mobile (105ms)
+  ✓  84 [chromium] › tests/responsive.spec.ts:204:7 › Responsive Design - Orientation Changes › should adapt to landscape orientation (93ms)
+  ✘  58 [chromium] › tests/outline-full-functionality.spec.ts:4:7 › Full Outline Functionality - Create, Style, Nest, and Persist › should create multi-level hierarchy with different styles and verify backend persistence (10.0s)
+  ✓  85 [chromium] › tests/responsive.spec.ts:214:7 › Responsive Design - Orientation Changes › should adapt to portrait orientation (92ms)
+  ✓  79 [chromium] › tests/responsive.spec.ts:98:7 › Responsive Design - Mobile › should display mobile layout (580ms)
+  ✓  82 [chromium] › tests/responsive.spec.ts:158:7 › Responsive Design - Mobile › should show mobile menu when hamburger clicked (440ms)
+  ✓  86 [chromium] › tests/responsive.spec.ts:236:9 › Responsive Design - Breakpoints › should render correctly at sm breakpoint (581ms)
+  ✘  61 [chromium] › tests/outline-nesting.spec.ts:107:7 › Outline Nesting and Hierarchy › should outdent items with Shift+Tab (10.0s)
+  ✓  87 [chromium] › tests/responsive.spec.ts:236:9 › Responsive Design - Breakpoints › should render correctly at md breakpoint (631ms)
+  ✓  88 [chromium] › tests/responsive.spec.ts:236:9 › Responsive Design - Breakpoints › should render correctly at lg breakpoint (618ms)
+  ✓  91 [chromium] › tests/responsive.spec.ts:254:7 › Responsive Design - Font Scaling › should scale fonts appropriately on mobile (128ms)
+  ✓  92 [chromium] › tests/responsive.spec.ts:269:7 › Responsive Design - Font Scaling › should scale fonts appropriately on desktop (125ms)
+  ✓  93 [chromium] › tests/responsive.spec.ts:286:7 › Responsive Design - Image Handling › should load appropriate image sizes (114ms)
+  ✓  89 [chromium] › tests/responsive.spec.ts:236:9 › Responsive Design - Breakpoints › should render correctly at xs breakpoint (598ms)
+Console: debug [vite] connecting...
+Console: debug [vite] connected.
+  ✓  95 [chromium] › tests/responsive.spec.ts:316:7 › Responsive Design - Performance › should lazy load content on scroll (122ms)
+Console: info %cDownload the React DevTools for a better development experience: https://reactjs.org/link/react-devtools font-weight:bold
+Console: log 🔌 API Mode: REAL (Backend: http://localhost:8001)
+Console: log 🔌 Config.enableMockApi: false
+Console: log 🔌 VITE_ENABLE_MOCK_API env: false
+Console: debug [vite] connecting...
+Console: debug [vite] connected.
+Console: warning ⚠️ React Router Future Flag Warning: React Router will begin wrapping state updates in `React.startTransition` in v7. You can use the `v7_startTransition` future flag to opt-in early. For more information, see https://reactrouter.com/v6/upgrading/future#v7_starttransition.
+Console: log Offline sync service initialized
+Console: log Offline sync service initialized
+Console: info %cDownload the React DevTools for a better development experience: https://reactjs.org/link/react-devtools font-weight:bold
+Console: log 🔌 API Mode: REAL (Backend: http://localhost:8001)
+Console: log 🔌 Config.enableMockApi: false
+Console: log 🔌 VITE_ENABLE_MOCK_API env: false
+Console: warning ⚠️ React Router Future Flag Warning: React Router will begin wrapping state updates in `React.startTransition` in v7. You can use the `v7_startTransition` future flag to opt-in early. For more information, see https://reactrouter.com/v6/upgrading/future#v7_starttransition.
+Console: log Offline sync service initialized
+Console: log Offline sync service initialized
+  ✓  90 [chromium] › tests/responsive.spec.ts:236:9 › Responsive Design - Breakpoints › should render correctly at xl breakpoint (627ms)
+  ✓  94 [chromium] › tests/responsive.spec.ts:305:7 › Responsive Design - Performance › should maintain performance on mobile (571ms)
+  ✓  98 [chromium] › tests/responsive.spec.ts:236:9 › Responsive Design - Breakpoints › should render correctly at 2xl breakpoint (658ms)
+  ✓  99 [chromium] › tests/voice.spec.ts:10:7 › Voice Transcription › should display voice recording button (608ms)
+  ✓  100 [chromium] › tests/voice.spec.ts:18:7 › Voice Transcription › should open voice modal when clicking record button (608ms)
+  ✓  101 [chromium] › tests/voice.spec.ts:37:7 › Voice Transcription › should show recording indicators when recording (632ms)
+  ✓  102 [chromium] › tests/voice.spec.ts:67:7 › Voice Transcription › should display transcription after recording (629ms)
+  ✓  103 [chromium] › tests/voice.spec.ts:93:7 › Voice Transcription › should allow editing transcription (602ms)
+Root element found: [33m1[39m
+Current URL: http://localhost:5176/
+  ✓  104 [chromium] › tests/voice.spec.ts:108:7 › Voice Transcription › should add transcription to outline (641ms)
+Body HTML (first 500 chars): 
+    <div id="root"><div class="app-layout"><header class="app-header"><nav class="nav-container"><a class="logo" href="/"><h1>BrainFlowy</h1></a><div class="nav-links"><a class="nav-link" href="/login">Sign In</a><a class="nav-link btn-primary" href="/register">Get Started</a></div><button class="mobile-menu-btn" aria-label="Toggle menu"><span class="hamburger"></span><span class="hamburger"></span><span class="hamburger"></span></button></nav></header><main class="main-content"><div class="hom
+  ✓  96 [chromium] › tests/simple.spec.ts:3:5 › check app loads (2.1s)
+  ✓  105 [chromium] › tests/voice.spec.ts:133:7 › Voice Transcription › should show audio waveform visualization (639ms)
+Login page HTML (first 500 chars): 
+    <div id="root"><div class="app-layout"><header class="app-header"><nav class="nav-container"><a class="logo" href="/"><h1>BrainFlowy</h1></a><div class="nav-links"><a class="nav-link" href="/login">Sign In</a><a class="nav-link btn-primary" href="/register">Get Started</a></div><button class="mobile-menu-btn" aria-label="Toggle menu"><span class="hamburger"></span><span class="hamburger"></span><span class="hamburger"></span></button></nav></header><main class="main-content"><div class="log
+  ✓  97 [chromium] › tests/simple.spec.ts:23:5 › check login page directly (2.1s)
+  ✓  106 [chromium] › tests/voice.spec.ts:153:7 › Voice Transcription › should handle pause and resume recording (603ms)
+  ✓  107 [chromium] › tests/voice.spec.ts:180:7 › Voice Transcription › should cancel recording (641ms)
+  ✓  108 [chromium] › tests/voice.spec.ts:206:7 › Voice Transcription › should show error when microphone access is denied (660ms)
+TEST 02: Finding input elements
+TEST 01: Basic page load
+TEST 03: Trying to activate input field
+Textareas found: [33m0[39m
+Text inputs found: [33m1[39m
+ContentEditable elements found: [33m0[39m
+Outline-related elements found: [33m42[39m
+Has "Marketing Campaign" text: [33mtrue[39m
+Has "Social Media Strategy" text: [33mtrue[39m
+Total interactive elements: [33m1[39m
+  ✓  110 [firefox] › tests/02-find-inputs.spec.ts:3:5 › 02: Find input elements on page (1.4s)
+Page title: BrainFlowy
+Page contains "My Outlines": [33mtrue[39m
+✓ Page loads successfully
+  ✓  109 [firefox] › tests/01-basic-load.spec.ts:3:5 › 01: App loads and shows outline page (1.5s)
+Found "Marketing Campaign", double-clicking...
+  ✓  114 [firefox] › tests/ai-integration.spec.ts:51:7 › AI Integration and Chat Features › should display AI response (910ms)
+  ✓  113 [firefox] › tests/ai-integration.spec.ts:23:7 › AI Integration and Chat Features › should send message to AI (1.5s)
+  ✓  115 [firefox] › tests/ai-integration.spec.ts:74:7 › AI Integration and Chat Features › should show typing indicator while AI responds (813ms)
+Elements with focus after double-click: [33m1[39m
+Found 43 potential outline elements
+Clicking first outline element...
+  ✓  112 [firefox] › tests/ai-integration.spec.ts:9:7 › AI Integration and Chat Features › should display AI chat interface (1.3s)
+  ✓  116 [firefox] › tests/ai-integration.spec.ts:94:7 › AI Integration and Chat Features › should apply AI suggestions to outline (717ms)
+  ✓  117 [firefox] › tests/ai-integration.spec.ts:120:7 › AI Integration and Chat Features › should show chat history (738ms)
+Visible textareas after click: [33m0[39m
+Visible inputs after click: [33m1[39m
+Trying Tab key to focus an element...
+  ✓  118 [firefox] › tests/ai-integration.spec.ts:144:7 › AI Integration and Chat Features › should clear chat history (744ms)
+  ✓  119 [firefox] › tests/ai-integration.spec.ts:170:7 › AI Integration and Chat Features › should handle AI error responses (713ms)
+Focused elements after Tab: [33m1[39m
+  ✓  111 [firefox] › tests/03-activate-input.spec.ts:3:5 › 03: Activate input by clicking existing item (2.9s)
+  ✓  120 [firefox] › tests/ai-integration.spec.ts:195:7 › AI Integration and Chat Features › should provide context-aware suggestions (728ms)
+  ✓  121 [firefox] › tests/ai-integration.spec.ts:222:7 › AI Integration and Chat Features › should export chat conversation (730ms)
+  ✓  123 [firefox] › tests/auth.spec.ts:32:7 › Authentication › should display register page (828ms)
+  ✓  124 [firefox] › tests/auth.spec.ts:50:7 › Authentication › should navigate between login and register pages (1.1s)
+  ✓  122 [firefox] › tests/auth.spec.ts:9:7 › Authentication › should display login page (1.3s)
+  ✓  126 [firefox] › tests/auth.spec.ts:92:7 › Authentication › should handle registration form submission (993ms)
+  ✓  127 [firefox] › tests/auth.spec.ts:124:7 › Authentication › should show validation errors for invalid input (880ms)
+  ✓  129 [firefox] › tests/auth.spec.ts:172:7 › Authentication › should handle logout functionality (862ms)
+  ✓  130 [firefox] › tests/basic.spec.ts:4:7 › BrainFlowy Application › homepage loads successfully (764ms)
+  ✓  131 [firefox] › tests/basic.spec.ts:14:7 › BrainFlowy Application › can navigate and interact with basic elements (696ms)
+  ✓  132 [firefox] › tests/basic.spec.ts:25:7 › BrainFlowy Application › responsive design works on mobile viewport (760ms)
+=== TESTING CORE BULLET CREATION ===
+Found 0 textareas
+  ✓  128 [firefox] › tests/auth.spec.ts:136:7 › Authentication › should maintain session after login (2.0s)
+  ✘  133 [firefox] › tests/core-outline-test.spec.ts:4:7 › Core Outline Functionality › creates nested bullets with different styles (734ms)
+  ✓  135 [firefox] › tests/data-persistence.spec.ts:39:7 › Data Persistence and Synchronization › should persist data in sessionStorage (706ms)
+  ✓  134 [firefox] › tests/data-persistence.spec.ts:9:7 › Data Persistence and Synchronization › should persist data in localStorage (1.4s)
+  ✓  138 [firefox] › tests/data-persistence.spec.ts:75:7 › Data Persistence and Synchronization › should sync data with backend (1.1s)
+  ✓  136 [firefox] › tests/data-persistence.spec.ts:51:7 › Data Persistence and Synchronization › should persist user preferences (2.1s)
+  ✓  137 [firefox] › tests/data-persistence.spec.ts:96:7 › Data Persistence and Synchronization › should handle offline mode (1.8s)
+  ✓  141 [firefox] › tests/data-persistence.spec.ts:174:7 › Data Persistence and Synchronization › should auto-save periodically (799ms)
+  ✓  142 [firefox] › tests/data-persistence.spec.ts:195:7 › Data Persistence and Synchronization › should export data (838ms)
+  ✓  139 [firefox] › tests/data-persistence.spec.ts:120:7 › Data Persistence and Synchronization › should queue actions when offline (2.8s)
+  ✘  125 [firefox] › tests/auth.spec.ts:67:7 › Authentication › should handle login form submission (6.1s)
+  ✓  143 [firefox] › tests/data-persistence.spec.ts:211:7 › Data Persistence and Synchronization › should import data (787ms)
+  ✓  140 [firefox] › tests/data-persistence.spec.ts:141:7 › Data Persistence and Synchronization › should handle concurrent edits (1.8s)
+  ✓  144 [firefox] › tests/data-persistence.spec.ts:239:7 › Data Persistence and Synchronization › should handle data conflicts (770ms)
+
+=== TEST 1: Page loads ===
+  ✓  145 [firefox] › tests/data-persistence.spec.ts:269:7 › Data Persistence and Synchronization › should validate data integrity (768ms)
+  ✓  146 [firefox] › tests/data-persistence.spec.ts:308:7 › Data Persistence and Synchronization › should handle storage quota exceeded (879ms)
+Page URL: http://localhost:5176/login
+Page title: BrainFlowy
+✓ Page loaded, title: BrainFlowy
+
+=== TEST 2: Check existing content ===
+✓ Has "My Outlines": [33mtrue[39m
+
+=== TEST 3: Find demo content ===
+✓ Found "Marketing Campaign": [33mtrue[39m
+
+=== TEST 4: Double-click Marketing Campaign ===
+  ✘  147 [firefox] › tests/debug.spec.ts:4:7 › Debug Tests › check what is on login page (893ms)
+  ✓  150 [firefox] › tests/keyboard-shortcuts.spec.ts:9:7 › Keyboard Shortcuts and Navigation › should navigate with arrow keys (796ms)
+✓ Something has focus after double-click: [33mfalse[39m
+
+=== TEST 5: Type in focused element ===
+
+✓ Test complete!
+  ✓  148 [firefox] › tests/iterative-test.spec.ts:3:5 › Iterative Outline Test (1.4s)
+  ✓  151 [firefox] › tests/keyboard-shortcuts.spec.ts:26:7 › Keyboard Shortcuts and Navigation › should indent with Tab key (770ms)
+  ✓  152 [firefox] › tests/keyboard-shortcuts.spec.ts:60:7 › Keyboard Shortcuts and Navigation › should create new item with Enter key (764ms)
+  ✓  154 [firefox] › tests/keyboard-shortcuts.spec.ts:76:7 › Keyboard Shortcuts and Navigation › should delete item with Delete key (776ms)
+  ✓  155 [firefox] › tests/keyboard-shortcuts.spec.ts:92:7 › Keyboard Shortcuts and Navigation › should undo with Ctrl+Z / Cmd+Z (832ms)
+  ✓  156 [firefox] › tests/keyboard-shortcuts.spec.ts:110:7 › Keyboard Shortcuts and Navigation › should redo with Ctrl+Shift+Z / Cmd+Shift+Z (756ms)
+  ✓  153 [firefox] › tests/keyboard-shortcuts.spec.ts:42:7 › Keyboard Shortcuts and Navigation › should outdent with Shift+Tab (1.2s)
+  ✓  157 [firefox] › tests/keyboard-shortcuts.spec.ts:131:7 › Keyboard Shortcuts and Navigation › should save with Ctrl+S / Cmd+S (1.3s)
+  ✓  159 [firefox] › tests/keyboard-shortcuts.spec.ts:156:7 › Keyboard Shortcuts and Navigation › should select all with Ctrl+A / Cmd+A (710ms)
+  ✓  160 [firefox] › tests/keyboard-shortcuts.spec.ts:173:7 › Keyboard Shortcuts and Navigation › should copy with Ctrl+C / Cmd+C (708ms)
+  ✓  149 [firefox] › tests/data-persistence.spec.ts:289:7 › Data Persistence and Synchronization › should clean up old data (3.4s)
+  ✓  161 [firefox] › tests/keyboard-shortcuts.spec.ts:191:7 › Keyboard Shortcuts and Navigation › should paste with Ctrl+V / Cmd+V (729ms)
+API REQUEST: GET http://localhost:5176/src/services/api/apiClient.ts
+API RESPONSE: [33m200[39m http://localhost:5176/src/services/api/apiClient.ts
+API REQUEST: GET http://localhost:5176/src/services/api/mockAuth.ts
+API REQUEST: GET http://localhost:5176/src/services/api/mockOutlines.ts
+API REQUEST: GET http://localhost:5176/src/services/api/mockVoice.ts
+API REQUEST: GET http://localhost:5176/src/services/api/realApi.ts
+API RESPONSE: [33m200[39m http://localhost:5176/src/services/api/mockAuth.ts
+API RESPONSE: [33m200[39m http://localhost:5176/src/services/api/mockOutlines.ts
+API RESPONSE: [33m200[39m http://localhost:5176/src/services/api/mockVoice.ts
+API RESPONSE: [33m200[39m http://localhost:5176/src/services/api/realApi.ts
+API REQUEST: GET http://localhost:8001/api/v1/outlines
+API REQUEST: GET http://localhost:8001/api/v1/outlines
+API RESPONSE: [33m403[39m http://localhost:8001/api/v1/outlines
+API RESPONSE: [33m403[39m http://localhost:8001/api/v1/outlines
+CONSOLE ERROR: Failed to load outlines: Error
+CONSOLE ERROR: Failed to load outlines: Error
+  ✘  162 [firefox] › tests/keyboard-shortcuts.spec.ts:210:7 › Keyboard Shortcuts and Navigation › should navigate between panes with Tab (785ms)
+  ✓  164 [firefox] › tests/keyboard-shortcuts.spec.ts:239:7 › Keyboard Shortcuts and Navigation › should close modals with Escape (725ms)
+=== DEBUGGING OUTLINE CREATION ===
+Clicking plus button...
+CONSOLE ERROR: User not authenticated
+  ✓  163 [firefox] › tests/keyboard-shortcuts.spec.ts:224:7 › Keyboard Shortcuts and Navigation › should show keyboard shortcuts help with ? or F1 (1.3s)
+=== TESTING COMPLEX OPERATIONS ===
+  ✓  166 [firefox] › tests/outline-full-functionality.spec.ts:269:7 › Full Outline Functionality - Create, Style, Nest, and Persist › should handle complex operations: delete, reorder, and style changes (703ms)
+ERROR: No input became focused after clicking plus button
+
+Total textareas in DOM: 0
+
+=== END DEBUG ===
+  ✓  165 [firefox] › tests/outline-debug.spec.ts:3:5 › debug outline functionality (1.3s)
+Found input with selector: input[type="text"]
+Page loaded, looking for elements...
+Page text: BrainFlowy
+My OutlinesLogout
+BrainFlowy
+My Outlines
+New Outline
+Settings
+Help
+Work Notes
+Last edited 2 hours ago
+Voice Mode
+NormalHeaderCodeQuote
+Tab indent⌘B header⌘E code⌘I quote
+Marketing Campaign
+Social Media Strategy
+Instagram content calendar
+TikTok video series
+const videoConfig = { format: "vertical", duration: 60 };
+Budget planning
+As Steve Jobs said, "Innovation distinguishes between a leader and a follower."
+Product Launch
+Technical Implementation
+API endpoints to implement
+async func
+Strategy succeeded, looking for input
+=== STARTING FULL OUTLINE FUNCTIONALITY TEST ===
+Initial page content (first 300 chars): BrainFlowy
+My OutlinesLogout
+BrainFlowy
+My Outlines
+New Outline
+Settings
+Help
+Work Notes
+Last edited 2 hours ago
+Voice Mode
+NormalHeaderCodeQuote
+Tab indent⌘B header⌘E code⌘I quote
+Marketing Campaign
+Social Media Strategy
+Instagram content calendar
+TikTok video series
+const videoConfig = { format: "
+Strategy succeeded, looking for input
+  ✓  170 [firefox] › tests/outline-nesting.spec.ts:136:7 › Outline Nesting and Hierarchy › should handle complex nested structures (1.1s)
+=== TESTING REAL OUTLINE INTERFACE ===
+Found "Marketing Campaign": [33mtrue[39m
+Number of textareas found: [33m0[39m
+Double-clicking on Marketing Campaign item...
+Input focused after double-click: [33mtrue[39m
+Typing new text...
+Item updated: [33mfalse[39m
+Plus buttons found: [33m2[39m
+Clicking plus button...
+  ✘  158 [firefox] › tests/keyboard-shortcuts.spec.ts:143:7 › Keyboard Shortcuts and Navigation › should search with Ctrl+F / Cmd+F (6.1s)
+
+--- Checking if items were created ---
+"Test Item - Normal Style": NOT FOUND ✗
+"Test Item - Indented Child": NOT FOUND ✗
+"Test Item - Header Style": NOT FOUND ✗
+"const test = "code style"": NOT FOUND ✗
+
+--- Testing persistence ---
+Items before reload: [33m0[39m
+  ✓  172 [firefox] › tests/outline.spec.ts:9:7 › Outline Management › should display outline page (1.0s)
+  ✓  173 [firefox] › tests/outline.spec.ts:18:7 › Outline Management › should create a new outline (1.3s)
+Items after reload: [33m0[39m
+
+--- Checking persistence of test items ---
+"Test Item - Normal Style": NOT PERSISTED ✗
+"Test Item - Indented Child": NOT PERSISTED ✗
+"Test Item - Header Style": NOT PERSISTED ✗
+"const test = "code style"": NOT PERSISTED ✗
+
+Screenshots saved: outline-page-actual.png and outline-page-after-test.png
+  ✓  171 [firefox] › tests/outline-real-test.spec.ts:4:7 › Real Outline Functionality Test › interact with actual outline interface (5.1s)
+  ✘  168 [firefox] › tests/outline-nesting.spec.ts:4:7 › Outline Nesting and Hierarchy › should create nested bullet hierarchy with Tab key (6.5s)
+  ✓  175 [firefox] › tests/outline.spec.ts:62:7 › Outline Management › should edit outline items (849ms)
+  ✓  174 [firefox] › tests/outline.spec.ts:38:7 › Outline Management › should add items to outline (1.5s)
+  ✓  177 [firefox] › tests/outline.spec.ts:100:7 › Outline Management › should indent/outdent items (765ms)
+  ✓  176 [firefox] › tests/outline.spec.ts:81:7 › Outline Management › should delete outline items (1.1s)
+  ✓  178 [firefox] › tests/outline.spec.ts:120:7 › Outline Management › should expand/collapse items with children (738ms)
+  ✓  180 [firefox] › tests/outline.spec.ts:166:7 › Outline Management › should switch between different outlines (721ms)
+  ✓  179 [firefox] › tests/outline.spec.ts:137:7 › Outline Management › should save outline changes (1.4s)
+  ✓  182 [firefox] › tests/responsive.spec.ts:6:7 › Responsive Design - Desktop › should display desktop layout (712ms)
+  ✓  181 [firefox] › tests/outline.spec.ts:184:7 › Outline Management › should search within outline (1.2s)
+  ✓  184 [firefox] › tests/responsive.spec.ts:40:7 › Responsive Design - Desktop › should display multi-column layout on desktop (323ms)
+  ✓  183 [firefox] › tests/responsive.spec.ts:21:7 › Responsive Design - Desktop › should show all navigation items on desktop (733ms)
+  ✘  167 [firefox] › tests/outline-full-functionality.spec.ts:4:7 › Full Outline Functionality - Create, Style, Nest, and Persist › should create multi-level hierarchy with different styles and verify backend persistence (10.0s)
+  ✘  169 [firefox] › tests/outline-nesting.spec.ts:107:7 › Outline Nesting and Hierarchy › should outdent items with Shift+Tab (10.1s)
+  ✓  186 [firefox] › tests/responsive.spec.ts:71:7 › Responsive Design - Tablet › should toggle sidebar on tablet (307ms)
+  ✘  187 [firefox] › tests/responsive.spec.ts:98:7 › Responsive Design - Mobile › should display mobile layout (2ms)
+  ✓  185 [firefox] › tests/responsive.spec.ts:55:7 › Responsive Design - Tablet › should display tablet layout (838ms)
+  ✘  188 [firefox] › tests/responsive.spec.ts:158:7 › Responsive Design - Mobile › should show mobile menu when hamburger clicked (4ms)
+  ✓  191 [firefox] › tests/responsive.spec.ts:204:7 › Responsive Design - Orientation Changes › should adapt to landscape orientation (347ms)
+  ✘  189 [firefox] › tests/responsive.spec.ts:114:7 › Responsive Design - Mobile › should have touch-friendly button sizes (2ms)
+  ✓  193 [firefox] › tests/responsive.spec.ts:236:9 › Responsive Design - Breakpoints › should render correctly at xs breakpoint (793ms)
+  ✘  190 [firefox] › tests/responsive.spec.ts:140:7 › Responsive Design - Mobile › should stack content vertically on mobile (3ms)
+  ✘  192 [firefox] › tests/responsive.spec.ts:177:7 › Responsive Design - Mobile › should handle touch gestures on mobile (4ms)
+  ✓  195 [firefox] › tests/responsive.spec.ts:236:9 › Responsive Design - Breakpoints › should render correctly at md breakpoint (925ms)
+  ✓  194 [firefox] › tests/responsive.spec.ts:214:7 › Responsive Design - Orientation Changes › should adapt to portrait orientation (908ms)
+  ✓  200 [firefox] › tests/responsive.spec.ts:254:7 › Responsive Design - Font Scaling › should scale fonts appropriately on mobile (523ms)
+  ✓  199 [firefox] › tests/responsive.spec.ts:236:9 › Responsive Design - Breakpoints › should render correctly at 2xl breakpoint (1.0s)
+  ✓  201 [firefox] › tests/responsive.spec.ts:269:7 › Responsive Design - Font Scaling › should scale fonts appropriately on desktop (446ms)
+  ✓  196 [firefox] › tests/responsive.spec.ts:236:9 › Responsive Design - Breakpoints › should render correctly at sm breakpoint (1.5s)
+  ✓  202 [firefox] › tests/responsive.spec.ts:286:7 › Responsive Design - Image Handling › should load appropriate image sizes (412ms)
+Console: debug [vite] connecting...
+Console: debug [vite] connected.
+  ✓  204 [firefox] › tests/responsive.spec.ts:316:7 › Responsive Design - Performance › should lazy load content on scroll (335ms)
+Console: info Download the React DevTools for a better development experience: https://reactjs.org/link/react-devtools
+Console: log 🔌 API Mode: REAL (Backend: http://localhost:8001)
+Console: log 🔌 Config.enableMockApi: false
+Console: log 🔌 VITE_ENABLE_MOCK_API env: false
+Console: warning ⚠️ React Router Future Flag Warning: React Router will begin wrapping state updates in `React.startTransition` in v7. You can use the `v7_startTransition` future flag to opt-in early. For more information, see https://reactrouter.com/v6/upgrading/future#v7_starttransition.
+Console: log Offline sync service initialized
+Console: log Offline sync service initialized
+  ✓  197 [firefox] › tests/responsive.spec.ts:236:9 › Responsive Design - Breakpoints › should render correctly at lg breakpoint (1.5s)
+Console: debug [vite] connecting...
+Console: debug [vite] connected.
+Console: info Download the React DevTools for a better development experience: https://reactjs.org/link/react-devtools
+Console: log 🔌 API Mode: REAL (Backend: http://localhost:8001)
+Console: log 🔌 Config.enableMockApi: false
+Console: log 🔌 VITE_ENABLE_MOCK_API env: false
+Console: warning ⚠️ React Router Future Flag Warning: React Router will begin wrapping state updates in `React.startTransition` in v7. You can use the `v7_startTransition` future flag to opt-in early. For more information, see https://reactrouter.com/v6/upgrading/future#v7_starttransition.
+Console: log Offline sync service initialized
+Console: log Offline sync service initialized
+  ✓  203 [firefox] › tests/responsive.spec.ts:305:7 › Responsive Design - Performance › should maintain performance on mobile (885ms)
+  ✘  207 [firefox] › tests/voice.spec.ts:10:7 › Voice Transcription › should display voice recording button (151ms)
+  ✓  198 [firefox] › tests/responsive.spec.ts:236:9 › Responsive Design - Breakpoints › should render correctly at xl breakpoint (1.5s)
+  ✘  208 [firefox] › tests/voice.spec.ts:18:7 › Voice Transcription › should open voice modal when clicking record button (138ms)
+  ✘  209 [firefox] › tests/voice.spec.ts:67:7 › Voice Transcription › should display transcription after recording (145ms)
+Root element found: [33m1[39m
+Current URL: http://localhost:5176/
+Body HTML (first 500 chars): 
+    <div id="root"><div class="app-layout"><header class="app-header"><nav class="nav-container"><a class="logo" href="/"><h1>BrainFlowy</h1></a><div class="nav-links"><a class="nav-link" href="/login">Sign In</a><a class="nav-link btn-primary" href="/register">Get Started</a></div><button class="mobile-menu-btn" aria-label="Toggle menu"><span class="hamburger"></span><span class="hamburger"></span><span class="hamburger"></span></button></nav></header><main class="main-content"><div class="hom
+  ✓  205 [firefox] › tests/simple.spec.ts:3:5 › check app loads (2.3s)
+  ✘  210 [firefox] › tests/voice.spec.ts:37:7 › Voice Transcription › should show recording indicators when recording (473ms)
+Login page HTML (first 500 chars): 
+    <div id="root"><div class="app-layout"><header class="app-header"><nav class="nav-container"><a class="logo" href="/"><h1>BrainFlowy</h1></a><div class="nav-links"><a class="nav-link" href="/login">Sign In</a><a class="nav-link btn-primary" href="/register">Get Started</a></div><button class="mobile-menu-btn" aria-label="Toggle menu"><span class="hamburger"></span><span class="hamburger"></span><span class="hamburger"></span></button></nav></header><main class="main-content"><div class="log
+  ✓  206 [firefox] › tests/simple.spec.ts:23:5 › check login page directly (2.3s)
+  ✘  211 [firefox] › tests/voice.spec.ts:93:7 › Voice Transcription › should allow editing transcription (540ms)
+  ✘  213 [firefox] › tests/voice.spec.ts:133:7 › Voice Transcription › should show audio waveform visualization (200ms)
+  ✘  214 [firefox] › tests/voice.spec.ts:180:7 › Voice Transcription › should cancel recording (194ms)
+  ✘  212 [firefox] › tests/voice.spec.ts:108:7 › Voice Transcription › should add transcription to outline (639ms)
+TEST 01: Basic page load
+TEST 02: Finding input elements
+TEST 03: Trying to activate input field
+  ✘  215 [firefox] › tests/voice.spec.ts:153:7 › Voice Transcription › should handle pause and resume recording (1.0s)
+Textareas found: [33m0[39m
+Text inputs found: [33m1[39m
+ContentEditable elements found: [33m0[39m
+Outline-related elements found: [33m42[39m
+Has "Marketing Campaign" text: [33mtrue[39m
+Has "Social Media Strategy" text: [33mtrue[39m
+Page title: BrainFlowy
+Total interactive elements: [33m1[39m
+  ✓  218 [webkit] › tests/02-find-inputs.spec.ts:3:5 › 02: Find input elements on page (1.0s)
+Page contains "My Outlines": [33mtrue[39m
+✓ Page loads successfully
+  ✓  217 [webkit] › tests/01-basic-load.spec.ts:3:5 › 01: App loads and shows outline page (1.3s)
+Found "Marketing Campaign", double-clicking...
+  ✘  216 [firefox] › tests/voice.spec.ts:206:7 › Voice Transcription › should show error when microphone access is denied (727ms)
+Elements with focus after double-click: [33m0[39m
+Found 42 potential outline elements
+Clicking first outline element...
+  ✓  220 [webkit] › tests/ai-integration.spec.ts:23:7 › AI Integration and Chat Features › should send message to AI (739ms)
+  ✓  221 [webkit] › tests/ai-integration.spec.ts:51:7 › AI Integration and Chat Features › should display AI response (741ms)
+  ✓  222 [webkit] › tests/ai-integration.spec.ts:9:7 › AI Integration and Chat Features › should display AI chat interface (781ms)
+Visible textareas after click: [33m0[39m
+Visible inputs after click: [33m1[39m
+Trying Tab key to focus an element...
+  ✓  224 [webkit] › tests/ai-integration.spec.ts:94:7 › AI Integration and Chat Features › should apply AI suggestions to outline (724ms)
+Focused elements after Tab: [33m1[39m
+  ✓  219 [webkit] › tests/03-activate-input.spec.ts:3:5 › 03: Activate input by clicking existing item (2.3s)
+  ✓  225 [webkit] › tests/ai-integration.spec.ts:120:7 › AI Integration and Chat Features › should show chat history (743ms)
+  ✓  223 [webkit] › tests/ai-integration.spec.ts:74:7 › AI Integration and Chat Features › should show typing indicator while AI responds (859ms)
+  ✓  226 [webkit] › tests/ai-integration.spec.ts:144:7 › AI Integration and Chat Features › should clear chat history (697ms)
+  ✓  227 [webkit] › tests/ai-integration.spec.ts:170:7 › AI Integration and Chat Features › should handle AI error responses (775ms)
+  ✓  229 [webkit] › tests/ai-integration.spec.ts:222:7 › AI Integration and Chat Features › should export chat conversation (761ms)
+  ✓  228 [webkit] › tests/ai-integration.spec.ts:195:7 › AI Integration and Chat Features › should provide context-aware suggestions (794ms)
+  ✓  231 [webkit] › tests/auth.spec.ts:32:7 › Authentication › should display register page (692ms)
+  ✓  230 [webkit] › tests/auth.spec.ts:9:7 › Authentication › should display login page (1.3s)
+  ✓  232 [webkit] › tests/auth.spec.ts:50:7 › Authentication › should navigate between login and register pages (889ms)
+  ✓  235 [webkit] › tests/auth.spec.ts:124:7 › Authentication › should show validation errors for invalid input (714ms)
+  ✓  234 [webkit] › tests/auth.spec.ts:92:7 › Authentication › should handle registration form submission (1.0s)
+  ✓  237 [webkit] › tests/auth.spec.ts:172:7 › Authentication › should handle logout functionality (672ms)
+  ✓  238 [webkit] › tests/basic.spec.ts:4:7 › BrainFlowy Application › homepage loads successfully (650ms)
+  ✓  239 [webkit] › tests/basic.spec.ts:14:7 › BrainFlowy Application › can navigate and interact with basic elements (642ms)
+  ✓  240 [webkit] › tests/basic.spec.ts:25:7 › BrainFlowy Application › responsive design works on mobile viewport (643ms)
+=== TESTING CORE BULLET CREATION ===
+  ✓  236 [webkit] › tests/auth.spec.ts:136:7 › Authentication › should maintain session after login (1.8s)
+Found 0 textareas
+  ✘  241 [webkit] › tests/core-outline-test.spec.ts:4:7 › Core Outline Functionality › creates nested bullets with different styles (697ms)
+  ✓  243 [webkit] › tests/data-persistence.spec.ts:39:7 › Data Persistence and Synchronization › should persist data in sessionStorage (676ms)
+  ✓  242 [webkit] › tests/data-persistence.spec.ts:9:7 › Data Persistence and Synchronization › should persist data in localStorage (1.2s)
+  ✓  245 [webkit] › tests/data-persistence.spec.ts:75:7 › Data Persistence and Synchronization › should sync data with backend (812ms)
+  ✓  244 [webkit] › tests/data-persistence.spec.ts:51:7 › Data Persistence and Synchronization › should persist user preferences (1.8s)
+  ✓  246 [webkit] › tests/data-persistence.spec.ts:96:7 › Data Persistence and Synchronization › should handle offline mode (1.7s)
+  ✓  249 [webkit] › tests/data-persistence.spec.ts:174:7 › Data Persistence and Synchronization › should auto-save periodically (716ms)
+  ✓  248 [webkit] › tests/data-persistence.spec.ts:141:7 › Data Persistence and Synchronization › should handle concurrent edits (1.5s)
+  ✓  250 [webkit] › tests/data-persistence.spec.ts:195:7 › Data Persistence and Synchronization › should export data (677ms)
+  ✓  251 [webkit] › tests/data-persistence.spec.ts:211:7 › Data Persistence and Synchronization › should import data (675ms)
+  ✓  247 [webkit] › tests/data-persistence.spec.ts:120:7 › Data Persistence and Synchronization › should queue actions when offline (2.7s)
+  ✓  252 [webkit] › tests/data-persistence.spec.ts:239:7 › Data Persistence and Synchronization › should handle data conflicts (679ms)
+  ✓  253 [webkit] › tests/data-persistence.spec.ts:269:7 › Data Persistence and Synchronization › should validate data integrity (674ms)
+
+=== TEST 1: Page loads ===
+  ✘  233 [webkit] › tests/auth.spec.ts:67:7 › Authentication › should handle login form submission (6.0s)
+  ✓  255 [webkit] › tests/data-persistence.spec.ts:308:7 › Data Persistence and Synchronization › should handle storage quota exceeded (685ms)
+Page URL: http://localhost:5176/login
+Page title: BrainFlowy
+  ✘  256 [webkit] › tests/debug.spec.ts:4:7 › Debug Tests › check what is on login page (685ms)
+✓ Page loaded, title: BrainFlowy
+
+=== TEST 2: Check existing content ===
+✓ Has "My Outlines": [33mtrue[39m
+
+=== TEST 3: Find demo content ===
+✓ Found "Marketing Campaign": [33mtrue[39m
+
+=== TEST 4: Double-click Marketing Campaign ===
+  ✓  259 [webkit] › tests/keyboard-shortcuts.spec.ts:26:7 › Keyboard Shortcuts and Navigation › should indent with Tab key (732ms)
+✓ Something has focus after double-click: [33mfalse[39m
+
+=== TEST 5: Type in focused element ===
+
+✓ Test complete!
+  ✓  257 [webkit] › tests/iterative-test.spec.ts:3:5 › Iterative Outline Test (1.2s)
+  ✓  258 [webkit] › tests/keyboard-shortcuts.spec.ts:9:7 › Keyboard Shortcuts and Navigation › should navigate with arrow keys (802ms)
+  ✓  260 [webkit] › tests/keyboard-shortcuts.spec.ts:42:7 › Keyboard Shortcuts and Navigation › should outdent with Shift+Tab (796ms)
+  ✓  261 [webkit] › tests/keyboard-shortcuts.spec.ts:60:7 › Keyboard Shortcuts and Navigation › should create new item with Enter key (721ms)
+  ✓  262 [webkit] › tests/keyboard-shortcuts.spec.ts:76:7 › Keyboard Shortcuts and Navigation › should delete item with Delete key (717ms)
+  ✓  263 [webkit] › tests/keyboard-shortcuts.spec.ts:92:7 › Keyboard Shortcuts and Navigation › should undo with Ctrl+Z / Cmd+Z (702ms)
+  ✓  254 [webkit] › tests/data-persistence.spec.ts:289:7 › Data Persistence and Synchronization › should clean up old data (2.7s)
+  ✓  264 [webkit] › tests/keyboard-shortcuts.spec.ts:110:7 › Keyboard Shortcuts and Navigation › should redo with Ctrl+Shift+Z / Cmd+Shift+Z (717ms)
+  ✓  267 [webkit] › tests/keyboard-shortcuts.spec.ts:156:7 › Keyboard Shortcuts and Navigation › should select all with Ctrl+A / Cmd+A (686ms)
+  ✓  268 [webkit] › tests/keyboard-shortcuts.spec.ts:173:7 › Keyboard Shortcuts and Navigation › should copy with Ctrl+C / Cmd+C (677ms)
+  ✓  265 [webkit] › tests/keyboard-shortcuts.spec.ts:131:7 › Keyboard Shortcuts and Navigation › should save with Ctrl+S / Cmd+S (1.2s)
+  ✓  269 [webkit] › tests/keyboard-shortcuts.spec.ts:191:7 › Keyboard Shortcuts and Navigation › should paste with Ctrl+V / Cmd+V (716ms)
+API REQUEST: GET http://localhost:5176/src/services/api/apiClient.ts
+API RESPONSE: [33m200[39m http://localhost:5176/src/services/api/apiClient.ts
+API REQUEST: GET http://localhost:5176/src/services/api/mockAuth.ts
+API REQUEST: GET http://localhost:5176/src/services/api/mockOutlines.ts
+API REQUEST: GET http://localhost:5176/src/services/api/mockVoice.ts
+API REQUEST: GET http://localhost:5176/src/services/api/realApi.ts
+API RESPONSE: [33m200[39m http://localhost:5176/src/services/api/mockAuth.ts
+API RESPONSE: [33m200[39m http://localhost:5176/src/services/api/mockOutlines.ts
+API RESPONSE: [33m200[39m http://localhost:5176/src/services/api/realApi.ts
+API RESPONSE: [33m200[39m http://localhost:5176/src/services/api/mockVoice.ts
+API REQUEST: GET http://localhost:8001/api/v1/outlines
+API REQUEST: GET http://localhost:8001/api/v1/outlines
+API RESPONSE: [33m403[39m http://localhost:8001/api/v1/outlines
+CONSOLE ERROR: Failed to load resource: the server responded with a status of 403 (Forbidden)
+API RESPONSE: [33m403[39m http://localhost:8001/api/v1/outlines
+CONSOLE ERROR: Failed to load resource: the server responded with a status of 403 (Forbidden)
+CONSOLE ERROR: Failed to load outlines: Error: Not authenticated
+CONSOLE ERROR: Failed to load outlines: Error: Not authenticated
+  ✓  272 [webkit] › tests/keyboard-shortcuts.spec.ts:239:7 › Keyboard Shortcuts and Navigation › should close modals with Escape (697ms)
+=== DEBUGGING OUTLINE CREATION ===
+Clicking plus button...
+CONSOLE ERROR: User not authenticated
+  ✓  271 [webkit] › tests/keyboard-shortcuts.spec.ts:224:7 › Keyboard Shortcuts and Navigation › should show keyboard shortcuts help with ? or F1 (1.3s)
+ERROR: No input became focused after clicking plus button
+
+Total textareas in DOM: 0
+
+=== END DEBUG ===
+  ✓  273 [webkit] › tests/outline-debug.spec.ts:3:5 › debug outline functionality (1.2s)
+=== STARTING FULL OUTLINE FUNCTIONALITY TEST ===
+Initial page content (first 300 chars): BrainFlowy
+My OutlinesLogout
+BrainFlowy
+
+My Outlines
+New Outline
+SettingsHelp
+Work Notes
+Last edited 2 hours ago
+
+Voice Mode
+NormalHeaderCodeQuote
+Tab indent⌘B header⌘E code⌘I quote
+
+Marketing Campaign
+
+Social Media Strategy
+
+Instagram content calendar
+
+TikTok video series
+
+const videoConfig = { for
+=== TESTING COMPLEX OPERATIONS ===
+  ✓  275 [webkit] › tests/outline-full-functionality.spec.ts:269:7 › Full Outline Functionality - Create, Style, Nest, and Persist › should handle complex operations: delete, reorder, and style changes (671ms)
+Found input with selector: input[type="text"]
+  ✘  266 [webkit] › tests/keyboard-shortcuts.spec.ts:143:7 › Keyboard Shortcuts and Navigation › should search with Ctrl+F / Cmd+F (6.0s)
+Page loaded, looking for elements...
+Page text: BrainFlowy
+My OutlinesLogout
+BrainFlowy
+
+My Outlines
+New Outline
+SettingsHelp
+Work Notes
+Last edited 2 hours ago
+
+Voice Mode
+NormalHeaderCodeQuote
+Tab indent⌘B header⌘E code⌘I quote
+
+Marketing Campaign
+
+Social Media Strategy
+
+Instagram content calendar
+
+TikTok video series
+
+const videoConfig = { format: "vertical", duration: 60 };
+
+Budget planning
+
+As Steve Jobs said, "Innovation distinguishes between a leader and a follower."
+
+Product Launch
+
+Technical Implementation
+
+API endpoints to implement
+Strategy succeeded, looking for input
+Strategy succeeded, looking for input
+  ✓  278 [webkit] › tests/outline-nesting.spec.ts:136:7 › Outline Nesting and Hierarchy › should handle complex nested structures (1.1s)
+=== TESTING REAL OUTLINE INTERFACE ===
+Found "Marketing Campaign": [33mtrue[39m
+Number of textareas found: [33m0[39m
+Double-clicking on Marketing Campaign item...
+Input focused after double-click: [33mfalse[39m
+Plus buttons found: [33m2[39m
+Clicking plus button...
+  ✘  276 [webkit] › tests/outline-nesting.spec.ts:4:7 › Outline Nesting and Hierarchy › should create nested bullet hierarchy with Tab key (6.4s)
+
+--- Checking if items were created ---
+"Test Item - Normal Style": NOT FOUND ✗
+"Test Item - Indented Child": NOT FOUND ✗
+"Test Item - Header Style": NOT FOUND ✗
+"const test = "code style"": NOT FOUND ✗
+
+--- Testing persistence ---
+Items before reload: [33m0[39m
+  ✓  280 [webkit] › tests/outline.spec.ts:9:7 › Outline Management › should display outline page (801ms)
+  ✘  270 [webkit] › tests/keyboard-shortcuts.spec.ts:210:7 › Keyboard Shortcuts and Navigation › should navigate between panes with Tab (10.0s)
+  ✓  281 [webkit] › tests/outline.spec.ts:18:7 › Outline Management › should create a new outline (1.2s)
+  ✘  274 [webkit] › tests/outline-full-functionality.spec.ts:4:7 › Full Outline Functionality - Create, Style, Nest, and Persist › should create multi-level hierarchy with different styles and verify backend persistence (10.0s)
+Items after reload: [33m0[39m
+
+--- Checking persistence of test items ---
+"Test Item - Normal Style": NOT PERSISTED ✗
+  ✓  283 [webkit] › tests/outline.spec.ts:62:7 › Outline Management › should edit outline items (699ms)
+"Test Item - Indented Child": NOT PERSISTED ✗
+"Test Item - Header Style": NOT PERSISTED ✗
+"const test = "code style"": NOT PERSISTED ✗
+
+Screenshots saved: outline-page-actual.png and outline-page-after-test.png
+  ✓  279 [webkit] › tests/outline-real-test.spec.ts:4:7 › Real Outline Functionality Test › interact with actual outline interface (4.4s)
+  ✓  282 [webkit] › tests/outline.spec.ts:38:7 › Outline Management › should add items to outline (1.5s)
+  ✓  284 [webkit] › tests/outline.spec.ts:100:7 › Outline Management › should indent/outdent items (702ms)
+  ✓  285 [webkit] › tests/outline.spec.ts:120:7 › Outline Management › should expand/collapse items with children (692ms)
+  ✘  277 [webkit] › tests/outline-nesting.spec.ts:107:7 › Outline Nesting and Hierarchy › should outdent items with Shift+Tab (10.0s)
+  ✓  286 [webkit] › tests/outline.spec.ts:81:7 › Outline Management › should delete outline items (771ms)
+  ✓  288 [webkit] › tests/outline.spec.ts:166:7 › Outline Management › should switch between different outlines (716ms)
+  ✓  292 [webkit] › tests/responsive.spec.ts:40:7 › Responsive Design - Desktop › should display multi-column layout on desktop (211ms)
+  ✓  290 [webkit] › tests/responsive.spec.ts:21:7 › Responsive Design - Desktop › should show all navigation items on desktop (656ms)
+  ✓  287 [webkit] › tests/outline.spec.ts:137:7 › Outline Management › should save outline changes (1.3s)
+  ✓  289 [webkit] › tests/outline.spec.ts:184:7 › Outline Management › should search within outline (1.2s)
+  ✓  294 [webkit] › tests/responsive.spec.ts:71:7 › Responsive Design - Tablet › should toggle sidebar on tablet (173ms)
+  ✓  296 [webkit] › tests/responsive.spec.ts:114:7 › Responsive Design - Mobile › should have touch-friendly button sizes (218ms)
+  ✓  297 [webkit] › tests/responsive.spec.ts:140:7 › Responsive Design - Mobile › should stack content vertically on mobile (188ms)
+  ✓  291 [webkit] › tests/responsive.spec.ts:6:7 › Responsive Design - Desktop › should display desktop layout (831ms)
+  ✓  293 [webkit] › tests/responsive.spec.ts:55:7 › Responsive Design - Tablet › should display tablet layout (715ms)
+  ✓  299 [webkit] › tests/responsive.spec.ts:177:7 › Responsive Design - Mobile › should handle touch gestures on mobile (272ms)
+  ✓  295 [webkit] › tests/responsive.spec.ts:98:7 › Responsive Design - Mobile › should display mobile layout (696ms)
+  ✓  301 [webkit] › tests/responsive.spec.ts:214:7 › Responsive Design - Orientation Changes › should adapt to portrait orientation (278ms)
+  ✓  300 [webkit] › tests/responsive.spec.ts:204:7 › Responsive Design - Orientation Changes › should adapt to landscape orientation (299ms)
+  ✓  298 [webkit] › tests/responsive.spec.ts:158:7 › Responsive Design - Mobile › should show mobile menu when hamburger clicked (617ms)
+  ✓  302 [webkit] › tests/responsive.spec.ts:236:9 › Responsive Design - Breakpoints › should render correctly at xs breakpoint (693ms)
+  ✓  303 [webkit] › tests/responsive.spec.ts:236:9 › Responsive Design - Breakpoints › should render correctly at sm breakpoint (704ms)
+  ✓  304 [webkit] › tests/responsive.spec.ts:236:9 › Responsive Design - Breakpoints › should render correctly at md breakpoint (765ms)
+  ✓  305 [webkit] › tests/responsive.spec.ts:236:9 › Responsive Design - Breakpoints › should render correctly at lg breakpoint (771ms)
+  ✓  306 [webkit] › tests/responsive.spec.ts:236:9 › Responsive Design - Breakpoints › should render correctly at xl breakpoint (726ms)
+  ✓  308 [webkit] › tests/responsive.spec.ts:254:7 › Responsive Design - Font Scaling › should scale fonts appropriately on mobile (233ms)
+  ✓  310 [webkit] › tests/responsive.spec.ts:286:7 › Responsive Design - Image Handling › should load appropriate image sizes (242ms)
+  ✓  309 [webkit] › tests/responsive.spec.ts:269:7 › Responsive Design - Font Scaling › should scale fonts appropriately on desktop (260ms)
+Console: debug [vite] connecting...
+Console: debug [vite] connecting...
+Console: debug [vite] connected.
+Console: debug [vite] connected.
+  ✓  312 [webkit] › tests/responsive.spec.ts:316:7 › Responsive Design - Performance › should lazy load content on scroll (246ms)
+Console: log 🔌 API Mode: REAL (Backend: http://localhost:8001)
+Console: log 🔌 Config.enableMockApi: false
+Console: log 🔌 VITE_ENABLE_MOCK_API env: false
+Console: log 🔌 API Mode: REAL (Backend: http://localhost:8001)
+Console: log 🔌 Config.enableMockApi: false
+Console: log 🔌 VITE_ENABLE_MOCK_API env: false
+  ✓  307 [webkit] › tests/responsive.spec.ts:236:9 › Responsive Design - Breakpoints › should render correctly at 2xl breakpoint (684ms)
+Console: warning ⚠️ React Router Future Flag Warning: React Router will begin wrapping state updates in `React.startTransition` in v7. You can use the `v7_startTransition` future flag to opt-in early. For more information, see https://reactrouter.com/v6/upgrading/future#v7_starttransition.
+Console: log Offline sync service initialized
+Console: warning Push notifications are not supported in this browser
+Console: log PWA services initialized
+Console: log Offline sync service initialized
+Console: warning Push notifications are not supported in this browser
+Console: log PWA services initialized
+Console: warning ⚠️ React Router Future Flag Warning: React Router will begin wrapping state updates in `React.startTransition` in v7. You can use the `v7_startTransition` future flag to opt-in early. For more information, see https://reactrouter.com/v6/upgrading/future#v7_starttransition.
+Console: log Offline sync service initialized
+Console: warning Push notifications are not supported in this browser
+Console: log PWA services initialized
+Console: log Offline sync service initialized
+Console: warning Push notifications are not supported in this browser
+Console: log PWA services initialized
+  ✘  315 [webkit] › tests/voice.spec.ts:10:7 › Voice Transcription › should display voice recording button (97ms)
+  ✘  316 [webkit] › tests/voice.spec.ts:18:7 › Voice Transcription › should open voice modal when clicking record button (102ms)
+  ✓  311 [webkit] › tests/responsive.spec.ts:305:7 › Responsive Design - Performance › should maintain performance on mobile (679ms)
+  ✘  318 [webkit] › tests/voice.spec.ts:93:7 › Voice Transcription › should allow editing transcription (95ms)
+  ✘  317 [webkit] › tests/voice.spec.ts:37:7 › Voice Transcription › should show recording indicators when recording (230ms)
+  ✘  319 [webkit] › tests/voice.spec.ts:67:7 › Voice Transcription › should display transcription after recording (226ms)
+  ✘  320 [webkit] › tests/voice.spec.ts:108:7 › Voice Transcription › should add transcription to outline (200ms)
+  ✘  321 [webkit] › tests/voice.spec.ts:153:7 › Voice Transcription › should handle pause and resume recording (249ms)
+  ✘  322 [webkit] › tests/voice.spec.ts:133:7 › Voice Transcription › should show audio waveform visualization (248ms)
+  ✘  323 [webkit] › tests/voice.spec.ts:180:7 › Voice Transcription › should cancel recording (215ms)
+  ✘  324 [webkit] › tests/voice.spec.ts:206:7 › Voice Transcription › should show error when microphone access is denied (194ms)
+Login page HTML (first 500 chars): 
+    <div id="root"><div class="app-layout"><header class="app-header"><nav class="nav-container"><a class="logo" href="/"><h1>BrainFlowy</h1></a><div class="nav-links"><a class="nav-link" href="/login">Sign In</a><a class="nav-link btn-primary" href="/register">Get Started</a></div><button class="mobile-menu-btn" aria-label="Toggle menu"><span class="hamburger"></span><span class="hamburger"></span><span class="hamburger"></span></button></nav></header><main class="main-content"><div class="log
+  ✓  314 [webkit] › tests/simple.spec.ts:23:5 › check login page directly (2.2s)
+Root element found: [33m1[39m
+Current URL: http://localhost:5176/
+Body HTML (first 500 chars): 
+    <div id="root"><div class="app-layout"><header class="app-header"><nav class="nav-container"><a class="logo" href="/"><h1>BrainFlowy</h1></a><div class="nav-links"><a class="nav-link" href="/login">Sign In</a><a class="nav-link btn-primary" href="/register">Get Started</a></div><button class="mobile-menu-btn" aria-label="Toggle menu"><span class="hamburger"></span><span class="hamburger"></span><span class="hamburger"></span></button></nav></header><main class="main-content"><div class="hom
+  ✓  313 [webkit] › tests/simple.spec.ts:3:5 › check app loads (2.2s)
+
+
+  1) [chromium] › tests/auth.spec.ts:67:7 › Authentication › should handle login form submission ───
+
+    Error: [31mTimed out 5000ms waiting for [39m[2mexpect([22m[31mpage[39m[2m).[22mtoHaveURL[2m([22m[32mexpected[39m[2m)[22m
+
+    Expected pattern: [32m/.*outlines/[39m
+    Received string:  [31m"http://localhost:5176/"[39m
+    Call log:
+    [2m  - Expect "toHaveURL" with timeout 5000ms[22m
+    [2m    9 × unexpected value "http://localhost:5176/"[22m
+
+
+      85 |     if (response) {
+      86 |       if (response.status() === 200) {
+    > 87 |         await expect(page).toHaveURL(/.*outlines/);
+         |                            ^
+      88 |       }
+      89 |     }
+      90 |   });
+        at /Users/timothyjoo/brainflowy/tests/auth.spec.ts:87:28
+
+    Error Context: test-results/auth-Authentication-should-handle-login-form-submission-chromium/error-context.md
+
+  2) [chromium] › tests/core-outline-test.spec.ts:4:7 › Core Outline Functionality › creates nested bullets with different styles 
+
+    Error: No textareas found on page - cannot create bullets
+
+      14 |     
+      15 |     if (textareas.length === 0) {
+    > 16 |       throw new Error('No textareas found on page - cannot create bullets');
+         |             ^
+      17 |     }
+      18 |     
+      19 |     // Click on the first textarea to focus it
+        at /Users/timothyjoo/brainflowy/tests/core-outline-test.spec.ts:16:13
+
+    Error Context: test-results/core-outline-test-Core-Out-e3636-llets-with-different-styles-chromium/error-context.md
+
+  3) [chromium] › tests/debug.spec.ts:4:7 › Debug Tests › check what is on login page ──────────────
+
+    Error: locator.textContent: Error: strict mode violation: locator('h1') resolved to 2 elements:
+        1) <h1>BrainFlowy</h1> aka getByRole('link', { name: 'BrainFlowy' })
+        2) <h1>Sign In to BrainFlowy</h1> aka getByRole('heading', { name: 'Sign In to BrainFlowy' })
+
+    Call log:
+    [2m  - waiting for locator('h1')[22m
+
+
+      15 |     
+      16 |     // Check what's visible
+    > 17 |     const h1 = await page.locator('h1').textContent();
+         |                                         ^
+      18 |     console.log('H1 content:', h1);
+      19 |     
+      20 |     // Check for any inputs
+        at /Users/timothyjoo/brainflowy/tests/debug.spec.ts:17:41
+
+    Error Context: test-results/debug-Debug-Tests-check-what-is-on-login-page-chromium/error-context.md
+
+  4) [chromium] › tests/keyboard-shortcuts.spec.ts:143:7 › Keyboard Shortcuts and Navigation › should search with Ctrl+F / Cmd+F 
+
+    Error: [31mTimed out 5000ms waiting for [39m[2mexpect([22m[31mlocator[39m[2m).[22mtoBeFocused[2m()[22m
+
+    Locator: locator('input[type="search"], input[placeholder*="search" i]').first()
+    Expected: focused
+    Received: inactive
+    Call log:
+    [2m  - Expect "toBeFocused" with timeout 5000ms[22m
+    [2m  - waiting for locator('input[type="search"], input[placeholder*="search" i]').first()[22m
+    [2m    9 × locator resolved to <input value="" type="text" placeholder="Search outline..." class="pl-9 pr-4 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"/>[22m
+    [2m      - unexpected value "inactive"[22m
+
+
+      150 |     if (await searchInput.count() > 0) {
+      151 |       await expect(searchInput.first()).toBeVisible();
+    > 152 |       await expect(searchInput.first()).toBeFocused();
+          |                                         ^
+      153 |     }
+      154 |   });
+      155 |
+        at /Users/timothyjoo/brainflowy/tests/keyboard-shortcuts.spec.ts:152:41
+
+    Error Context: test-results/keyboard-shortcuts-Keyboar-7edbb-ld-search-with-Ctrl-F-Cmd-F-chromium/error-context.md
+
+  5) [chromium] › tests/keyboard-shortcuts.spec.ts:210:7 › Keyboard Shortcuts and Navigation › should navigate between panes with Tab 
+
+    Error: [2mexpect([22m[31mreceived[39m[2m).[22mnot[2m.[22mtoBe[2m([22m[32mexpected[39m[2m) // Object.is equality[22m
+
+    Expected: not [32m"text-gray-700 hover:text-gray-900"[39m
+
+      218 |     
+      219 |     if (firstElement && secondElement) {
+    > 220 |       expect(firstElement).not.toBe(secondElement);
+          |                                ^
+      221 |     }
+      222 |   });
+      223 |
+        at /Users/timothyjoo/brainflowy/tests/keyboard-shortcuts.spec.ts:220:32
+
+    Error Context: test-results/keyboard-shortcuts-Keyboar-0eec4-gate-between-panes-with-Tab-chromium/error-context.md
+
+  6) [chromium] › tests/outline-full-functionality.spec.ts:4:7 › Full Outline Functionality - Create, Style, Nest, and Persist › should create multi-level hierarchy with different styles and verify backend persistence 
+
+    [31mTest timeout of 10000ms exceeded.[39m
+
+    Error: locator.innerHTML: Test timeout of 10000ms exceeded.
+    Call log:
+    [2m  - waiting for locator('.outline-content, .outline-items, .outline-container, main').first()[22m
+
+
+      15 |     // Look for the outline area
+      16 |     const outlineArea = page.locator('.outline-content, .outline-items, .outline-container, main').first();
+    > 17 |     const outlineHTML = await outlineArea.innerHTML();
+         |                                           ^
+      18 |     console.log('Outline area HTML (first 500 chars):', outlineHTML.substring(0, 500));
+      19 |     
+      20 |     // Strategy 1: Try to find and click the add/plus button
+        at /Users/timothyjoo/brainflowy/tests/outline-full-functionality.spec.ts:17:43
+
+    Error Context: test-results/outline-full-functionality-b94de--verify-backend-persistence-chromium/error-context.md
+
+  7) [chromium] › tests/outline-nesting.spec.ts:4:7 › Outline Nesting and Hierarchy › should create nested bullet hierarchy with Tab key 
+
+    Error: [31mTimed out 5000ms waiting for [39m[2mexpect([22m[31mlocator[39m[2m).[22mtoBeVisible[2m()[22m
+
+    Locator: locator('text=Parent Item')
+    Expected: visible
+    Received: <element(s) not found>
+    Call log:
+    [2m  - Expect "toBeVisible" with timeout 5000ms[22m
+    [2m  - waiting for locator('text=Parent Item')[22m
+
+
+      87 |     const grandchildItem = page.locator('text=Grandchild Item');
+      88 |     
+    > 89 |     await expect(parentItem).toBeVisible();
+         |                              ^
+      90 |     await expect(childItem1).toBeVisible();
+      91 |     await expect(childItem2).toBeVisible();
+      92 |     await expect(grandchildItem).toBeVisible();
+        at /Users/timothyjoo/brainflowy/tests/outline-nesting.spec.ts:89:30
+
+    Error Context: test-results/outline-nesting-Outline-Ne-6bd6f-llet-hierarchy-with-Tab-key-chromium/error-context.md
+
+  8) [chromium] › tests/outline-nesting.spec.ts:107:7 › Outline Nesting and Hierarchy › should outdent items with Shift+Tab 
+
+    [31mTest timeout of 10000ms exceeded.[39m
+
+    Error: locator.boundingBox: Test timeout of 10000ms exceeded.
+    Call log:
+    [2m  - waiting for locator('text=Item to outdent')[22m
+
+
+      125 |       // Verify it's at root level (no indentation)
+      126 |       const item = page.locator('text=Item to outdent');
+    > 127 |       const box = await item.boundingBox();
+          |                              ^
+      128 |       
+      129 |       if (box) {
+      130 |         // Should be at or near the left edge (root level)
+        at /Users/timothyjoo/brainflowy/tests/outline-nesting.spec.ts:127:30
+
+    Error Context: test-results/outline-nesting-Outline-Ne-63c4f-utdent-items-with-Shift-Tab-chromium/error-context.md
+
+  9) [firefox] › tests/auth.spec.ts:67:7 › Authentication › should handle login form submission ────
+
+    Error: [31mTimed out 5000ms waiting for [39m[2mexpect([22m[31mpage[39m[2m).[22mtoHaveURL[2m([22m[32mexpected[39m[2m)[22m
+
+    Expected pattern: [32m/.*outlines/[39m
+    Received string:  [31m"http://localhost:5176/"[39m
+    Call log:
+    [2m  - Expect "toHaveURL" with timeout 5000ms[22m
+    [2m    9 × unexpected value "http://localhost:5176/"[22m
+
+
+      85 |     if (response) {
+      86 |       if (response.status() === 200) {
+    > 87 |         await expect(page).toHaveURL(/.*outlines/);
+         |                            ^
+      88 |       }
+      89 |     }
+      90 |   });
+        at /Users/timothyjoo/brainflowy/tests/auth.spec.ts:87:28
+
+    Error Context: test-results/auth-Authentication-should-handle-login-form-submission-firefox/error-context.md
+
+  10) [firefox] › tests/core-outline-test.spec.ts:4:7 › Core Outline Functionality › creates nested bullets with different styles 
+
+    Error: No textareas found on page - cannot create bullets
+
+      14 |     
+      15 |     if (textareas.length === 0) {
+    > 16 |       throw new Error('No textareas found on page - cannot create bullets');
+         |             ^
+      17 |     }
+      18 |     
+      19 |     // Click on the first textarea to focus it
+        at /Users/timothyjoo/brainflowy/tests/core-outline-test.spec.ts:16:13
+
+    Error Context: test-results/core-outline-test-Core-Out-e3636-llets-with-different-styles-firefox/error-context.md
+
+  11) [firefox] › tests/debug.spec.ts:4:7 › Debug Tests › check what is on login page ──────────────
+
+    Error: locator.textContent: Error: strict mode violation: locator('h1') resolved to 2 elements:
+        1) <h1>BrainFlowy</h1> aka getByRole('link', { name: 'BrainFlowy' })
+        2) <h1>Sign In to BrainFlowy</h1> aka getByRole('heading', { name: 'Sign In to BrainFlowy' })
+
+    Call log:
+    [2m  - waiting for locator('h1')[22m
+
+
+      15 |     
+      16 |     // Check what's visible
+    > 17 |     const h1 = await page.locator('h1').textContent();
+         |                                         ^
+      18 |     console.log('H1 content:', h1);
+      19 |     
+      20 |     // Check for any inputs
+        at /Users/timothyjoo/brainflowy/tests/debug.spec.ts:17:41
+
+    Error Context: test-results/debug-Debug-Tests-check-what-is-on-login-page-firefox/error-context.md
+
+  12) [firefox] › tests/keyboard-shortcuts.spec.ts:143:7 › Keyboard Shortcuts and Navigation › should search with Ctrl+F / Cmd+F 
+
+    Error: [31mTimed out 5000ms waiting for [39m[2mexpect([22m[31mlocator[39m[2m).[22mtoBeFocused[2m()[22m
+
+    Locator: locator('input[type="search"], input[placeholder*="search" i]').first()
+    Expected: focused
+    Received: inactive
+    Call log:
+    [2m  - Expect "toBeFocused" with timeout 5000ms[22m
+    [2m  - waiting for locator('input[type="search"], input[placeholder*="search" i]').first()[22m
+    [2m    9 × locator resolved to <input value="" type="text" placeholder="Search outline..." class="pl-9 pr-4 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"/>[22m
+    [2m      - unexpected value "inactive"[22m
+
+
+      150 |     if (await searchInput.count() > 0) {
+      151 |       await expect(searchInput.first()).toBeVisible();
+    > 152 |       await expect(searchInput.first()).toBeFocused();
+          |                                         ^
+      153 |     }
+      154 |   });
+      155 |
+        at /Users/timothyjoo/brainflowy/tests/keyboard-shortcuts.spec.ts:152:41
+
+    Error Context: test-results/keyboard-shortcuts-Keyboar-7edbb-ld-search-with-Ctrl-F-Cmd-F-firefox/error-context.md
+
+  13) [firefox] › tests/keyboard-shortcuts.spec.ts:210:7 › Keyboard Shortcuts and Navigation › should navigate between panes with Tab 
+
+    Error: [2mexpect([22m[31mreceived[39m[2m).[22mnot[2m.[22mtoBe[2m([22m[32mexpected[39m[2m) // Object.is equality[22m
+
+    Expected: not [32m"text-gray-700 hover:text-gray-900"[39m
+
+      218 |     
+      219 |     if (firstElement && secondElement) {
+    > 220 |       expect(firstElement).not.toBe(secondElement);
+          |                                ^
+      221 |     }
+      222 |   });
+      223 |
+        at /Users/timothyjoo/brainflowy/tests/keyboard-shortcuts.spec.ts:220:32
+
+    Error Context: test-results/keyboard-shortcuts-Keyboar-0eec4-gate-between-panes-with-Tab-firefox/error-context.md
+
+  14) [firefox] › tests/outline-full-functionality.spec.ts:4:7 › Full Outline Functionality - Create, Style, Nest, and Persist › should create multi-level hierarchy with different styles and verify backend persistence 
+
+    [31mTest timeout of 10000ms exceeded.[39m
+
+    Error: locator.innerHTML: Test timeout of 10000ms exceeded.
+    Call log:
+    [2m  - waiting for locator('.outline-content, .outline-items, .outline-container, main').first()[22m
+
+
+      15 |     // Look for the outline area
+      16 |     const outlineArea = page.locator('.outline-content, .outline-items, .outline-container, main').first();
+    > 17 |     const outlineHTML = await outlineArea.innerHTML();
+         |                                           ^
+      18 |     console.log('Outline area HTML (first 500 chars):', outlineHTML.substring(0, 500));
+      19 |     
+      20 |     // Strategy 1: Try to find and click the add/plus button
+        at /Users/timothyjoo/brainflowy/tests/outline-full-functionality.spec.ts:17:43
+
+    Error Context: test-results/outline-full-functionality-b94de--verify-backend-persistence-firefox/error-context.md
+
+  15) [firefox] › tests/outline-nesting.spec.ts:4:7 › Outline Nesting and Hierarchy › should create nested bullet hierarchy with Tab key 
+
+    Error: [31mTimed out 5000ms waiting for [39m[2mexpect([22m[31mlocator[39m[2m).[22mtoBeVisible[2m()[22m
+
+    Locator: locator('text=Parent Item')
+    Expected: visible
+    Received: <element(s) not found>
+    Call log:
+    [2m  - Expect "toBeVisible" with timeout 5000ms[22m
+    [2m  - waiting for locator('text=Parent Item')[22m
+
+
+      87 |     const grandchildItem = page.locator('text=Grandchild Item');
+      88 |     
+    > 89 |     await expect(parentItem).toBeVisible();
+         |                              ^
+      90 |     await expect(childItem1).toBeVisible();
+      91 |     await expect(childItem2).toBeVisible();
+      92 |     await expect(grandchildItem).toBeVisible();
+        at /Users/timothyjoo/brainflowy/tests/outline-nesting.spec.ts:89:30
+
+    Error Context: test-results/outline-nesting-Outline-Ne-6bd6f-llet-hierarchy-with-Tab-key-firefox/error-context.md
+
+  16) [firefox] › tests/outline-nesting.spec.ts:107:7 › Outline Nesting and Hierarchy › should outdent items with Shift+Tab 
+
+    [31mTest timeout of 10000ms exceeded.[39m
+
+    Error: locator.boundingBox: Test timeout of 10000ms exceeded.
+    Call log:
+    [2m  - waiting for locator('text=Item to outdent')[22m
+
+
+      125 |       // Verify it's at root level (no indentation)
+      126 |       const item = page.locator('text=Item to outdent');
+    > 127 |       const box = await item.boundingBox();
+          |                              ^
+      128 |       
+      129 |       if (box) {
+      130 |         // Should be at or near the left edge (root level)
+        at /Users/timothyjoo/brainflowy/tests/outline-nesting.spec.ts:127:30
+
+    Error Context: test-results/outline-nesting-Outline-Ne-63c4f-utdent-items-with-Shift-Tab-firefox/error-context.md
+
+  17) [firefox] › tests/responsive.spec.ts:98:7 › Responsive Design - Mobile › should display mobile layout 
+
+    Error: browser.newContext: options.isMobile is not supported in Firefox
+
+       97 | test.describe('Responsive Design - Mobile', () => {
+       98 |   test('should display mobile layout', async ({ browser }) => {
+    >  99 |     const context = await browser.newContext({
+          |                     ^
+      100 |       ...devices['iPhone 12']
+      101 |     });
+      102 |     const page = await context.newPage();
+        at /Users/timothyjoo/brainflowy/tests/responsive.spec.ts:99:21
+
+  18) [firefox] › tests/responsive.spec.ts:114:7 › Responsive Design - Mobile › should have touch-friendly button sizes 
+
+    Error: browser.newContext: options.isMobile is not supported in Firefox
+
+      113 |
+      114 |   test('should have touch-friendly button sizes', async ({ browser }) => {
+    > 115 |     const context = await browser.newContext({
+          |                     ^
+      116 |       ...devices['iPhone 12']
+      117 |     });
+      118 |     const page = await context.newPage();
+        at /Users/timothyjoo/brainflowy/tests/responsive.spec.ts:115:21
+
+  19) [firefox] › tests/responsive.spec.ts:140:7 › Responsive Design - Mobile › should stack content vertically on mobile 
+
+    Error: browser.newContext: options.isMobile is not supported in Firefox
+
+      139 |
+      140 |   test('should stack content vertically on mobile', async ({ browser }) => {
+    > 141 |     const context = await browser.newContext({
+          |                     ^
+      142 |       ...devices['iPhone 12']
+      143 |     });
+      144 |     const page = await context.newPage();
+        at /Users/timothyjoo/brainflowy/tests/responsive.spec.ts:141:21
+
+  20) [firefox] › tests/responsive.spec.ts:158:7 › Responsive Design - Mobile › should show mobile menu when hamburger clicked 
+
+    Error: browser.newContext: options.isMobile is not supported in Firefox
+
+      157 |
+      158 |   test('should show mobile menu when hamburger clicked', async ({ browser }) => {
+    > 159 |     const context = await browser.newContext({
+          |                     ^
+      160 |       ...devices['iPhone 12']
+      161 |     });
+      162 |     const page = await context.newPage();
+        at /Users/timothyjoo/brainflowy/tests/responsive.spec.ts:159:21
+
+    Error Context: test-results/responsive-Responsive-Desi-e5fad-menu-when-hamburger-clicked-firefox/error-context.md
+
+  21) [firefox] › tests/responsive.spec.ts:177:7 › Responsive Design - Mobile › should handle touch gestures on mobile 
+
+    Error: browser.newContext: options.isMobile is not supported in Firefox
+
+      176 |
+      177 |   test('should handle touch gestures on mobile', async ({ browser }) => {
+    > 178 |     const context = await browser.newContext({
+          |                     ^
+      179 |       ...devices['iPhone 12']
+      180 |     });
+      181 |     const page = await context.newPage();
+        at /Users/timothyjoo/brainflowy/tests/responsive.spec.ts:178:21
+
+  22) [firefox] › tests/voice.spec.ts:10:7 › Voice Transcription › should display voice recording button 
+
+    Error: browserContext.grantPermissions: Unknown permission: microphone
+
+      3 | test.describe('Voice Transcription', () => {
+      4 |   test.beforeEach(async ({ page, context }) => {
+    > 5 |     await context.grantPermissions(['microphone']);
+        |                   ^
+      6 |     await page.goto('http://localhost:5176/outlines');
+      7 |     await page.waitForLoadState('networkidle');
+      8 |   });
+        at /Users/timothyjoo/brainflowy/tests/voice.spec.ts:5:19
+
+  23) [firefox] › tests/voice.spec.ts:18:7 › Voice Transcription › should open voice modal when clicking record button 
+
+    Error: browserContext.grantPermissions: Unknown permission: microphone
+
+      3 | test.describe('Voice Transcription', () => {
+      4 |   test.beforeEach(async ({ page, context }) => {
+    > 5 |     await context.grantPermissions(['microphone']);
+        |                   ^
+      6 |     await page.goto('http://localhost:5176/outlines');
+      7 |     await page.waitForLoadState('networkidle');
+      8 |   });
+        at /Users/timothyjoo/brainflowy/tests/voice.spec.ts:5:19
+
+  24) [firefox] › tests/voice.spec.ts:37:7 › Voice Transcription › should show recording indicators when recording 
+
+    Error: browserContext.grantPermissions: Unknown permission: microphone
+
+      3 | test.describe('Voice Transcription', () => {
+      4 |   test.beforeEach(async ({ page, context }) => {
+    > 5 |     await context.grantPermissions(['microphone']);
+        |                   ^
+      6 |     await page.goto('http://localhost:5176/outlines');
+      7 |     await page.waitForLoadState('networkidle');
+      8 |   });
+        at /Users/timothyjoo/brainflowy/tests/voice.spec.ts:5:19
+
+  25) [firefox] › tests/voice.spec.ts:67:7 › Voice Transcription › should display transcription after recording 
+
+    Error: browserContext.grantPermissions: Unknown permission: microphone
+
+      3 | test.describe('Voice Transcription', () => {
+      4 |   test.beforeEach(async ({ page, context }) => {
+    > 5 |     await context.grantPermissions(['microphone']);
+        |                   ^
+      6 |     await page.goto('http://localhost:5176/outlines');
+      7 |     await page.waitForLoadState('networkidle');
+      8 |   });
+        at /Users/timothyjoo/brainflowy/tests/voice.spec.ts:5:19
+
+  26) [firefox] › tests/voice.spec.ts:93:7 › Voice Transcription › should allow editing transcription 
+
+    Error: browserContext.grantPermissions: Unknown permission: microphone
+
+      3 | test.describe('Voice Transcription', () => {
+      4 |   test.beforeEach(async ({ page, context }) => {
+    > 5 |     await context.grantPermissions(['microphone']);
+        |                   ^
+      6 |     await page.goto('http://localhost:5176/outlines');
+      7 |     await page.waitForLoadState('networkidle');
+      8 |   });
+        at /Users/timothyjoo/brainflowy/tests/voice.spec.ts:5:19
+
+  27) [firefox] › tests/voice.spec.ts:108:7 › Voice Transcription › should add transcription to outline 
+
+    Error: browserContext.grantPermissions: Unknown permission: microphone
+
+      3 | test.describe('Voice Transcription', () => {
+      4 |   test.beforeEach(async ({ page, context }) => {
+    > 5 |     await context.grantPermissions(['microphone']);
+        |                   ^
+      6 |     await page.goto('http://localhost:5176/outlines');
+      7 |     await page.waitForLoadState('networkidle');
+      8 |   });
+        at /Users/timothyjoo/brainflowy/tests/voice.spec.ts:5:19
+
+  28) [firefox] › tests/voice.spec.ts:133:7 › Voice Transcription › should show audio waveform visualization 
+
+    Error: browserContext.grantPermissions: Unknown permission: microphone
+
+      3 | test.describe('Voice Transcription', () => {
+      4 |   test.beforeEach(async ({ page, context }) => {
+    > 5 |     await context.grantPermissions(['microphone']);
+        |                   ^
+      6 |     await page.goto('http://localhost:5176/outlines');
+      7 |     await page.waitForLoadState('networkidle');
+      8 |   });
+        at /Users/timothyjoo/brainflowy/tests/voice.spec.ts:5:19
+
+    Error Context: test-results/voice-Voice-Transcription--d0e0c-udio-waveform-visualization-firefox/error-context.md
+
+  29) [firefox] › tests/voice.spec.ts:153:7 › Voice Transcription › should handle pause and resume recording 
+
+    Error: browserContext.grantPermissions: Unknown permission: microphone
+
+      3 | test.describe('Voice Transcription', () => {
+      4 |   test.beforeEach(async ({ page, context }) => {
+    > 5 |     await context.grantPermissions(['microphone']);
+        |                   ^
+      6 |     await page.goto('http://localhost:5176/outlines');
+      7 |     await page.waitForLoadState('networkidle');
+      8 |   });
+        at /Users/timothyjoo/brainflowy/tests/voice.spec.ts:5:19
+
+  30) [firefox] › tests/voice.spec.ts:180:7 › Voice Transcription › should cancel recording ────────
+
+    Error: browserContext.grantPermissions: Unknown permission: microphone
+
+      3 | test.describe('Voice Transcription', () => {
+      4 |   test.beforeEach(async ({ page, context }) => {
+    > 5 |     await context.grantPermissions(['microphone']);
+        |                   ^
+      6 |     await page.goto('http://localhost:5176/outlines');
+      7 |     await page.waitForLoadState('networkidle');
+      8 |   });
+        at /Users/timothyjoo/brainflowy/tests/voice.spec.ts:5:19
+
+  31) [firefox] › tests/voice.spec.ts:206:7 › Voice Transcription › should show error when microphone access is denied 
+
+    Error: browserContext.grantPermissions: Unknown permission: microphone
+
+      3 | test.describe('Voice Transcription', () => {
+      4 |   test.beforeEach(async ({ page, context }) => {
+    > 5 |     await context.grantPermissions(['microphone']);
+        |                   ^
+      6 |     await page.goto('http://localhost:5176/outlines');
+      7 |     await page.waitForLoadState('networkidle');
+      8 |   });
+        at /Users/timothyjoo/brainflowy/tests/voice.spec.ts:5:19
+
+  32) [webkit] › tests/auth.spec.ts:67:7 › Authentication › should handle login form submission ────
+
+    Error: [31mTimed out 5000ms waiting for [39m[2mexpect([22m[31mpage[39m[2m).[22mtoHaveURL[2m([22m[32mexpected[39m[2m)[22m
+
+    Expected pattern: [32m/.*outlines/[39m
+    Received string:  [31m"http://localhost:5176/"[39m
+    Call log:
+    [2m  - Expect "toHaveURL" with timeout 5000ms[22m
+    [2m    9 × unexpected value "http://localhost:5176/"[22m
+
+
+      85 |     if (response) {
+      86 |       if (response.status() === 200) {
+    > 87 |         await expect(page).toHaveURL(/.*outlines/);
+         |                            ^
+      88 |       }
+      89 |     }
+      90 |   });
+        at /Users/timothyjoo/brainflowy/tests/auth.spec.ts:87:28
+
+    Error Context: test-results/auth-Authentication-should-handle-login-form-submission-webkit/error-context.md
+
+  33) [webkit] › tests/core-outline-test.spec.ts:4:7 › Core Outline Functionality › creates nested bullets with different styles 
+
+    Error: No textareas found on page - cannot create bullets
+
+      14 |     
+      15 |     if (textareas.length === 0) {
+    > 16 |       throw new Error('No textareas found on page - cannot create bullets');
+         |             ^
+      17 |     }
+      18 |     
+      19 |     // Click on the first textarea to focus it
+        at /Users/timothyjoo/brainflowy/tests/core-outline-test.spec.ts:16:13
+
+    Error Context: test-results/core-outline-test-Core-Out-e3636-llets-with-different-styles-webkit/error-context.md
+
+  34) [webkit] › tests/debug.spec.ts:4:7 › Debug Tests › check what is on login page ───────────────
+
+    Error: locator.textContent: Error: strict mode violation: locator('h1') resolved to 2 elements:
+        1) <h1>BrainFlowy</h1> aka getByRole('link', { name: 'BrainFlowy' })
+        2) <h1>Sign In to BrainFlowy</h1> aka getByRole('heading', { name: 'Sign In to BrainFlowy' })
+
+    Call log:
+    [2m  - waiting for locator('h1')[22m
+
+
+      15 |     
+      16 |     // Check what's visible
+    > 17 |     const h1 = await page.locator('h1').textContent();
+         |                                         ^
+      18 |     console.log('H1 content:', h1);
+      19 |     
+      20 |     // Check for any inputs
+        at /Users/timothyjoo/brainflowy/tests/debug.spec.ts:17:41
+
+    Error Context: test-results/debug-Debug-Tests-check-what-is-on-login-page-webkit/error-context.md
+
+  35) [webkit] › tests/keyboard-shortcuts.spec.ts:143:7 › Keyboard Shortcuts and Navigation › should search with Ctrl+F / Cmd+F 
+
+    Error: [31mTimed out 5000ms waiting for [39m[2mexpect([22m[31mlocator[39m[2m).[22mtoBeFocused[2m()[22m
+
+    Locator: locator('input[type="search"], input[placeholder*="search" i]').first()
+    Expected: focused
+    Received: inactive
+    Call log:
+    [2m  - Expect "toBeFocused" with timeout 5000ms[22m
+    [2m  - waiting for locator('input[type="search"], input[placeholder*="search" i]').first()[22m
+    [2m    9 × locator resolved to <input value="" type="text" placeholder="Search outline..." class="pl-9 pr-4 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"/>[22m
+    [2m      - unexpected value "inactive"[22m
+
+
+      150 |     if (await searchInput.count() > 0) {
+      151 |       await expect(searchInput.first()).toBeVisible();
+    > 152 |       await expect(searchInput.first()).toBeFocused();
+          |                                         ^
+      153 |     }
+      154 |   });
+      155 |
+        at /Users/timothyjoo/brainflowy/tests/keyboard-shortcuts.spec.ts:152:41
+
+    Error Context: test-results/keyboard-shortcuts-Keyboar-7edbb-ld-search-with-Ctrl-F-Cmd-F-webkit/error-context.md
+
+  36) [webkit] › tests/keyboard-shortcuts.spec.ts:210:7 › Keyboard Shortcuts and Navigation › should navigate between panes with Tab 
+
+    [31mTest timeout of 10000ms exceeded.[39m
+
+    Error: locator.getAttribute: Test timeout of 10000ms exceeded.
+    Call log:
+    [2m  - waiting for locator(':focus')[22m
+
+
+      215 |     await page.keyboard.press('Tab');
+      216 |     focusedElement = await page.locator(':focus');
+    > 217 |     const secondElement = await focusedElement.getAttribute('class');
+          |                                                ^
+      218 |     
+      219 |     if (firstElement && secondElement) {
+      220 |       expect(firstElement).not.toBe(secondElement);
+        at /Users/timothyjoo/brainflowy/tests/keyboard-shortcuts.spec.ts:217:48
+
+    Error Context: test-results/keyboard-shortcuts-Keyboar-0eec4-gate-between-panes-with-Tab-webkit/error-context.md
+
+  37) [webkit] › tests/outline-full-functionality.spec.ts:4:7 › Full Outline Functionality - Create, Style, Nest, and Persist › should create multi-level hierarchy with different styles and verify backend persistence 
+
+    [31mTest timeout of 10000ms exceeded.[39m
+
+    Error: locator.innerHTML: Test timeout of 10000ms exceeded.
+    Call log:
+    [2m  - waiting for locator('.outline-content, .outline-items, .outline-container, main').first()[22m
+
+
+      15 |     // Look for the outline area
+      16 |     const outlineArea = page.locator('.outline-content, .outline-items, .outline-container, main').first();
+    > 17 |     const outlineHTML = await outlineArea.innerHTML();
+         |                                           ^
+      18 |     console.log('Outline area HTML (first 500 chars):', outlineHTML.substring(0, 500));
+      19 |     
+      20 |     // Strategy 1: Try to find and click the add/plus button
+        at /Users/timothyjoo/brainflowy/tests/outline-full-functionality.spec.ts:17:43
+
+    Error Context: test-results/outline-full-functionality-b94de--verify-backend-persistence-webkit/error-context.md
+
+  38) [webkit] › tests/outline-nesting.spec.ts:4:7 › Outline Nesting and Hierarchy › should create nested bullet hierarchy with Tab key 
+
+    Error: [31mTimed out 5000ms waiting for [39m[2mexpect([22m[31mlocator[39m[2m).[22mtoBeVisible[2m()[22m
+
+    Locator: locator('text=Parent Item')
+    Expected: visible
+    Received: <element(s) not found>
+    Call log:
+    [2m  - Expect "toBeVisible" with timeout 5000ms[22m
+    [2m  - waiting for locator('text=Parent Item')[22m
+
+
+      87 |     const grandchildItem = page.locator('text=Grandchild Item');
+      88 |     
+    > 89 |     await expect(parentItem).toBeVisible();
+         |                              ^
+      90 |     await expect(childItem1).toBeVisible();
+      91 |     await expect(childItem2).toBeVisible();
+      92 |     await expect(grandchildItem).toBeVisible();
+        at /Users/timothyjoo/brainflowy/tests/outline-nesting.spec.ts:89:30
+
+    Error Context: test-results/outline-nesting-Outline-Ne-6bd6f-llet-hierarchy-with-Tab-key-webkit/error-context.md
+
+  39) [webkit] › tests/outline-nesting.spec.ts:107:7 › Outline Nesting and Hierarchy › should outdent items with Shift+Tab 
+
+    [31mTest timeout of 10000ms exceeded.[39m
+
+    Error: locator.boundingBox: Test timeout of 10000ms exceeded.
+    Call log:
+    [2m  - waiting for locator('text=Item to outdent')[22m
+
+
+      125 |       // Verify it's at root level (no indentation)
+      126 |       const item = page.locator('text=Item to outdent');
+    > 127 |       const box = await item.boundingBox();
+          |                              ^
+      128 |       
+      129 |       if (box) {
+      130 |         // Should be at or near the left edge (root level)
+        at /Users/timothyjoo/brainflowy/tests/outline-nesting.spec.ts:127:30
+
+    Error Context: test-results/outline-nesting-Outline-Ne-63c4f-utdent-items-with-Shift-Tab-webkit/error-context.md
+
+  40) [webkit] › tests/voice.spec.ts:10:7 › Voice Transcription › should display voice recording button 
+
+    Error: browserContext.grantPermissions: Unknown permission: microphone
+
+      3 | test.describe('Voice Transcription', () => {
+      4 |   test.beforeEach(async ({ page, context }) => {
+    > 5 |     await context.grantPermissions(['microphone']);
+        |                   ^
+      6 |     await page.goto('http://localhost:5176/outlines');
+      7 |     await page.waitForLoadState('networkidle');
+      8 |   });
+        at /Users/timothyjoo/brainflowy/tests/voice.spec.ts:5:19
+
+    Error Context: test-results/voice-Voice-Transcription--9baa2-play-voice-recording-button-webkit/error-context.md
+
+  41) [webkit] › tests/voice.spec.ts:18:7 › Voice Transcription › should open voice modal when clicking record button 
+
+    Error: browserContext.grantPermissions: Unknown permission: microphone
+
+      3 | test.describe('Voice Transcription', () => {
+      4 |   test.beforeEach(async ({ page, context }) => {
+    > 5 |     await context.grantPermissions(['microphone']);
+        |                   ^
+      6 |     await page.goto('http://localhost:5176/outlines');
+      7 |     await page.waitForLoadState('networkidle');
+      8 |   });
+        at /Users/timothyjoo/brainflowy/tests/voice.spec.ts:5:19
+
+    Error Context: test-results/voice-Voice-Transcription--85317-when-clicking-record-button-webkit/error-context.md
+
+  42) [webkit] › tests/voice.spec.ts:37:7 › Voice Transcription › should show recording indicators when recording 
+
+    Error: browserContext.grantPermissions: Unknown permission: microphone
+
+      3 | test.describe('Voice Transcription', () => {
+      4 |   test.beforeEach(async ({ page, context }) => {
+    > 5 |     await context.grantPermissions(['microphone']);
+        |                   ^
+      6 |     await page.goto('http://localhost:5176/outlines');
+      7 |     await page.waitForLoadState('networkidle');
+      8 |   });
+        at /Users/timothyjoo/brainflowy/tests/voice.spec.ts:5:19
+
+  43) [webkit] › tests/voice.spec.ts:67:7 › Voice Transcription › should display transcription after recording 
+
+    Error: browserContext.grantPermissions: Unknown permission: microphone
+
+      3 | test.describe('Voice Transcription', () => {
+      4 |   test.beforeEach(async ({ page, context }) => {
+    > 5 |     await context.grantPermissions(['microphone']);
+        |                   ^
+      6 |     await page.goto('http://localhost:5176/outlines');
+      7 |     await page.waitForLoadState('networkidle');
+      8 |   });
+        at /Users/timothyjoo/brainflowy/tests/voice.spec.ts:5:19
+
+  44) [webkit] › tests/voice.spec.ts:93:7 › Voice Transcription › should allow editing transcription 
+
+    Error: browserContext.grantPermissions: Unknown permission: microphone
+
+      3 | test.describe('Voice Transcription', () => {
+      4 |   test.beforeEach(async ({ page, context }) => {
+    > 5 |     await context.grantPermissions(['microphone']);
+        |                   ^
+      6 |     await page.goto('http://localhost:5176/outlines');
+      7 |     await page.waitForLoadState('networkidle');
+      8 |   });
+        at /Users/timothyjoo/brainflowy/tests/voice.spec.ts:5:19
+
+    Error Context: test-results/voice-Voice-Transcription-should-allow-editing-transcription-webkit/error-context.md
+
+  45) [webkit] › tests/voice.spec.ts:108:7 › Voice Transcription › should add transcription to outline 
+
+    Error: browserContext.grantPermissions: Unknown permission: microphone
+
+      3 | test.describe('Voice Transcription', () => {
+      4 |   test.beforeEach(async ({ page, context }) => {
+    > 5 |     await context.grantPermissions(['microphone']);
+        |                   ^
+      6 |     await page.goto('http://localhost:5176/outlines');
+      7 |     await page.waitForLoadState('networkidle');
+      8 |   });
+        at /Users/timothyjoo/brainflowy/tests/voice.spec.ts:5:19
+
+  46) [webkit] › tests/voice.spec.ts:133:7 › Voice Transcription › should show audio waveform visualization 
+
+    Error: browserContext.grantPermissions: Unknown permission: microphone
+
+      3 | test.describe('Voice Transcription', () => {
+      4 |   test.beforeEach(async ({ page, context }) => {
+    > 5 |     await context.grantPermissions(['microphone']);
+        |                   ^
+      6 |     await page.goto('http://localhost:5176/outlines');
+      7 |     await page.waitForLoadState('networkidle');
+      8 |   });
+        at /Users/timothyjoo/brainflowy/tests/voice.spec.ts:5:19
+
+  47) [webkit] › tests/voice.spec.ts:153:7 › Voice Transcription › should handle pause and resume recording 
+
+    Error: browserContext.grantPermissions: Unknown permission: microphone
+
+      3 | test.describe('Voice Transcription', () => {
+      4 |   test.beforeEach(async ({ page, context }) => {
+    > 5 |     await context.grantPermissions(['microphone']);
+        |                   ^
+      6 |     await page.goto('http://localhost:5176/outlines');
+      7 |     await page.waitForLoadState('networkidle');
+      8 |   });
+        at /Users/timothyjoo/brainflowy/tests/voice.spec.ts:5:19
+
+  48) [webkit] › tests/voice.spec.ts:180:7 › Voice Transcription › should cancel recording ─────────
+
+    Error: browserContext.grantPermissions: Unknown permission: microphone
+
+      3 | test.describe('Voice Transcription', () => {
+      4 |   test.beforeEach(async ({ page, context }) => {
+    > 5 |     await context.grantPermissions(['microphone']);
+        |                   ^
+      6 |     await page.goto('http://localhost:5176/outlines');
+      7 |     await page.waitForLoadState('networkidle');
+      8 |   });
+        at /Users/timothyjoo/brainflowy/tests/voice.spec.ts:5:19
+
+  49) [webkit] › tests/voice.spec.ts:206:7 › Voice Transcription › should show error when microphone access is denied 
+
+    Error: browserContext.grantPermissions: Unknown permission: microphone
+
+      3 | test.describe('Voice Transcription', () => {
+      4 |   test.beforeEach(async ({ page, context }) => {
+    > 5 |     await context.grantPermissions(['microphone']);
+        |                   ^
+      6 |     await page.goto('http://localhost:5176/outlines');
+      7 |     await page.waitForLoadState('networkidle');
+      8 |   });
+        at /Users/timothyjoo/brainflowy/tests/voice.spec.ts:5:19
+
+  49 failed
+    [chromium] › tests/auth.spec.ts:67:7 › Authentication › should handle login form submission ────
+    [chromium] › tests/core-outline-test.spec.ts:4:7 › Core Outline Functionality › creates nested bullets with different styles 
+    [chromium] › tests/debug.spec.ts:4:7 › Debug Tests › check what is on login page ───────────────
+    [chromium] › tests/keyboard-shortcuts.spec.ts:143:7 › Keyboard Shortcuts and Navigation › should search with Ctrl+F / Cmd+F 
+    [chromium] › tests/keyboard-shortcuts.spec.ts:210:7 › Keyboard Shortcuts and Navigation › should navigate between panes with Tab 
+    [chromium] › tests/outline-full-functionality.spec.ts:4:7 › Full Outline Functionality - Create, Style, Nest, and Persist › should create multi-level hierarchy with different styles and verify backend persistence 
+    [chromium] › tests/outline-nesting.spec.ts:4:7 › Outline Nesting and Hierarchy › should create nested bullet hierarchy with Tab key 
+    [chromium] › tests/outline-nesting.spec.ts:107:7 › Outline Nesting and Hierarchy › should outdent items with Shift+Tab 
+    [firefox] › tests/auth.spec.ts:67:7 › Authentication › should handle login form submission ─────
+    [firefox] › tests/core-outline-test.spec.ts:4:7 › Core Outline Functionality › creates nested bullets with different styles 
+    [firefox] › tests/debug.spec.ts:4:7 › Debug Tests › check what is on login page ────────────────
+    [firefox] › tests/keyboard-shortcuts.spec.ts:143:7 › Keyboard Shortcuts and Navigation › should search with Ctrl+F / Cmd+F 
+    [firefox] › tests/keyboard-shortcuts.spec.ts:210:7 › Keyboard Shortcuts and Navigation › should navigate between panes with Tab 
+    [firefox] › tests/outline-full-functionality.spec.ts:4:7 › Full Outline Functionality - Create, Style, Nest, and Persist › should create multi-level hierarchy with different styles and verify backend persistence 
+    [firefox] › tests/outline-nesting.spec.ts:4:7 › Outline Nesting and Hierarchy › should create nested bullet hierarchy with Tab key 
+    [firefox] › tests/outline-nesting.spec.ts:107:7 › Outline Nesting and Hierarchy › should outdent items with Shift+Tab 
+    [firefox] › tests/responsive.spec.ts:98:7 › Responsive Design - Mobile › should display mobile layout 
+    [firefox] › tests/responsive.spec.ts:114:7 › Responsive Design - Mobile › should have touch-friendly button sizes 
+    [firefox] › tests/responsive.spec.ts:140:7 › Responsive Design - Mobile › should stack content vertically on mobile 
+    [firefox] › tests/responsive.spec.ts:158:7 › Responsive Design - Mobile › should show mobile menu when hamburger clicked 
+    [firefox] › tests/responsive.spec.ts:177:7 › Responsive Design - Mobile › should handle touch gestures on mobile 
+    [firefox] › tests/voice.spec.ts:10:7 › Voice Transcription › should display voice recording button 
+    [firefox] › tests/voice.spec.ts:18:7 › Voice Transcription › should open voice modal when clicking record button 
+    [firefox] › tests/voice.spec.ts:37:7 › Voice Transcription › should show recording indicators when recording 
+    [firefox] › tests/voice.spec.ts:67:7 › Voice Transcription › should display transcription after recording 
+    [firefox] › tests/voice.spec.ts:93:7 › Voice Transcription › should allow editing transcription 
+    [firefox] › tests/voice.spec.ts:108:7 › Voice Transcription › should add transcription to outline 
+    [firefox] › tests/voice.spec.ts:133:7 › Voice Transcription › should show audio waveform visualization 
+    [firefox] › tests/voice.spec.ts:153:7 › Voice Transcription › should handle pause and resume recording 
+    [firefox] › tests/voice.spec.ts:180:7 › Voice Transcription › should cancel recording ──────────
+    [firefox] › tests/voice.spec.ts:206:7 › Voice Transcription › should show error when microphone access is denied 
+    [webkit] › tests/auth.spec.ts:67:7 › Authentication › should handle login form submission ──────
+    [webkit] › tests/core-outline-test.spec.ts:4:7 › Core Outline Functionality › creates nested bullets with different styles 
+    [webkit] › tests/debug.spec.ts:4:7 › Debug Tests › check what is on login page ─────────────────
+    [webkit] › tests/keyboard-shortcuts.spec.ts:143:7 › Keyboard Shortcuts and Navigation › should search with Ctrl+F / Cmd+F 
+    [webkit] › tests/keyboard-shortcuts.spec.ts:210:7 › Keyboard Shortcuts and Navigation › should navigate between panes with Tab 
+    [webkit] › tests/outline-full-functionality.spec.ts:4:7 › Full Outline Functionality - Create, Style, Nest, and Persist › should create multi-level hierarchy with different styles and verify backend persistence 
+    [webkit] › tests/outline-nesting.spec.ts:4:7 › Outline Nesting and Hierarchy › should create nested bullet hierarchy with Tab key 
+    [webkit] › tests/outline-nesting.spec.ts:107:7 › Outline Nesting and Hierarchy › should outdent items with Shift+Tab 
+    [webkit] › tests/voice.spec.ts:10:7 › Voice Transcription › should display voice recording button 
+    [webkit] › tests/voice.spec.ts:18:7 › Voice Transcription › should open voice modal when clicking record button 
+    [webkit] › tests/voice.spec.ts:37:7 › Voice Transcription › should show recording indicators when recording 
+    [webkit] › tests/voice.spec.ts:67:7 › Voice Transcription › should display transcription after recording 
+    [webkit] › tests/voice.spec.ts:93:7 › Voice Transcription › should allow editing transcription ─
+    [webkit] › tests/voice.spec.ts:108:7 › Voice Transcription › should add transcription to outline 
+    [webkit] › tests/voice.spec.ts:133:7 › Voice Transcription › should show audio waveform visualization 
+    [webkit] › tests/voice.spec.ts:153:7 › Voice Transcription › should handle pause and resume recording 
+    [webkit] › tests/voice.spec.ts:180:7 › Voice Transcription › should cancel recording ───────────
+    [webkit] › tests/voice.spec.ts:206:7 › Voice Transcription › should show error when microphone access is denied 
+  275 passed (1.5m)
