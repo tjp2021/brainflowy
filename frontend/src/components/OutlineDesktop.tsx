@@ -61,6 +61,31 @@ const OutlineDesktop: React.FC<OutlineDesktopProps> = ({
   };
 
   const flatItems = flattenOutline(outline);
+  
+  // Filter items based on search query
+  const filteredItems = searchQuery 
+    ? flatItems.filter(item => 
+        item.text.toLowerCase().includes(searchQuery.toLowerCase())
+      )
+    : flatItems;
+  
+  // Helper to highlight search terms in text
+  const highlightSearchTerm = (text: string) => {
+    if (!searchQuery) return text;
+    
+    const regex = new RegExp(`(${searchQuery})`, 'gi');
+    const parts = text.split(regex);
+    
+    return parts.map((part, index) => 
+      regex.test(part) ? (
+        <mark key={index} className="bg-yellow-200 text-black">
+          {part}
+        </mark>
+      ) : (
+        part
+      )
+    );
+  };
 
   // Load user's outlines on mount
   useEffect(() => {
@@ -926,7 +951,7 @@ const OutlineDesktop: React.FC<OutlineDesktopProps> = ({
         <div className="flex-1 px-6 py-6 overflow-auto outline-desktop-container">
           <div className="max-w-4xl outline-desktop-content">
             <div className="space-y-1">
-              {flatItems.map((item) => (
+              {filteredItems.map((item) => (
                 <div
                   key={item.id}
                   className={`group rounded hover:bg-gray-50 transition-colors ${
@@ -998,7 +1023,7 @@ const OutlineDesktop: React.FC<OutlineDesktopProps> = ({
                             'text-sm text-gray-900'
                           }`}
                         >
-                          {item.text}
+                          {highlightSearchTerm(item.text)}
                         </div>
                       )}
                     </div>
