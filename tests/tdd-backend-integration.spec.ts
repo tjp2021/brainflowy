@@ -102,7 +102,7 @@ test.describe('TDD: Backend Integration & Authentication', () => {
     
     // Should still be logged in
     await expect(page.locator('text=Logout')).toBeVisible();
-    await expect(page.locator('text=My Outlines')).toBeVisible();
+    await expect(page.locator('text=My Outlines').first()).toBeVisible();
     
     // Should not redirect to login
     expect(page.url()).not.toContain('/login');

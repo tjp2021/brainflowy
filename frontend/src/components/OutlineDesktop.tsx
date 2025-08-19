@@ -38,6 +38,7 @@ const OutlineDesktop: React.FC<OutlineDesktopProps> = ({
   const [userOutlines, setUserOutlines] = useState<any[]>([]);
   const [currentOutlineId, setCurrentOutlineId] = useState<string | null>(null);
   const [outlineTitle, setOutlineTitle] = useState(title);
+  const [isLoadingOutlines, setIsLoadingOutlines] = useState(false);
   const textAreaRefs = useRef<{ [key: string]: HTMLTextAreaElement | null }>({});
 
   // Handle logout
@@ -62,25 +63,63 @@ const OutlineDesktop: React.FC<OutlineDesktopProps> = ({
   // Load user's outlines on mount
   useEffect(() => {
     const loadUserOutlines = async () => {
+      // Prevent duplicate loads
+      if (isLoadingOutlines) return;
+      setIsLoadingOutlines(true);
+      
       try {
-        const { outlinesApi } = await import('@/services/api/apiClient');
-        const outlines = await outlinesApi.getOutlines();
-        setUserOutlines(outlines);
+        const { outlinesApi, authApi } = await import('@/services/api/apiClient');
+        const user = await authApi.getCurrentUser();
         
-        // Load first outline if available
-        if (outlines.length > 0 && !currentOutlineId) {
-          setCurrentOutlineId(outlines[0].id);
-          setOutlineTitle(outlines[0].title);
-          const items = await outlinesApi.getOutlineItems(outlines[0].id);
-          setOutline(items as any);
+        if (!user) {
+          console.error('User not authenticated');
+          return;
+        }
+        
+        // Pass the user ID correctly - the backend expects it as a query parameter
+        const outlines = await outlinesApi.getOutlines();
+        console.log('Loaded outlines:', JSON.stringify(outlines, null, 2));
+        
+        // If no outlines exist, create a default one
+        if (!outlines || outlines.length === 0) {
+          console.log('No outlines found, creating default outline...');
+          const newOutline = await outlinesApi.createOutline({
+            title: 'My First Outline',
+            userId: user.id
+          });
+          setUserOutlines([newOutline]);
+          setCurrentOutlineId(newOutline.id);
+          setOutlineTitle(newOutline.title);
+          setOutline([]);
+        } else {
+          setUserOutlines(outlines);
+          // Load first outline if available
+          if (!currentOutlineId) {
+            setCurrentOutlineId(outlines[0].id);
+            setOutlineTitle(outlines[0].title);
+            const items = await outlinesApi.getOutlineItems(outlines[0].id);
+            console.log('Loaded items from outline:', items);
+            // Convert backend format to frontend format
+            const convertedItems = items.map((item: any) => ({
+              ...item,
+              text: item.content || item.text || '',
+              children: item.children || []
+            }));
+            setOutline(convertedItems);
+          }
         }
       } catch (error) {
         console.error('Failed to load outlines:', error);
+      } finally {
+        setIsLoadingOutlines(false);
       }
     };
     
-    loadUserOutlines();
-  }, []);
+    // Only load if we haven't started loading yet
+    if (!isLoadingOutlines && userOutlines.length === 0) {
+      loadUserOutlines();
+    }
+  }, [isLoadingOutlines, userOutlines.length]);
 
   const selectOutline = async (outlineId: string) => {
     try {
@@ -90,7 +129,13 @@ const OutlineDesktop: React.FC<OutlineDesktopProps> = ({
       
       setCurrentOutlineId(outlineId);
       setOutlineTitle(outline.title);
-      setOutline(items as any);
+      // Convert backend format to frontend format
+      const convertedItems = items.map((item: any) => ({
+        ...item,
+        text: item.content || item.text || '',
+        children: item.children || []
+      }));
+      setOutline(convertedItems);
     } catch (error) {
       console.error('Failed to load outline:', error);
     }
@@ -179,12 +224,44 @@ const OutlineDesktop: React.FC<OutlineDesktopProps> = ({
       });
     }).then(async () => {
       // Save to backend if we have an outline ID
-      // Only update if it's not a temporary ID (temporary IDs start with 'item_' followed by timestamp)
-      if (currentOutlineId && !itemId.match(/^item_\d{13}$/)) {
+      if (currentOutlineId) {
         try {
           const { outlinesApi } = await import('@/services/api/apiClient');
-          const response = await outlinesApi.updateItem(currentOutlineId, itemId, { content: newText });
-          console.log('Item updated in backend:', response);
+          
+          // Check if this is a new item (temporary ID)
+          if (itemId.match(/^item_\d{13}$/)) {
+            // Create new item in backend
+            const item = outline.find(i => i.id === itemId);
+            if (item && newText.trim()) {
+              const response = await outlinesApi.createItem(currentOutlineId, {
+                content: newText,
+                parentId: null,
+                style: item.style || 'normal',
+                formatting: item.formatting
+              });
+              console.log('New item created in backend:', response);
+              
+              // Update the temporary ID with the real ID from backend
+              setOutline(prevOutline => {
+                const updateIds = (items: OutlineItem[]): OutlineItem[] => {
+                  return items.map(i => {
+                    if (i.id === itemId) {
+                      return { ...i, id: response.id };
+                    }
+                    if (i.children.length > 0) {
+                      return { ...i, children: updateIds(i.children) };
+                    }
+                    return i;
+                  });
+                };
+                return updateIds(prevOutline);
+              });
+            }
+          } else {
+            // Update existing item
+            const response = await outlinesApi.updateItem(currentOutlineId, itemId, { content: newText });
+            console.log('Item updated in backend:', response);
+          }
         } catch (error) {
           console.error('Failed to save item:', error);
         }
@@ -254,7 +331,7 @@ const OutlineDesktop: React.FC<OutlineDesktopProps> = ({
           const updateItems = (items: OutlineItem[]): OutlineItem[] => {
             return items.map(item => {
               if (item.id === itemId) {
-                console.log(`Saving item ${itemId} with text: "${trimmedValue}"`);
+                console.log(`Saving item ${itemId} with text: "${trimmedValue}" to outline ${currentOutlineId}`);
                 return { ...item, text: trimmedValue, updatedAt: new Date().toISOString() };
               }
               if (item.children.length > 0) {

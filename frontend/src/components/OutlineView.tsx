@@ -27,52 +27,10 @@ const OutlineView: React.FC<OutlineViewProps> = ({ outlineId }) => {
     return () => window.removeEventListener('resize', checkMobile);
   }, []);
 
-  // Load outline data
+  // Don't load outline data here - let OutlineDesktop handle it
   useEffect(() => {
-    const loadOutline = async () => {
-      setLoading(true);
-      try {
-        const { authApi } = await import('@/services/api/apiClient');
-        const user = await authApi.getCurrentUser();
-        
-        if (!user) {
-          // Not logged in - use sample data
-          setItems(getSampleOutlineData());
-          setLoading(false);
-          return;
-        }
-
-        if (outlineId) {
-          // Load existing outline
-          const outline = await outlinesApi.getOutline(outlineId);
-          const items = await outlinesApi.getOutlineItems(outlineId);
-          setTitle(outline.title);
-          setCurrentOutlineId(outlineId);
-          
-          // Convert flat items to hierarchical structure
-          const hierarchicalItems = convertToHierarchical(items);
-          setItems(hierarchicalItems);
-        } else {
-          // Create a new outline for the user
-          const newOutline = await outlinesApi.createOutline({
-            title: `Outline ${new Date().toLocaleDateString()}`,
-            userId: user.id
-          });
-          setCurrentOutlineId(newOutline.id);
-          setTitle(newOutline.title);
-          setItems([]);
-        }
-      } catch (error) {
-        console.error('Failed to load outline:', error);
-        // Use sample data as fallback for demo purposes
-        setItems(getSampleOutlineData());
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    loadOutline();
-  }, [outlineId]);
+    setLoading(false);
+  }, []);
 
   const handleItemsChange = async (updatedItems: OutlineItem[]) => {
     setItems(updatedItems);
@@ -157,7 +115,7 @@ const OutlineView: React.FC<OutlineViewProps> = ({ outlineId }) => {
       ) : (
         <OutlineDesktop 
           title={title}
-          initialItems={items} 
+          initialItems={[]} 
           onItemsChange={handleItemsChange}
         />
       )}
