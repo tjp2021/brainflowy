@@ -295,3 +295,4 @@ config.local.ts
 
 # Task Master specific (keep these for project management)
 # .taskmaster/ 
+backend/mock_db_data.json

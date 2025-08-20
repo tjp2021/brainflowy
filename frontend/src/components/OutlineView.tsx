@@ -33,6 +33,9 @@ const OutlineView: React.FC<OutlineViewProps> = ({ outlineId }) => {
   }, []);
 
   const handleItemsChange = async (updatedItems: OutlineItem[]) => {
+    console.log('handleItemsChange called with', updatedItems.length, 'items');
+    console.log('currentOutlineId:', currentOutlineId);
+    
     // Use setTimeout to avoid setState during render warning
     setTimeout(() => {
       setItems(updatedItems);
@@ -40,6 +43,7 @@ const OutlineView: React.FC<OutlineViewProps> = ({ outlineId }) => {
     
     // Save to backend if we have an outline ID
     if (currentOutlineId) {
+      console.log('Have outline ID, proceeding with save...');
       setSaving(true);
       try {
         // Map to track old ID -> new ID mappings
@@ -78,11 +82,15 @@ const OutlineView: React.FC<OutlineViewProps> = ({ outlineId }) => {
         
         // Process items in order to handle parent-child relationships
         const processNewItems = async (items: OutlineItem[], parentId: string | null = null): Promise<void> => {
+          console.log('Processing items for save:', items.length, 'items');
           for (const item of items) {
+            console.log('Processing item:', item.id, 'text:', item.text);
             // Check if this is a new item
             if (item.id.startsWith('item_') || item.id.startsWith('voice-')) {
+              console.log('Item identified as new, checking text...');
               // Skip items without text or with default "New Item" text
               if (!item.text || item.text === 'New Item' || item.text.trim() === '') {
+                console.log('Skipping item with empty/default text');
                 continue;
               }
               

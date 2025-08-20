@@ -899,7 +899,7 @@ const OutlineDesktop: React.FC<OutlineDesktopProps> = ({
     startEditing(newItem.id);
   };
 
-  const applyBrainliftTemplate = () => {
+  const applyBrainliftTemplate = async () => {
     // Confirm if there are existing items
     if (outline.length > 0) {
       const confirmed = window.confirm(
@@ -908,10 +908,57 @@ const OutlineDesktop: React.FC<OutlineDesktopProps> = ({
       if (!confirmed) return;
     }
     
+    // Make sure we have an outline ID first
+    if (!currentOutlineId) {
+      console.error('No outline ID available, cannot save template');
+      return;
+    }
+    
     // Apply the template
     const templateItems = createBrainliftTemplate();
+    console.log('Generated template items:', templateItems);
+    console.log('Current outline ID:', currentOutlineId);
     setOutline(templateItems);
-    setTimeout(() => onItemsChange?.(templateItems), 0);
+    
+    // Save items directly using the API since we have the outline ID
+    try {
+      console.log('Saving template items to outline:', currentOutlineId);
+      const { outlinesApi } = await import('@/services/api/apiClient');
+      
+      // Create each item
+      for (const item of templateItems) {
+        await createItemWithChildren(item, null, outlinesApi, currentOutlineId);
+      }
+      
+      console.log('Template items saved successfully');
+    } catch (error) {
+      console.error('Failed to save template items:', error);
+    }
+  };
+  
+  // Helper function to recursively create items with children
+  const createItemWithChildren = async (
+    item: OutlineItem, 
+    parentId: string | null,
+    api: any,
+    outlineId: string
+  ): Promise<string> => {
+    // Create the item
+    const created = await api.createItem(outlineId, {
+      content: item.text,
+      parentId: parentId,
+      style: item.style,
+      formatting: item.formatting
+    });
+    
+    // Create children recursively
+    if (item.children && item.children.length > 0) {
+      for (const child of item.children) {
+        await createItemWithChildren(child, created.id, api, outlineId);
+      }
+    }
+    
+    return created.id;
   };
 
   const toggleItemStyle = async (itemId: string, style: 'header' | 'code' | 'quote' | 'normal') => {
