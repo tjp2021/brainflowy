@@ -2,7 +2,8 @@ import React, { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { 
   Plus, Mic, Search, ChevronRight, ChevronDown, ChevronLeft, 
-  Folder, Settings, HelpCircle, MoreHorizontal, GripVertical, FileText
+  Folder, Settings, HelpCircle, MoreHorizontal, GripVertical, FileText,
+  Sparkles
 } from 'lucide-react';
 import {
   DndContext,
@@ -27,6 +28,7 @@ import { useAuth } from '@/hooks/useAuth';
 import type { OutlineItem } from '@/types/outline';
 import VoiceModal from './VoiceModal';
 import { createBrainliftTemplate } from '@/templates/brainliftTemplate';
+import LLMAssistantPanel, { type LLMAction, type LLMResponse } from './LLMAssistantPanel';
 import '../styles/outline.css';
 
 interface OutlineDesktopProps {
@@ -61,6 +63,9 @@ const OutlineDesktop: React.FC<OutlineDesktopProps> = ({
   const [isLoadingOutlines, setIsLoadingOutlines] = useState(false);
   const [showNewOutlineDialog, setShowNewOutlineDialog] = useState(false);
   const [newOutlineName, setNewOutlineName] = useState('');
+  const [showLLMAssistant, setShowLLMAssistant] = useState(false);
+  const [llmCurrentItem, setLLMCurrentItem] = useState<OutlineItem | null>(null);
+  const [llmCurrentSection, setLLMCurrentSection] = useState<string | undefined>();
   const textAreaRefs = useRef<{ [key: string]: HTMLTextAreaElement | null }>({});
 
   // Handle logout
@@ -899,6 +904,110 @@ const OutlineDesktop: React.FC<OutlineDesktopProps> = ({
     startEditing(newItem.id);
   };
 
+  const handleLLMAction = async (action: LLMAction, response: LLMResponse) => {
+    console.log('Applying LLM action:', action, response);
+    
+    if (action.type === 'edit' && action.targetId && response.content) {
+      // Edit existing item
+      const updateItem = (items: OutlineItem[]): OutlineItem[] => {
+        return items.map(item => {
+          if (item.id === action.targetId) {
+            return { ...item, text: response.content! };
+          }
+          if (item.children) {
+            return { ...item, children: updateItem(item.children) };
+          }
+          return item;
+        });
+      };
+      
+      const updatedOutline = updateItem(outline);
+      setOutline(updatedOutline);
+      if (onItemsChange) onItemsChange(updatedOutline);
+      
+    } else if (action.type === 'create' && response.items) {
+      // Create new items
+      const newItems: OutlineItem[] = response.items.map((respItem, idx) => {
+        const baseId = Date.now() + idx;
+        
+        const createOutlineItem = (item: any, parentId?: string, level: number = 0): OutlineItem => {
+          const id = `item_${baseId}_${Math.random().toString(36).substr(2, 9)}`;
+          const outlineItem: OutlineItem = {
+            id,
+            text: item.text,
+            level,
+            expanded: true,
+            parentId,
+            children: [],
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString()
+          };
+          
+          if (item.children && item.children.length > 0) {
+            outlineItem.children = item.children.map((child: any, childIdx: number) => 
+              createOutlineItem(child, id, level + 1)
+            );
+          }
+          
+          return outlineItem;
+        };
+        
+        return createOutlineItem(respItem, action.parentId);
+      });
+      
+      if (action.parentId) {
+        // Insert as children of specific parent
+        const insertIntoParent = (items: OutlineItem[]): OutlineItem[] => {
+          return items.map(item => {
+            if (item.id === action.parentId) {
+              return {
+                ...item,
+                children: [...(item.children || []), ...newItems]
+              };
+            }
+            if (item.children) {
+              return { ...item, children: insertIntoParent(item.children) };
+            }
+            return item;
+          });
+        };
+        
+        const updatedOutline = insertIntoParent(outline);
+        setOutline(updatedOutline);
+        if (onItemsChange) onItemsChange(updatedOutline);
+      } else {
+        // Add to root level
+        const updatedOutline = [...outline, ...newItems];
+        setOutline(updatedOutline);
+        if (onItemsChange) onItemsChange(updatedOutline);
+      }
+    }
+  };
+  
+  const openLLMAssistantForItem = (item: OutlineItem) => {
+    setLLMCurrentItem(item);
+    setLLMCurrentSection(detectSectionFromItem(item));
+    setShowLLMAssistant(true);
+  };
+  
+  const openLLMAssistantForCreate = (parentId?: string, section?: string) => {
+    setLLMCurrentItem(null);
+    setLLMCurrentSection(section);
+    setShowLLMAssistant(true);
+  };
+  
+  const detectSectionFromItem = (item: OutlineItem): string | undefined => {
+    const text = item.text.toLowerCase();
+    if (text.includes('spov')) return 'spov';
+    if (text.includes('purpose')) return 'purpose';
+    if (text.includes('owner')) return 'owner';
+    if (text.includes('scope')) return 'out_of_scope';
+    if (text.includes('overview')) return 'initiative_overview';
+    if (text.includes('dok')) return text.includes('3') ? 'dok3' : text.includes('2') ? 'dok2' : 'dok1';
+    if (text.includes('expert') || text.includes('council')) return 'expert_council';
+    return undefined;
+  };
+
   const applyBrainliftTemplate = async () => {
     // Confirm if there are existing items
     if (outline.length > 0) {
@@ -1333,7 +1442,7 @@ const OutlineDesktop: React.FC<OutlineDesktopProps> = ({
                       )}
                     </button>
 
-                    <div className="flex-1 min-w-0">
+                    <div className="flex-1 min-w-0 flex items-start">
                       {editingId === item.id ? (
                         <textarea
                           ref={(el) => {
@@ -1372,17 +1481,31 @@ const OutlineDesktop: React.FC<OutlineDesktopProps> = ({
                           placeholder=""
                         />
                       ) : (
-                        <div
-                          onClick={(e) => handleItemClick(e, item.id)}
-                          className={`px-2 py-1 leading-relaxed cursor-text rounded hover:bg-gray-100 transition-colors ${
-                            item.style === 'header' ? 'text-base font-bold text-gray-900' :
-                            item.style === 'code' ? 'font-mono text-xs bg-gray-100 text-gray-800' :
-                            item.style === 'quote' ? 'italic text-sm text-gray-700 border-l-4 border-gray-400 pl-3' :
-                            'text-sm text-gray-900'
-                          }`}
-                        >
-                          {highlightSearchTerm(item.text)}
-                        </div>
+                        <>
+                          <div
+                            onClick={(e) => handleItemClick(e, item.id)}
+                            className={`flex-1 px-2 py-1 leading-relaxed cursor-text rounded hover:bg-gray-100 transition-colors ${
+                              item.style === 'header' ? 'text-base font-bold text-gray-900' :
+                              item.style === 'code' ? 'font-mono text-xs bg-gray-100 text-gray-800' :
+                              item.style === 'quote' ? 'italic text-sm text-gray-700 border-l-4 border-gray-400 pl-3' :
+                              'text-sm text-gray-900'
+                            }`}
+                          >
+                            {highlightSearchTerm(item.text)}
+                          </div>
+                          
+                          {/* Inline AI Assistant button */}
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              openLLMAssistantForItem(item);
+                            }}
+                            className="ml-2 p-1 opacity-0 group-hover:opacity-100 hover:bg-purple-100 rounded transition-all duration-200"
+                            title="Edit with AI"
+                          >
+                            <Sparkles className="w-4 h-4 text-purple-600" />
+                          </button>
+                        </>
                       )}
                     </div>
                   </div>
@@ -1406,6 +1529,18 @@ const OutlineDesktop: React.FC<OutlineDesktopProps> = ({
                 <FileText className="w-4 h-4" />
                 <span className="text-sm font-medium">Create Brainlift</span>
               </button>
+              
+              <button 
+                onClick={() => {
+                  setLLMCurrentItem(null);
+                  setLLMCurrentSection(undefined);
+                  setShowLLMAssistant(true);
+                }}
+                className="w-full flex items-center space-x-2 px-3 py-2 text-purple-600 hover:text-purple-700 hover:bg-purple-50 rounded-lg transition-colors border border-purple-200"
+              >
+                <Sparkles className="w-4 h-4" />
+                <span className="text-sm font-medium">AI Assistant</span>
+              </button>
             </div>
           </div>
         </div>
@@ -1417,6 +1552,19 @@ const OutlineDesktop: React.FC<OutlineDesktopProps> = ({
         isOpen={showVoiceModal}
         onClose={() => setShowVoiceModal(false)}
         onAcceptStructure={handleAcceptStructure}
+      />
+      
+      {/* LLM Assistant Panel */}
+      <LLMAssistantPanel
+        isOpen={showLLMAssistant}
+        onClose={() => {
+          setShowLLMAssistant(false);
+          setLLMCurrentItem(null);
+          setLLMCurrentSection(undefined);
+        }}
+        currentItem={llmCurrentItem}
+        currentSection={llmCurrentSection}
+        onApplyAction={handleLLMAction}
       />
     </div>
   );
