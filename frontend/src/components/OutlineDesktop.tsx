@@ -59,6 +59,14 @@ const OutlineDesktop: React.FC<OutlineDesktopProps> = ({
   const [selectedStyle, setSelectedStyle] = useState<'header' | 'code' | 'quote' | 'normal'>('normal');
   const [userOutlines, setUserOutlines] = useState<any[]>([]);
   const [currentOutlineId, setCurrentOutlineId] = useState<string | null>(null);
+  
+  // Sync currentOutlineId to localStorage whenever it changes
+  useEffect(() => {
+    if (currentOutlineId) {
+      localStorage.setItem('currentOutlineId', currentOutlineId);
+      console.log('Stored outline ID in localStorage:', currentOutlineId);
+    }
+  }, [currentOutlineId]);
   const [outlineTitle, setOutlineTitle] = useState(title);
   const [isLoadingOutlines, setIsLoadingOutlines] = useState(false);
   const [showNewOutlineDialog, setShowNewOutlineDialog] = useState(false);
@@ -907,23 +915,116 @@ const OutlineDesktop: React.FC<OutlineDesktopProps> = ({
   const handleLLMAction = async (action: LLMAction, response: LLMResponse) => {
     console.log('Applying LLM action:', action, response);
     
-    if (action.type === 'edit' && action.targetId && response.content) {
-      // Edit existing item
-      const updateItem = (items: OutlineItem[]): OutlineItem[] => {
-        return items.map(item => {
-          if (item.id === action.targetId) {
-            return { ...item, text: response.content! };
-          }
-          if (item.children) {
-            return { ...item, children: updateItem(item.children) };
-          }
-          return item;
-        });
-      };
+    if (action.type === 'edit' && action.targetId) {
+      // Edit existing item - handle both simple content and structured items
+      if (response.content) {
+        // Simple text replacement - preserve existing children
+        const updateItem = (items: OutlineItem[]): OutlineItem[] => {
+          return items.map(item => {
+            if (item.id === action.targetId) {
+              // Keep all existing properties including children, just update text
+              return { ...item, text: response.content! };
+            }
+            if (item.children) {
+              return { ...item, children: updateItem(item.children) };
+            }
+            return item;
+          });
+        };
+        
+        const updatedOutline = updateItem(outline);
+        setOutline(updatedOutline);
+        if (onItemsChange) onItemsChange(updatedOutline);
+        
+      } else if (response.items && response.items.length > 0) {
+        // Structured replacement - AI provided new nested structure
+        const responseItem = response.items[0];
+        
+        const updateItem = (items: OutlineItem[]): OutlineItem[] => {
+          return items.map(item => {
+            if (item.id === action.targetId) {
+              // Preserve item ID and metadata, but update content and children
+              const updatedItem = { ...item, text: responseItem.text };
+              
+              // If AI provided new children structure, use it
+              if (responseItem.children && responseItem.children.length > 0) {
+                updatedItem.children = responseItem.children.map((child: any, idx: number) => {
+                  const createChild = (childData: any, level: number = item.level + 1): OutlineItem => ({
+                    id: `item_${Date.now()}_${idx}_${Math.random().toString(36).substr(2, 9)}`,
+                    text: childData.text,
+                    level,
+                    expanded: true,
+                    parentId: item.id,
+                    children: childData.children ? 
+                      childData.children.map((subChild: any, subIdx: number) => 
+                        createChild(subChild, level + 1)) : [],
+                    createdAt: new Date().toISOString(),
+                    updatedAt: new Date().toISOString()
+                  });
+                  return createChild(child);
+                });
+              }
+              
+              return updatedItem;
+            }
+            if (item.children) {
+              return { ...item, children: updateItem(item.children) };
+            }
+            return item;
+          });
+        };
+        
+        const updatedOutline = updateItem(outline);
+        setOutline(updatedOutline);
+        if (onItemsChange) onItemsChange(updatedOutline);
+      }
       
-      const updatedOutline = updateItem(outline);
-      setOutline(updatedOutline);
-      if (onItemsChange) onItemsChange(updatedOutline);
+      // Save to backend if we have a real item ID
+      if (currentOutlineId && action.targetId.startsWith('item_')) {
+        try {
+          if (response.content) {
+            // Simple text update
+            await outlinesApi.updateItem(currentOutlineId, action.targetId, { 
+              content: response.content 
+            });
+            console.log('Saved edited content to backend');
+          } else if (response.items && response.items.length > 0) {
+            // Structured update - need to update main item and potentially add new children
+            const responseItem = response.items[0];
+            
+            // Update the main item's text
+            await outlinesApi.updateItem(currentOutlineId, action.targetId, { 
+              content: responseItem.text 
+            });
+            
+            // If there are new children from AI, save them too
+            if (responseItem.children && responseItem.children.length > 0) {
+              const saveChildRecursively = async (child: any, parentId: string) => {
+                const created = await outlinesApi.createItem(currentOutlineId, {
+                  content: child.text,
+                  parentId: parentId,
+                  order: 0
+                });
+                
+                if (child.children) {
+                  for (const subChild of child.children) {
+                    await saveChildRecursively(subChild, created.id);
+                  }
+                }
+              };
+              
+              // Save all new children
+              for (const child of responseItem.children) {
+                await saveChildRecursively(child, action.targetId);
+              }
+            }
+            
+            console.log('Saved structured edit with children to backend');
+          }
+        } catch (error) {
+          console.error('Failed to save edit to backend:', error);
+        }
+      }
       
     } else if (action.type === 'create' && response.items) {
       // Create new items
@@ -980,6 +1081,40 @@ const OutlineDesktop: React.FC<OutlineDesktopProps> = ({
         const updatedOutline = [...outline, ...newItems];
         setOutline(updatedOutline);
         if (onItemsChange) onItemsChange(updatedOutline);
+      }
+      
+      // Save new items to backend
+      if (currentOutlineId && response.items) {
+        const saveItemRecursively = async (item: OutlineItem, parentId: string | null = null) => {
+          try {
+            // Create the item in backend
+            const created = await outlinesApi.createItem(currentOutlineId, {
+              content: item.text,
+              parentId: parentId,
+              order: 0,
+              style: item.style,
+              formatting: item.formatting
+            });
+            
+            console.log('Created item in backend:', created.id, item.text);
+            
+            // Save children recursively
+            if (item.children && item.children.length > 0) {
+              for (const child of item.children) {
+                await saveItemRecursively(child, created.id);
+              }
+            }
+          } catch (error) {
+            console.error('Failed to save item to backend:', error);
+          }
+        };
+        
+        // Save all new items
+        for (const newItem of newItems) {
+          await saveItemRecursively(newItem, action.parentId || null);
+        }
+        
+        console.log('All AI-generated items saved to backend');
       }
     }
   };
