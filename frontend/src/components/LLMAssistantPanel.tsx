@@ -163,29 +163,67 @@ export const LLMAssistantPanel: React.FC<LLMAssistantPanelProps> = ({
     };
     setConversation(prev => [...prev, userEntry]);
 
-    // Simulate LLM processing delay
-    await new Promise(resolve => setTimeout(resolve, 800));
+    try {
+      // Call real backend API
+      const token = localStorage.getItem('accessToken');
+      const outlineId = localStorage.getItem('currentOutlineId') || 'test-outline';
+      
+      const apiResponse = await fetch(`http://localhost:8001/api/v1/outlines/${outlineId}/llm-action`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          type: actionMode,
+          targetId: currentItem?.id,
+          parentId: currentItem?.parentId,
+          section: currentSection || detectSection(userPrompt),
+          userPrompt: userPrompt
+        })
+      });
 
-    // Get mock response based on content
-    const response = getMockResponse(action);
+      if (!apiResponse.ok) {
+        throw new Error(`API error: ${apiResponse.status}`);
+      }
 
-    // Add assistant response to conversation
-    const assistantEntry: ConversationEntry = {
-      id: (Date.now() + 1).toString(),
-      type: 'assistant',
-      content: formatResponseForDisplay(response),
-      response,
-      timestamp: new Date()
-    };
-    setConversation(prev => [...prev, assistantEntry]);
+      const data = await apiResponse.json();
+      const response = data.result;
 
-    // Apply the action
-    onApplyAction(action, response);
+      // Add assistant response to conversation
+      const assistantEntry: ConversationEntry = {
+        id: (Date.now() + 1).toString(),
+        type: 'assistant',
+        content: formatResponseForDisplay(response),
+        response,
+        timestamp: new Date()
+      };
+      setConversation(prev => [...prev, assistantEntry]);
 
-    setIsProcessing(false);
-
-    // Focus back on input
-    textareaRef.current?.focus();
+      // Apply the action
+      onApplyAction(action, response);
+    } catch (error) {
+      console.error('Error calling LLM API:', error);
+      
+      // Fall back to mock response on error
+      const response = getMockResponse(action);
+      
+      const assistantEntry: ConversationEntry = {
+        id: (Date.now() + 1).toString(),
+        type: 'assistant',
+        content: '⚠️ Using offline mode. ' + formatResponseForDisplay(response),
+        response,
+        timestamp: new Date()
+      };
+      setConversation(prev => [...prev, assistantEntry]);
+      
+      // Still apply the action with mock response
+      onApplyAction(action, response);
+    } finally {
+      setIsProcessing(false);
+      // Focus back on input
+      textareaRef.current?.focus();
+    }
   };
 
   const getMockResponse = (action: LLMAction): LLMResponse => {

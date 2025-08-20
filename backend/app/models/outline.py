@@ -25,7 +25,7 @@ class OutlineBase(BaseModel):
 
 class OutlineCreate(OutlineBase):
     """Schema for creating an outline"""
-    userId: str
+    pass  # userId will come from authenticated user
 
 
 class Outline(OutlineBase):

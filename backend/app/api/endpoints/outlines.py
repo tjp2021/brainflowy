@@ -61,19 +61,12 @@ async def create_outline(
     current_user: User = Depends(get_current_user)
 ):
     """Create a new outline"""
-    # Verify user has access
-    if outline_data.userId != current_user.id:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Cannot create outline for another user"
-        )
-    
-    # Create outline document
+    # Create outline document with current user's ID
     outline_id = f"outline_{int(datetime.utcnow().timestamp() * 1000)}"
     outline_doc = {
         "id": outline_id,
         "title": outline_data.title,
-        "userId": outline_data.userId,
+        "userId": current_user.id,  # Always use authenticated user's ID
         "items": [],
         "itemCount": 0,
         "createdAt": datetime.utcnow().isoformat(),
