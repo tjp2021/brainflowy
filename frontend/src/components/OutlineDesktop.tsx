@@ -1083,9 +1083,9 @@ const OutlineDesktop: React.FC<OutlineDesktopProps> = ({
         if (onItemsChange) onItemsChange(updatedOutline);
       }
       
-      // Save new items to backend
+      // Save new items to backend and update with real IDs
       if (currentOutlineId && response.items) {
-        const saveItemRecursively = async (item: OutlineItem, parentId: string | null = null) => {
+        const saveItemRecursively = async (item: OutlineItem, parentId: string | null = null): Promise<string | null> => {
           try {
             // Create the item in backend
             const created = await outlinesApi.createItem(currentOutlineId, {
@@ -1098,14 +1098,20 @@ const OutlineDesktop: React.FC<OutlineDesktopProps> = ({
             
             console.log('Created item in backend:', created.id, item.text);
             
+            // Update the frontend item with the backend ID
+            item.id = created.id;
+            
             // Save children recursively
             if (item.children && item.children.length > 0) {
               for (const child of item.children) {
                 await saveItemRecursively(child, created.id);
               }
             }
+            
+            return created.id;
           } catch (error) {
             console.error('Failed to save item to backend:', error);
+            return null;
           }
         };
         
@@ -1114,7 +1120,10 @@ const OutlineDesktop: React.FC<OutlineDesktopProps> = ({
           await saveItemRecursively(newItem, action.parentId || null);
         }
         
-        console.log('All AI-generated items saved to backend');
+        console.log('All AI-generated items saved to backend with real IDs');
+        
+        // Force a re-render with updated IDs
+        setOutline([...outline]);
       }
     }
   };

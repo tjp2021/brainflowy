@@ -21,6 +21,7 @@ class LLMActionRequest(BaseModel):
     parentId: Optional[str] = None  # For creates
     section: Optional[str] = None  # Context section
     userPrompt: str  # What the user asked for
+    currentContent: Optional[str] = None  # Current content for edits
 
 class LLMItem(BaseModel):
     text: str
@@ -228,11 +229,14 @@ async def call_llm_api(action: LLMActionRequest, outline_context: Optional[Dict]
                 }}"""
         
         elif action.type == "edit":
+            current_text = action.currentContent or "No content provided"
             user_prompt = f"""Edit this content based on the request: {action.userPrompt}
+            
+            Current content: "{current_text}"
             
             Respond with this JSON structure:
             {{
-                "content": "[Edited content as a single clear statement]",
+                "content": "[Edited version of the content based on the request]",
                 "suggestions": [
                     "[Follow-up suggestion 1]",
                     "[Follow-up suggestion 2]"

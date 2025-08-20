@@ -179,7 +179,8 @@ export const LLMAssistantPanel: React.FC<LLMAssistantPanelProps> = ({
           targetId: currentItem?.id,
           parentId: currentItem?.parentId,
           section: currentSection || detectSection(userPrompt),
-          userPrompt: userPrompt
+          userPrompt: userPrompt,
+          currentContent: currentItem?.text  // Send current content for editing context
         })
       });
 
