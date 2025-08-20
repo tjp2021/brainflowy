@@ -1,10 +1,15 @@
 """Application configuration"""
+import os
 from typing import List, Optional
 from pydantic import Field
+from dotenv import load_dotenv
 try:
     from pydantic_settings import BaseSettings
 except ImportError:
     from pydantic import BaseSettings
+
+# Load .env file from parent directory
+load_dotenv(os.path.join(os.path.dirname(__file__), '..', '..', '..', '.env'))
 
 
 class Settings(BaseSettings):

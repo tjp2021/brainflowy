@@ -7,6 +7,8 @@ from pydantic import BaseModel
 import os
 import json
 from datetime import datetime
+import openai
+from openai import OpenAI
 
 from app.api.dependencies import get_current_user
 
@@ -163,28 +165,127 @@ async def call_llm_api(action: LLMActionRequest, outline_context: Optional[Dict]
     """
     # Check for API keys
     openai_key = os.getenv("OPENAI_API_KEY")
-    anthropic_key = os.getenv("ANTHROPIC_API_KEY")
     
-    # For now, return mock responses
-    # In production, you would:
-    # 1. Build a proper prompt with context
-    # 2. Call the LLM API
-    # 3. Parse and structure the response
-    # 4. Handle errors and rate limits
-    
-    if not openai_key and not anthropic_key:
-        # No API keys configured, use mock responses
+    if not openai_key:
+        # No API key configured, use mock responses
+        print("No OpenAI API key found, using mock responses")
         return get_mock_response(action)
     
-    # TODO: Implement actual LLM API calls here
-    # Example structure:
-    # if anthropic_key:
-    #     import anthropic
-    #     client = anthropic.Anthropic(api_key=anthropic_key)
-    #     response = await client.messages.create(...)
-    #     return parse_llm_response(response)
-    
-    return get_mock_response(action)
+    try:
+        # Initialize OpenAI client
+        client = OpenAI(api_key=openai_key)
+        
+        # Build the prompt based on action type
+        system_prompt = """You are an AI assistant helping users create and edit business documents called Brainlifts. 
+        You must respond in valid JSON format. Be concise and professional."""
+        
+        if action.type == "create":
+            if "spov" in action.userPrompt.lower() or action.section == "spov":
+                user_prompt = f"""Create a Strategic Point of View (SPOV) based on this request: {action.userPrompt}
+                
+                Respond with this EXACT JSON structure:
+                {{
+                    "items": [{{
+                        "text": "[SPOV Title]",
+                        "children": [
+                            {{
+                                "text": "Description:",
+                                "children": [{{"text": "[One clear sentence describing the strategic view]"}}]
+                            }},
+                            {{
+                                "text": "Evidence:",
+                                "children": [
+                                    {{"text": "[Specific data point or statistic 1]"}},
+                                    {{"text": "[Specific data point or statistic 2]"}},
+                                    {{"text": "[Specific data point or statistic 3]"}}
+                                ]
+                            }},
+                            {{
+                                "text": "Implementation Levers:",
+                                "children": [
+                                    {{"text": "[Concrete action 1]"}},
+                                    {{"text": "[Concrete action 2]"}},
+                                    {{"text": "[Concrete action 3]"}}
+                                ]
+                            }}
+                        ]
+                    }}],
+                    "suggestions": [
+                        "[Follow-up question 1]",
+                        "[Follow-up question 2]"
+                    ]
+                }}"""
+            else:
+                user_prompt = f"""Create content for this request: {action.userPrompt}
+                
+                Respond with this JSON structure:
+                {{
+                    "items": [{{
+                        "text": "[Main content]",
+                        "children": []
+                    }}],
+                    "suggestions": ["[Follow-up question]"]
+                }}"""
+        
+        elif action.type == "edit":
+            user_prompt = f"""Edit this content based on the request: {action.userPrompt}
+            
+            Respond with this JSON structure:
+            {{
+                "content": "[Edited content as a single clear statement]",
+                "suggestions": [
+                    "[Follow-up suggestion 1]",
+                    "[Follow-up suggestion 2]"
+                ]
+            }}"""
+        
+        elif action.type == "research":
+            user_prompt = f"""Research this topic: {action.userPrompt}
+            
+            Respond with this JSON structure:
+            {{
+                "content": "Based on research:",
+                "citations": [
+                    {{
+                        "text": "[Key finding or statistic]",
+                        "source": "[Source name]",
+                        "url": "[URL if available, or null]"
+                    }}
+                ],
+                "suggestions": ["[Follow-up question]"]
+            }}"""
+        
+        else:
+            return get_mock_response(action)
+        
+        # Call OpenAI API
+        response = client.chat.completions.create(
+            model="gpt-4-turbo-preview",  # Using GPT-4 for better structured output
+            messages=[
+                {"role": "system", "content": system_prompt},
+                {"role": "user", "content": user_prompt}
+            ],
+            temperature=0.7,
+            response_format={"type": "json_object"}  # Force JSON response
+        )
+        
+        # Parse the response
+        response_text = response.choices[0].message.content
+        print(f"Raw LLM response: {response_text[:500]}...")  # Log first 500 chars
+        
+        try:
+            result = json.loads(response_text)
+            return result
+        except json.JSONDecodeError as e:
+            print(f"Failed to parse LLM response as JSON: {e}")
+            print(f"Response was: {response_text}")
+            # Fall back to mock response if parsing fails
+            return get_mock_response(action)
+            
+    except Exception as e:
+        print(f"Error calling OpenAI API: {str(e)}")
+        # Fall back to mock response on error
+        return get_mock_response(action)
 
 @router.post("", response_model=LLMActionResponse)
 async def process_llm_action(

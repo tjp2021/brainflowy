@@ -93,7 +93,7 @@
         "dependencies": [
           1
         ],
-        "status": "pending",
+        "status": "done",
         "subtasks": [
           {
             "id": 1,
@@ -101,7 +101,7 @@
             "description": "Create the PostgreSQL database schema for hierarchical outline data using the ltree extension, including tables for outlines and outline items with proper relationships and indexes.",
             "dependencies": [],
             "details": "1. Create 'outlines' table with columns: id, title, user_id, created_at, updated_at\n2. Create 'outline_items' table with columns: id, outline_id, path (ltree), content, created_at, updated_at, position (for ordering siblings)\n3. Add appropriate indexes: btree on id, gist on path, btree on outline_id\n4. Add foreign key constraints between tables\n5. Create database migration scripts for schema creation\n6. Document the schema design with entity relationship diagrams\n<info added on 2025-08-15T04:39:17.362Z>\n1. Design Cosmos DB document schema for hierarchical outline data\n2. Create JSON document structure for outlines container with nested items array\n3. Implement proper partition key strategy using userId\n4. Define indexing policies for efficient hierarchical queries\n5. Establish document relationships for parent-child navigation\n6. Document the schema design with examples of document structures\n7. Create sample queries for common outline operations (retrieve, update nested items)\n8. Develop utility functions for path manipulation within the document hierarchy\n</info added on 2025-08-15T04:39:17.362Z>",
-            "status": "pending",
+            "status": "done",
             "testStrategy": "1. Verify schema creation with test database\n2. Test ltree path operations (ancestors, descendants, siblings)\n3. Test index performance with explain analyze\n4. Validate foreign key constraints"
           },
           {
@@ -158,7 +158,7 @@
               "3.5"
             ],
             "details": "1. Document all required API endpoints with request/response formats\n2. Define data models and relationships\n3. Specify performance requirements for large outlines\n4. Document hierarchy manipulation operations\n5. Define caching requirements for outline data\n6. Specify concurrency handling for simultaneous edits\n7. Create sequence diagrams for key workflows\n8. Document error handling requirements",
-            "status": "pending",
+            "status": "done",
             "testStrategy": "1. Review documentation for completeness and clarity\n2. Verify all UI functionality has corresponding API requirements\n3. Validate data models against UI needs\n4. Confirm performance requirements are realistic"
           }
         ]
@@ -351,7 +351,7 @@
           3,
           6
         ],
-        "status": "pending",
+        "status": "done",
         "subtasks": []
       },
       {
@@ -430,7 +430,7 @@
           10,
           11
         ],
-        "status": "pending",
+        "status": "in-progress",
         "subtasks": []
       },
       {
@@ -610,7 +610,7 @@
               "14.4"
             ],
             "details": "Implement WebSocket connection handling with FastAPI. Create event-based system for real-time updates. Implement the following functionality:\n- WebSocket endpoint for real-time connections\n- Authentication for WebSocket connections\n- Broadcasting changes to connected clients\n- Handling client reconnection\n- Implementing conflict detection\n- Storing sync history\n\nCreate services to manage WebSocket connections and message broadcasting. Implement proper error handling and connection state management.",
-            "status": "pending",
+            "status": "done",
             "testStrategy": "Write unit tests for WebSocket message handling and broadcasting logic. Create integration tests simulating multiple connected clients. Test reconnection scenarios and conflict detection. Verify performance under load with many concurrent connections."
           },
           {
@@ -622,7 +622,7 @@
               "14.5"
             ],
             "details": "Implement version tracking for all data objects. Create conflict detection and resolution strategies. Implement the following endpoints:\n- POST /sync/changes - Submit local changes\n- GET /sync/changes - Get server changes since last sync\n- POST /sync/resolve - Resolve conflicts\n\nCreate data structures for tracking changes and detecting conflicts. Implement merge strategies for different conflict scenarios. Add timestamp and version tracking to all data models.",
-            "status": "pending",
+            "status": "done",
             "testStrategy": "Write unit tests for conflict detection and resolution algorithms. Create integration tests simulating offline changes and syncing. Test various conflict scenarios and verify correct resolution. Verify data integrity after conflict resolution."
           },
           {
@@ -724,7 +724,7 @@
     ],
     "metadata": {
       "created": "2025-08-13T22:24:45.471Z",
-      "updated": "2025-08-15T19:01:33.852Z",
+      "updated": "2025-08-20T17:15:44.527Z",
       "description": "Tasks for master context"
     }
   }
