@@ -33,56 +33,90 @@ const OutlineView: React.FC<OutlineViewProps> = ({ outlineId }) => {
   }, []);
 
   const handleItemsChange = async (updatedItems: OutlineItem[]) => {
-    setItems(updatedItems);
+    // Use setTimeout to avoid setState during render warning
+    setTimeout(() => {
+      setItems(updatedItems);
+    }, 0);
     
     // Save to backend if we have an outline ID
     if (currentOutlineId) {
       setSaving(true);
       try {
-        // Find new items (temporary IDs start with 'item_' or 'voice-')
-        const findNewItems = (items: OutlineItem[]): OutlineItem[] => {
-          const newItems: OutlineItem[] = [];
-          items.forEach(item => {
-            if (item.id.startsWith('item_') || item.id.startsWith('voice-')) {
-              newItems.push(item);
+        // Map to track old ID -> new ID mappings
+        const idMap = new Map<string, string>();
+        
+        // Track which items need updating (existing items that changed parentId)
+        const itemsToUpdate: Array<{ id: string, parentId: string | null }> = [];
+        
+        // Build a flat list of all items with their expected parentId
+        const buildFlatList = (items: OutlineItem[], parentId: string | null = null): void => {
+          for (const item of items) {
+            // For existing items (not new), track their expected parentId
+            if (!item.id.startsWith('item_') && !item.id.startsWith('voice-')) {
+              itemsToUpdate.push({ id: item.id, parentId: parentId });
             }
-            if (item.children?.length > 0) {
-              newItems.push(...findNewItems(item.children));
+            // Process children recursively
+            if (item.children && item.children.length > 0) {
+              buildFlatList(item.children, item.id);
             }
-          });
-          return newItems;
+          }
         };
         
-        const newItems = findNewItems(updatedItems);
+        // First, identify all items that need parentId updates
+        buildFlatList(updatedItems);
         
-        // Create new items in backend
-        for (const item of newItems) {
-          // Skip items without text or with default "New Item" text
-          if (!item.text || item.text === 'New Item' || item.text.trim() === '') {
-            continue;
+        // Update existing items' parentId values
+        for (const update of itemsToUpdate) {
+          try {
+            await outlinesApi.updateItem(currentOutlineId, update.id, {
+              parentId: update.parentId
+            } as any);
+          } catch (error) {
+            console.error(`Failed to update parentId for item ${update.id}:`, error);
           }
-          
-          const created = await outlinesApi.createItem(currentOutlineId, {
-            content: item.text,
-            parentId: item.parentId || null,
-            style: item.style,
-            formatting: item.formatting
-          } as any);
-          
-          // Update local ID with backend ID
-          const updateId = (items: OutlineItem[]): OutlineItem[] => {
-            return items.map(i => {
-              if (i.id === item.id) {
-                return { ...i, id: created.id };
-              }
-              if (i.children?.length > 0) {
-                return { ...i, children: updateId(i.children) };
-              }
-              return i;
-            });
-          };
-          setItems(prev => updateId(prev));
         }
+        
+        // Process items in order to handle parent-child relationships
+        const processNewItems = async (items: OutlineItem[], parentId: string | null = null): Promise<void> => {
+          for (const item of items) {
+            // Check if this is a new item
+            if (item.id.startsWith('item_') || item.id.startsWith('voice-')) {
+              // Skip items without text or with default "New Item" text
+              if (!item.text || item.text === 'New Item' || item.text.trim() === '') {
+                continue;
+              }
+              
+              // Resolve the actual parentId (in case parent was also new)
+              const actualParentId = item.parentId ? (idMap.get(item.parentId) || item.parentId) : parentId;
+              
+              const created = await outlinesApi.createItem(currentOutlineId, {
+                content: item.text,
+                parentId: actualParentId,
+                style: item.style,
+                formatting: item.formatting
+              } as any);
+              
+              // Store the ID mapping
+              idMap.set(item.id, created.id);
+              
+              // Update the item's ID in place
+              item.id = created.id;
+            }
+            
+            // Process children recursively
+            if (item.children && item.children.length > 0) {
+              await processNewItems(item.children, item.id);
+            }
+          }
+        };
+        
+        // Process all items
+        await processNewItems(updatedItems);
+        
+        // Update the items with new IDs
+        setTimeout(() => {
+          setItems([...updatedItems]);
+        }, 0);
       } catch (error) {
         console.error('Failed to save items:', error);
       } finally {

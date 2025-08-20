@@ -45,6 +45,7 @@ class OutlineService:
             processed.add(item_id)
             
             parent_id = item.get("parentId")
+            
             if parent_id and parent_id != item_id:  # Prevent self-reference
                 parent = item_map.get(parent_id)
                 if parent and item_id in item_map:

@@ -12,9 +12,9 @@ import {
   PointerSensor,
   useSensor,
   useSensors,
-  DragStartEvent,
-  DragEndEvent,
-  DragOverEvent,
+  type DragStartEvent,
+  type DragEndEvent,
+  type DragOverEvent,
 } from '@dnd-kit/core';
 import {
   SortableContext,
@@ -68,6 +68,15 @@ const OutlineDesktop: React.FC<OutlineDesktopProps> = ({
     navigate('/');
   };
 
+  // Helper to recalculate levels for all items
+  const recalculateLevels = (items: OutlineItem[], level: number = 0): OutlineItem[] => {
+    return items.map(item => ({
+      ...item,
+      level: level,
+      children: item.children ? recalculateLevels(item.children, level + 1) : []
+    }));
+  };
+
   // Flatten outline for rendering
   const flattenOutline = (items: OutlineItem[], result: OutlineItem[] = []): OutlineItem[] => {
     items.forEach(item => {
@@ -80,6 +89,15 @@ const OutlineDesktop: React.FC<OutlineDesktopProps> = ({
   };
 
   const flatItems = flattenOutline(outline);
+  
+  // Debug log to see what we're rendering
+  if (flatItems.length > 0) {
+    console.log('FLAT ITEMS FOR RENDER:', flatItems.map(i => ({ 
+      text: i.text, 
+      level: i.level, 
+      padding: `${(i.level || 0) * 24 + 8}px` 
+    })));
+  }
   
   // Filter items based on search query
   const filteredItems = searchQuery 
@@ -144,13 +162,39 @@ const OutlineDesktop: React.FC<OutlineDesktopProps> = ({
             setCurrentOutlineId(outlines[0].id);
             setOutlineTitle(outlines[0].title);
             const items = await outlinesApi.getOutlineItems(outlines[0].id);
-            console.log('Loaded items from outline:', items);
-            // Convert backend format to frontend format
-            const convertedItems = items.map((item: any) => ({
-              ...item,
-              text: item.content || item.text || '',
-              children: item.children || []
-            }));
+            console.log('RAW BACKEND ITEMS:', JSON.stringify(items, null, 2));
+            // Convert backend format to frontend format recursively with level calculation
+            const convertItems = (items: any[], level: number = 0): OutlineItem[] => {
+              return items.map((item: any) => {
+                const convertedItem: OutlineItem = {
+                  ...item,
+                  text: item.content || item.text || '',
+                  level: level,  // SET THE LEVEL FOR INDENTATION
+                  expanded: true, // Default to expanded to show all items
+                  children: []
+                };
+                // Recursively convert children with incremented level
+                if (item.children && item.children.length > 0) {
+                  convertedItem.children = convertItems(item.children, level + 1);
+                }
+                return convertedItem;
+              });
+            };
+            const convertedItems = convertItems(items);
+            console.log('CONVERTED ITEMS:', JSON.stringify(convertedItems, null, 2));
+            
+            // Debug: flatten and log
+            const debugFlatten = (items: any[], result: any[] = []): any[] => {
+              items.forEach(item => {
+                result.push({ text: item.text, level: item.level });
+                if (item.children && item.children.length > 0) {
+                  debugFlatten(item.children, result);
+                }
+              });
+              return result;
+            };
+            console.log('FLATTENED FOR DISPLAY:', debugFlatten(convertedItems));
+            
             setOutline(convertedItems);
           }
         }
@@ -220,7 +264,7 @@ const OutlineDesktop: React.FC<OutlineDesktopProps> = ({
             
             const updated = deleteSelectedItems(outline);
             setOutline(updated);
-            onItemsChange?.(updated);
+            setTimeout(() => onItemsChange?.(updated), 0);
             setSelectedItems(new Set()); // Clear selection after deletion
           }
         }
@@ -241,12 +285,17 @@ const OutlineDesktop: React.FC<OutlineDesktopProps> = ({
       
       setCurrentOutlineId(outlineId);
       setOutlineTitle(outline.title);
-      // Convert backend format to frontend format
-      const convertedItems = items.map((item: any) => ({
-        ...item,
-        text: item.content || item.text || '',
-        children: item.children || []
-      }));
+      // Convert backend format to frontend format recursively with level calculation
+      const convertItems = (items: any[], level: number = 0): OutlineItem[] => {
+        return items.map((item: any) => ({
+          ...item,
+          text: item.content || item.text || '',
+          level: level,  // SET THE LEVEL FOR INDENTATION
+          expanded: true, // Default to expanded to show all items
+          children: item.children ? convertItems(item.children, level + 1) : []
+        }));
+      };
+      const convertedItems = convertItems(items);
       setOutline(convertedItems);
     } catch (error) {
       console.error('Failed to load outline:', error);
@@ -297,7 +346,7 @@ const OutlineDesktop: React.FC<OutlineDesktopProps> = ({
     };
     const updated = updateItems(outline);
     setOutline(updated);
-    onItemsChange?.(updated);
+    setTimeout(() => onItemsChange?.(updated), 0);
   };
 
   const startEditing = (itemId: string) => {
@@ -336,10 +385,13 @@ const OutlineDesktop: React.FC<OutlineDesktopProps> = ({
           });
         };
         const updated = updateItems(prevOutline);
-        onItemsChange?.(updated);
         
-        // Resolve after state update
-        setTimeout(() => resolve(), 0);
+        // Defer onItemsChange to avoid updating parent during render
+        setTimeout(() => {
+          onItemsChange?.(updated);
+          resolve();
+        }, 0);
+        
         return updated;
       });
     }).then(async () => {
@@ -351,15 +403,33 @@ const OutlineDesktop: React.FC<OutlineDesktopProps> = ({
           // Check if this is a new item (temporary ID)
           if (itemId.match(/^item_\d{13}$/)) {
             // Create new item in backend
-            const item = outline.find(i => i.id === itemId);
-            if (item && newText.trim()) {
+            // Find the item and its parent
+            let foundItem: OutlineItem | null = null;
+            let parentId: string | null = null;
+            
+            const findItemAndParent = (items: OutlineItem[], parent: string | null = null): void => {
+              for (const item of items) {
+                if (item.id === itemId) {
+                  foundItem = item;
+                  parentId = parent;
+                  return;
+                }
+                if (item.children.length > 0) {
+                  findItemAndParent(item.children, item.id);
+                }
+              }
+            };
+            
+            findItemAndParent(outline);
+            
+            if (foundItem && newText.trim()) {
               const response = await outlinesApi.createItem(currentOutlineId, {
                 content: newText,
-                parentId: null,
-                style: item.style || 'normal',
-                formatting: item.formatting
+                parentId: parentId,
+                style: foundItem.style || 'normal',
+                formatting: foundItem.formatting
               });
-              console.log('New item created in backend:', response);
+              console.log('New item created in backend with parentId:', parentId, response);
               
               // Update the temporary ID with the real ID from backend
               setOutline(prevOutline => {
@@ -395,8 +465,10 @@ const OutlineDesktop: React.FC<OutlineDesktopProps> = ({
       for (let i = 0; i < items.length; i++) {
         if (items[i].id === itemId && i > 0) {
           const [item] = items.splice(i, 1);
-          item.level = items[i - 1].level + 1;
+          item.parentId = items[i - 1].id;
           items[i - 1].children = [...items[i - 1].children, item];
+          // Ensure parent is expanded
+          items[i - 1].expanded = true;
           return [...items];
         }
         if (items[i].children.length > 0) {
@@ -406,7 +478,9 @@ const OutlineDesktop: React.FC<OutlineDesktopProps> = ({
       return items;
     };
 
-    const updated = updateItems([...outline]);
+    let updated = updateItems([...outline]);
+    // Recalculate all levels to ensure consistency
+    updated = recalculateLevels(updated);
     setOutline(updated);
     onItemsChange?.(updated);
   };
@@ -440,7 +514,7 @@ const OutlineDesktop: React.FC<OutlineDesktopProps> = ({
         };
         const updated = removeEmptyItem(outline);
         setOutline(updated);
-        onItemsChange?.(updated);
+        setTimeout(() => onItemsChange?.(updated), 0);
         return;
       }
       
@@ -564,7 +638,7 @@ const OutlineDesktop: React.FC<OutlineDesktopProps> = ({
         };
         const updated = removeEmptyItem(outline);
         setOutline(updated);
-        onItemsChange?.(updated);
+        setTimeout(() => onItemsChange?.(updated), 0);
       }
       
       stopEditing();
@@ -574,30 +648,94 @@ const OutlineDesktop: React.FC<OutlineDesktopProps> = ({
     // Handle Tab for indentation
     if (e.key === 'Tab' && !e.shiftKey) {
       e.preventDefault();
-      // Indent the current item (make it a child of the previous item)
-      const indentItem = (items: OutlineItem[], targetId: string, prevItem: OutlineItem | null = null): OutlineItem[] => {
+      
+      // Find the item and its previous sibling
+      let targetItem: OutlineItem | null = null;
+      let previousItem: OutlineItem | null = null;
+      let parentOfTarget: OutlineItem | null = null;
+      
+      const findItemAndPrevious = (items: OutlineItem[], parent: OutlineItem | null = null): boolean => {
         for (let i = 0; i < items.length; i++) {
-          if (items[i].id === targetId && prevItem) {
-            // Remove from current position
-            const [removed] = items.splice(i, 1);
-            removed.level = prevItem.level + 1;
-            removed.parentId = prevItem.id;
-            // Add as child of previous item
-            if (!prevItem.children) prevItem.children = [];
-            prevItem.children.push(removed);
-            prevItem.expanded = true;
-            return items;
+          if (items[i].id === itemId) {
+            targetItem = items[i];
+            parentOfTarget = parent;
+            // Get the previous sibling at the same level
+            if (i > 0) {
+              previousItem = items[i - 1];
+            }
+            return true;
           }
-          prevItem = items[i];
-          if (items[i].children.length > 0) {
-            items[i].children = indentItem(items[i].children, targetId, items[i]);
+          // Search in children
+          if (items[i].children && items[i].children.length > 0) {
+            if (findItemAndPrevious(items[i].children, items[i])) {
+              return true;
+            }
           }
         }
-        return items;
+        return false;
       };
-      const updated = indentItem([...outline], itemId);
-      setOutline(updated);
-      onItemsChange?.(updated);
+      
+      findItemAndPrevious(outline);
+      
+      if (targetItem && previousItem) {
+        // Remove target from its current position
+        const removeFromParent = (items: OutlineItem[]): OutlineItem[] => {
+          return items.filter(item => {
+            if (item.id === itemId) {
+              return false;
+            }
+            if (item.children && item.children.length > 0) {
+              item.children = removeFromParent(item.children);
+            }
+            return true;
+          });
+        };
+        
+        // Add target as child of previous item
+        const addAsChild = (items: OutlineItem[]): OutlineItem[] => {
+          return items.map(item => {
+            if (item.id === previousItem!.id) {
+              if (!item.children) item.children = [];
+              targetItem!.level = item.level + 1;
+              targetItem!.parentId = item.id;
+              item.children.push(targetItem!);
+              item.expanded = true;
+            } else if (item.children && item.children.length > 0) {
+              item.children = addAsChild(item.children);
+            }
+            return item;
+          });
+        };
+        
+        let updated = removeFromParent([...outline]);
+        updated = addAsChild(updated);
+        // Recalculate all levels to ensure consistency
+        updated = recalculateLevels(updated);
+        setOutline(updated);
+        setTimeout(() => onItemsChange?.(updated), 0);
+        
+        // Save the indent change to backend
+        if (currentOutlineId && previousItem) {
+          const saveIndent = async () => {
+            try {
+              const { outlinesApi } = await import('@/services/api/apiClient');
+              // If item already exists in backend (not a newly created item), update its parentId
+              // New items have format: item_1234567890123 (13 digits)
+              // Backend items have format: item_1234567890123456_789 (more digits with suffix)
+              const isNewItem = itemId.match(/^item_\d{13}$/);
+              if (!isNewItem) {
+                await outlinesApi.updateItem(currentOutlineId, itemId, { 
+                  parentId: previousItem.id 
+                });
+                console.log('Indented item saved with new parentId:', previousItem.id);
+              }
+            } catch (error) {
+              console.error('Failed to save indent:', error);
+            }
+          };
+          saveIndent();
+        }
+      }
       return;
     }
     
@@ -630,9 +768,11 @@ const OutlineDesktop: React.FC<OutlineDesktopProps> = ({
         }
         return items;
       };
-      const updated = outdentItem([...outline], itemId);
+      let updated = outdentItem([...outline], itemId);
+      // Recalculate all levels to ensure consistency
+      updated = recalculateLevels(updated);
       setOutline(updated);
-      onItemsChange?.(updated);
+      setTimeout(() => onItemsChange?.(updated), 0);
       return;
     }
     
@@ -657,7 +797,7 @@ const OutlineDesktop: React.FC<OutlineDesktopProps> = ({
       };
       const updated = updateStyle(outline);
       setOutline(updated);
-      onItemsChange?.(updated);
+      setTimeout(() => onItemsChange?.(updated), 0);
       
       // Also update selectedStyle for this editing session
       setSelectedStyle(prevStyle => prevStyle === 'header' ? 'normal' : 'header');
@@ -685,7 +825,7 @@ const OutlineDesktop: React.FC<OutlineDesktopProps> = ({
       };
       const updated = updateStyle(outline);
       setOutline(updated);
-      onItemsChange?.(updated);
+      setTimeout(() => onItemsChange?.(updated), 0);
       
       // Also update selectedStyle for this editing session
       setSelectedStyle(prevStyle => prevStyle === 'quote' ? 'normal' : 'quote');
@@ -713,7 +853,7 @@ const OutlineDesktop: React.FC<OutlineDesktopProps> = ({
       };
       const updated = updateStyle(outline);
       setOutline(updated);
-      onItemsChange?.(updated);
+      setTimeout(() => onItemsChange?.(updated), 0);
       
       // Also update selectedStyle for this editing session
       setSelectedStyle(prevStyle => prevStyle === 'code' ? 'normal' : 'code');
@@ -754,7 +894,7 @@ const OutlineDesktop: React.FC<OutlineDesktopProps> = ({
     };
     const updated = [...outline, newItem];
     setOutline(updated);
-    onItemsChange?.(updated);
+    setTimeout(() => onItemsChange?.(updated), 0);
     startEditing(newItem.id);
   };
 
@@ -779,7 +919,7 @@ const OutlineDesktop: React.FC<OutlineDesktopProps> = ({
     };
     const updated = updateItems(outline);
     setOutline(updated);
-    onItemsChange?.(updated);
+    setTimeout(() => onItemsChange?.(updated), 0);
     
     // Save style change to backend if item exists there
     if (currentOutlineId && !itemId.startsWith('item_')) {
@@ -818,7 +958,7 @@ const OutlineDesktop: React.FC<OutlineDesktopProps> = ({
     // Add structured items to outline
     const updated = [...outline, ...items];
     setOutline(updated);
-    onItemsChange?.(updated);
+    setTimeout(() => onItemsChange?.(updated), 0);
   };
 
   const addNewItemAfter = (afterId: string) => {
@@ -851,7 +991,7 @@ const OutlineDesktop: React.FC<OutlineDesktopProps> = ({
 
     const updated = insertAfter([...outline]);
     setOutline(updated);
-    onItemsChange?.(updated);
+    setTimeout(() => onItemsChange?.(updated), 0);
     setTimeout(() => startEditing(newItem.id), 0);
   };
 
@@ -1156,7 +1296,7 @@ const OutlineDesktop: React.FC<OutlineDesktopProps> = ({
                               };
                               const updated = removeEmptyItem(outline);
                               setOutline(updated);
-                              onItemsChange?.(updated);
+                              setTimeout(() => onItemsChange?.(updated), 0);
                             } else if (value !== item.text) {
                               // Update the text if it changed
                               updateItemText(item.id, value);
