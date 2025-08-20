@@ -2,7 +2,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { 
   Plus, Mic, Search, ChevronRight, ChevronDown, ChevronLeft, 
-  Folder, Settings, HelpCircle, MoreHorizontal, GripVertical 
+  Folder, Settings, HelpCircle, MoreHorizontal, GripVertical, FileText
 } from 'lucide-react';
 import {
   DndContext,
@@ -26,6 +26,7 @@ import { CSS } from '@dnd-kit/utilities';
 import { useAuth } from '@/hooks/useAuth';
 import type { OutlineItem } from '@/types/outline';
 import VoiceModal from './VoiceModal';
+import { createBrainliftTemplate } from '@/templates/brainliftTemplate';
 import '../styles/outline.css';
 
 interface OutlineDesktopProps {
@@ -898,6 +899,21 @@ const OutlineDesktop: React.FC<OutlineDesktopProps> = ({
     startEditing(newItem.id);
   };
 
+  const applyBrainliftTemplate = () => {
+    // Confirm if there are existing items
+    if (outline.length > 0) {
+      const confirmed = window.confirm(
+        'This will replace your current outline with the Brainlift template. Are you sure?'
+      );
+      if (!confirmed) return;
+    }
+    
+    // Apply the template
+    const templateItems = createBrainliftTemplate();
+    setOutline(templateItems);
+    setTimeout(() => onItemsChange?.(templateItems), 0);
+  };
+
   const toggleItemStyle = async (itemId: string, style: 'header' | 'code' | 'quote' | 'normal') => {
     const updateItems = (items: OutlineItem[]): OutlineItem[] => {
       return items.map(item => {
@@ -1327,13 +1343,21 @@ const OutlineDesktop: React.FC<OutlineDesktopProps> = ({
               ))}
             </div>
 
-            <div className="mt-4">
+            <div className="mt-4 space-y-2">
               <button 
                 onClick={() => addNewItem()}
-                className="flex items-center space-x-2 px-3 py-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors"
+                className="w-full flex items-center space-x-2 px-3 py-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors"
               >
                 <Plus className="w-4 h-4" />
                 <span className="text-sm">Add new item</span>
+              </button>
+              
+              <button 
+                onClick={applyBrainliftTemplate}
+                className="w-full flex items-center space-x-2 px-3 py-2 text-blue-600 hover:text-blue-700 hover:bg-blue-50 rounded-lg transition-colors border border-blue-200"
+              >
+                <FileText className="w-4 h-4" />
+                <span className="text-sm font-medium">Create Brainlift</span>
               </button>
             </div>
           </div>
