@@ -156,11 +156,9 @@ const OutlineDesktop: React.FC<OutlineDesktopProps> = ({
         
         // Pass the user ID correctly - the backend expects it as a query parameter
         const outlines = await outlinesApi.getOutlines();
-        console.log('Loaded outlines:', JSON.stringify(outlines, null, 2));
         
         // If no outlines exist, create a default one
         if (!outlines || outlines.length === 0) {
-          console.log('No outlines found, creating default outline...');
           const newOutline = await outlinesApi.createOutline({
             title: 'My First Outline',
             userId: user.id
@@ -187,7 +185,6 @@ const OutlineDesktop: React.FC<OutlineDesktopProps> = ({
             
             // Always load items for the current outline
             const items = await outlinesApi.getOutlineItems(outlineToLoad);
-            console.log('RAW BACKEND ITEMS:', JSON.stringify(items, null, 2));
             
             // Convert backend format to frontend format recursively with level calculation
             const convertItems = (items: any[], level: number = 0): OutlineItem[] => {
@@ -207,7 +204,6 @@ const OutlineDesktop: React.FC<OutlineDesktopProps> = ({
               });
             };
             const convertedItems = convertItems(items);
-            console.log('CONVERTED ITEMS:', JSON.stringify(convertedItems, null, 2));
             
             // Debug: flatten and log
             const debugFlatten = (items: any[], result: any[] = []): any[] => {
@@ -219,7 +215,6 @@ const OutlineDesktop: React.FC<OutlineDesktopProps> = ({
               });
               return result;
             };
-            console.log('FLATTENED FOR DISPLAY:', debugFlatten(convertedItems));
             
             setOutline(convertedItems);
           }
@@ -925,7 +920,6 @@ const OutlineDesktop: React.FC<OutlineDesktopProps> = ({
   };
 
   const handleLLMAction = async (action: LLMAction, response: LLMResponse) => {
-    console.log('Applying LLM action:', action, response);
     
     if (action.type === 'edit' && action.targetId) {
       // Edit existing item - handle both simple content and structured items
@@ -991,15 +985,14 @@ const OutlineDesktop: React.FC<OutlineDesktopProps> = ({
         if (onItemsChange) onItemsChange(updatedOutline);
       }
       
-      // Save to backend if we have a real item ID
-      if (currentOutlineId && action.targetId.startsWith('item_')) {
+      // Save to backend if we have a real item ID (backend IDs start with 'item_')
+      if (currentOutlineId && action.targetId && action.targetId.startsWith('item_')) {
         try {
           if (response.content) {
             // Simple text update
             await outlinesApi.updateItem(currentOutlineId, action.targetId, { 
               content: response.content 
             });
-            console.log('Saved edited content to backend');
           } else if (response.items && response.items.length > 0) {
             // Structured update - need to update main item and potentially add new children
             const responseItem = response.items[0];
@@ -1031,7 +1024,6 @@ const OutlineDesktop: React.FC<OutlineDesktopProps> = ({
               }
             }
             
-            console.log('Saved structured edit with children to backend');
           }
         } catch (error) {
           console.error('Failed to save edit to backend:', error);
@@ -1039,103 +1031,91 @@ const OutlineDesktop: React.FC<OutlineDesktopProps> = ({
       }
       
     } else if (action.type === 'create' && response.items) {
-      // Create new items
-      const newItems: OutlineItem[] = response.items.map((respItem, idx) => {
-        const baseId = Date.now() + idx;
-        
-        const createOutlineItem = (item: any, parentId?: string, level: number = 0): OutlineItem => {
-          const id = `item_${baseId}_${Math.random().toString(36).substr(2, 9)}`;
-          const outlineItem: OutlineItem = {
-            id,
-            text: item.text,
-            level,
-            expanded: true,
-            parentId,
-            children: [],
-            createdAt: new Date().toISOString(),
-            updatedAt: new Date().toISOString()
+      // Save new items to backend FIRST to get real IDs
+      if (currentOutlineId && response.items) {
+        try {
+          const savedItems: OutlineItem[] = [];
+          
+          const saveItemRecursively = async (item: any, parentId: string | null = null, level: number = 0): Promise<OutlineItem | null> => {
+            try {
+              // Create the item in backend
+              const created = await outlinesApi.createItem(currentOutlineId, {
+                content: item.text || item.content,
+                parentId: parentId,
+                order: 0,
+                style: item.style,
+                formatting: item.formatting
+              });
+              
+              // Create the OutlineItem with the real backend ID
+              const outlineItem: OutlineItem = {
+                id: created.id,  // Use real backend ID
+                text: item.text || item.content,
+                level,
+                expanded: true,
+                parentId,
+                children: [],
+                createdAt: created.createdAt,
+                updatedAt: created.updatedAt
+              };
+              
+              // Save children recursively
+              if (item.children && item.children.length > 0) {
+                for (const child of item.children) {
+                  const savedChild = await saveItemRecursively(child, created.id, level + 1);
+                  if (savedChild) {
+                    outlineItem.children.push(savedChild);
+                  }
+                }
+              }
+              
+              return outlineItem;
+            } catch (error) {
+              console.error('Failed to save item to backend:', error);
+              return null;
+            }
           };
           
-          if (item.children && item.children.length > 0) {
-            outlineItem.children = item.children.map((child: any, childIdx: number) => 
-              createOutlineItem(child, id, level + 1)
-            );
+          // Save all new items and collect them with real IDs
+          for (const respItem of response.items) {
+            const savedItem = await saveItemRecursively(respItem, action.parentId || null);
+            if (savedItem) {
+              savedItems.push(savedItem);
+            }
           }
           
-          return outlineItem;
-        };
-        
-        return createOutlineItem(respItem, action.parentId);
-      });
-      
-      if (action.parentId) {
-        // Insert as children of specific parent
-        const insertIntoParent = (items: OutlineItem[]): OutlineItem[] => {
-          return items.map(item => {
-            if (item.id === action.parentId) {
-              return {
-                ...item,
-                children: [...(item.children || []), ...newItems]
+          // Now update the UI with items that have real backend IDs
+          if (savedItems.length > 0) {
+            if (action.parentId) {
+              // Insert as children of specific parent
+              const insertIntoParent = (items: OutlineItem[]): OutlineItem[] => {
+                return items.map(item => {
+                  if (item.id === action.parentId) {
+                    return {
+                      ...item,
+                      children: [...(item.children || []), ...savedItems]
+                    };
+                  }
+                  if (item.children) {
+                    return { ...item, children: insertIntoParent(item.children) };
+                  }
+                  return item;
+                });
               };
+              
+              const updatedOutline = insertIntoParent(outline);
+              setOutline(updatedOutline);
+              if (onItemsChange) onItemsChange(updatedOutline);
+            } else {
+              // Add to root level
+              const updatedOutline = [...outline, ...savedItems];
+              setOutline(updatedOutline);
+              if (onItemsChange) onItemsChange(updatedOutline);
             }
-            if (item.children) {
-              return { ...item, children: insertIntoParent(item.children) };
-            }
-            return item;
-          });
-        };
-        
-        const updatedOutline = insertIntoParent(outline);
-        setOutline(updatedOutline);
-        if (onItemsChange) onItemsChange(updatedOutline);
-      } else {
-        // Add to root level
-        const updatedOutline = [...outline, ...newItems];
-        setOutline(updatedOutline);
-        if (onItemsChange) onItemsChange(updatedOutline);
-      }
-      
-      // Save new items to backend and update with real IDs
-      if (currentOutlineId && response.items) {
-        const saveItemRecursively = async (item: OutlineItem, parentId: string | null = null): Promise<string | null> => {
-          try {
-            // Create the item in backend
-            const created = await outlinesApi.createItem(currentOutlineId, {
-              content: item.text,
-              parentId: parentId,
-              order: 0,
-              style: item.style,
-              formatting: item.formatting
-            });
-            
-            console.log('Created item in backend:', created.id, item.text);
-            
-            // Update the frontend item with the backend ID
-            item.id = created.id;
-            
-            // Save children recursively
-            if (item.children && item.children.length > 0) {
-              for (const child of item.children) {
-                await saveItemRecursively(child, created.id);
-              }
-            }
-            
-            return created.id;
-          } catch (error) {
-            console.error('Failed to save item to backend:', error);
-            return null;
           }
-        };
-        
-        // Save all new items
-        for (const newItem of newItems) {
-          await saveItemRecursively(newItem, action.parentId || null);
+        } catch (error) {
+          console.error('Failed to save AI-generated items:', error);
         }
-        
-        console.log('All AI-generated items saved to backend with real IDs');
-        
-        // Force a re-render with updated IDs
-        setOutline([...outline]);
       }
     }
   };
