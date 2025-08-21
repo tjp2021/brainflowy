@@ -16,7 +16,7 @@ test.describe('BrainFlowy Full Integration Test Suite', () => {
       const newUser = await registerNewUser(page, 'auth');
       
       // Verify we're on the outline page
-      await expect(page).toHaveURL('http://localhost:5174/');
+      await expect(page).toHaveURL('http://localhost:5173/');
       await expect(page.locator('text=BrainFlowy')).toBeVisible();
       
       // Logout
@@ -25,7 +25,7 @@ test.describe('BrainFlowy Full Integration Test Suite', () => {
       
       // Login again
       await login(page, newUser.email, newUser.password);
-      await expect(page).toHaveURL('http://localhost:5174/');
+      await expect(page).toHaveURL('http://localhost:5173/');
     });
   });
 
@@ -373,7 +373,7 @@ test.describe('BrainFlowy Full Integration Test Suite', () => {
       }
       
       // Restore by logging in again
-      await page.goto('http://localhost:5174/login');
+      await page.goto('http://localhost:5173/login');
       await login(page, user.email, user.password);
     });
   });

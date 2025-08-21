@@ -6,7 +6,7 @@ export async function registerNewUser(page: Page, prefix: string = 'test') {
   const testPassword = 'TestPass123!';
   
   // Navigate to register page
-  await page.goto('http://localhost:5174/register');
+  await page.goto('http://localhost:5173/register');
   await page.waitForLoadState('networkidle');
   
   // Fill registration form
@@ -16,7 +16,7 @@ export async function registerNewUser(page: Page, prefix: string = 'test') {
   
   // Submit registration
   await page.click('button[type="submit"]');
-  await page.waitForURL('http://localhost:5174/');
+  await page.waitForURL('http://localhost:5173/');
   
   // Wait for page to stabilize
   await page.waitForTimeout(1000);
@@ -25,11 +25,11 @@ export async function registerNewUser(page: Page, prefix: string = 'test') {
 }
 
 export async function login(page: Page, email: string, password: string) {
-  await page.goto('http://localhost:5174/login');
+  await page.goto('http://localhost:5173/login');
   await page.fill('input[type="email"]', email);
   await page.fill('input[type="password"]', password);
   await page.click('button[type="submit"]');
-  await page.waitForURL('http://localhost:5174/');
+  await page.waitForURL('http://localhost:5173/');
   await page.waitForTimeout(1000);
 }
 
