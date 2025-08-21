@@ -11,6 +11,7 @@ import openai
 from openai import OpenAI
 
 from app.api.dependencies import get_current_user
+from app.models.user import User
 
 router = APIRouter(prefix="/outlines/{outline_id}/llm-action", tags=["llm"])
 
@@ -22,6 +23,8 @@ class LLMActionRequest(BaseModel):
     section: Optional[str] = None  # Context section
     userPrompt: str  # What the user asked for
     currentContent: Optional[str] = None  # Current content for edits
+    # New field for context-aware processing
+    outlineId: Optional[str] = None  # To fetch full outline context
 
 class LLMItem(BaseModel):
     text: str
@@ -159,6 +162,81 @@ def get_mock_response(action: LLMActionRequest) -> Dict[str, Any]:
         "suggestions": ["Please provide more details"]
     }
 
+def format_outline_for_llm(outline: Dict) -> str:
+    """Format the outline structure for LLM context"""
+    items = outline.get("items", [])
+    if not items:
+        return "The outline is currently empty."
+    
+    # Build a hierarchical text representation
+    def format_item(item, level=0):
+        indent = "  " * level
+        text = f"{indent}- {item.get('content', item.get('text', 'Untitled'))}"
+        return text
+    
+    # Group items by parentId to build hierarchy
+    items_by_parent = {}
+    for item in items:
+        parent_id = item.get("parentId")
+        if parent_id not in items_by_parent:
+            items_by_parent[parent_id] = []
+        items_by_parent[parent_id].append(item)
+    
+    # Build the text representation
+    lines = []
+    
+    def add_items(parent_id, level=0):
+        if parent_id in items_by_parent:
+            # Sort by order if available
+            sorted_items = sorted(items_by_parent[parent_id], key=lambda x: x.get("order", 0))
+            for item in sorted_items:
+                lines.append(format_item(item, level))
+                # Recursively add children
+                add_items(item["id"], level + 1)
+    
+    # Start with root items (parentId = None)
+    add_items(None, 0)
+    
+    return "\n".join(lines) if lines else "The outline has items but no clear structure."
+
+def detect_outline_sections(outline: Dict) -> Dict[str, bool]:
+    """Detect which sections exist in the outline"""
+    items = outline.get("items", [])
+    sections = {
+        "spov": False,
+        "purpose": False,
+        "owner": False,
+        "out_of_scope": False,
+        "initiative_overview": False,
+        "expert_council": False,
+        "dok3": False,
+        "dok2": False,
+        "dok1": False
+    }
+    
+    for item in items:
+        content = item.get("content", "").lower()
+        if "spov" in content or "strategic point" in content:
+            sections["spov"] = True
+        elif "purpose" in content:
+            sections["purpose"] = True
+        elif "owner" in content:
+            sections["owner"] = True
+        elif "out of scope" in content or "scope" in content:
+            sections["out_of_scope"] = True
+        elif "initiative overview" in content or "overview" in content:
+            sections["initiative_overview"] = True
+        elif "expert" in content or "council" in content or "advisor" in content:
+            sections["expert_council"] = True
+        elif "dok" in content and "3" in content or "insight" in content:
+            sections["dok3"] = True
+        elif "dok" in content and "2" in content or "knowledge" in content:
+            sections["dok2"] = True
+        elif "dok" in content and "1" in content or "evidence" in content or "fact" in content or "citation" in content:
+            sections["dok1"] = True
+    
+    return sections
+
 async def call_llm_api(action: LLMActionRequest, outline_context: Optional[Dict] = None) -> Dict[str, Any]:
     """
     Call the actual LLM API (OpenAI, Anthropic, etc.)
@@ -176,18 +254,117 @@ async def call_llm_api(action: LLMActionRequest, outline_context: Optional[Dict]
         # Initialize OpenAI client
         client = OpenAI(api_key=openai_key)
         
-        # Build the prompt based on action type
-        system_prompt = """You are an AI assistant helping users create and edit business documents called Brainlifts. 
-        You must respond in valid JSON format. Be concise and professional."""
+        # Build the system prompt with outline context if available
+        existing_sections = {}
+        if outline_context:
+            outline_structure = format_outline_for_llm(outline_context)
+            existing_sections = detect_outline_sections(outline_context)
+            has_content = any(existing_sections.values())
+            
+            if has_content:
+                # Outline has Brainlift template structure
+                sections_list = []
+                if existing_sections["spov"]:
+                    sections_list.append("SPOV (Strategic Point of View)")
+                if existing_sections["purpose"]:
+                    sections_list.append("Purpose")
+                if existing_sections["owner"]:
+                    sections_list.append("Owner")
+                if existing_sections["out_of_scope"]:
+                    sections_list.append("Out of Scope")
+                if existing_sections["initiative_overview"]:
+                    sections_list.append("Initiative Overview")
+                if existing_sections["expert_council"]:
+                    sections_list.append("Expert Council")
+                if existing_sections["dok3"]:
+                    sections_list.append("DOK Level 3 - Insights")
+                if existing_sections["dok2"]:
+                    sections_list.append("DOK Level 2 - Knowledge")
+                if existing_sections["dok1"]:
+                    sections_list.append("DOK Level 1 - Evidence/Facts")
+                
+                system_prompt = f"""You are an AI assistant helping users create and edit business documents called Brainlifts. 
+                You must respond in valid JSON format. Be concise and professional.
+                
+                Current outline structure:
+                {outline_structure}
+                
+                Existing sections in this outline:
+                {', '.join(sections_list)}
+                
+                Section guidelines:
+                - SPOV: Strategic insights and recommendations
+                - Purpose: The main goal or decision to be made
+                - Expert Council: Subject matter experts and advisors
+                - DOK Level 3 - Insights: Strategic analysis and insights
+                - DOK Level 2 - Knowledge: Synthesized knowledge and patterns
+                - DOK Level 1 - Evidence/Facts: Data, facts, and citations
+                
+                When creating content, analyze the user's request to determine the appropriate section:
+                - If they mention experts, advisors, or need expertise → Expert Council
+                - If they mention data, facts, evidence, or citations → DOK Level 1
+                - If they mention insights, analysis, or strategy → DOK Level 3
+                - If they mention knowledge, patterns, or synthesis → DOK Level 2
+                - If they mention strategic points or recommendations → SPOV
+                
+                IMPORTANT: Create content under the appropriate existing section based on the content type."""
+            else:
+                # Empty outline or no clear structure
+                system_prompt = """You are an AI assistant helping users create and edit business documents called Brainlifts. 
+                You must respond in valid JSON format. Be concise and professional.
+                
+                The outline is currently empty or has no clear structure.
+                
+                When creating content, suggest creating it as a top-level item unless the user specifies otherwise.
+                You can suggest creating standard Brainlift sections if appropriate."""
+        else:
+            system_prompt = """You are an AI assistant helping users create and edit business documents called Brainlifts. 
+            You must respond in valid JSON format. Be concise and professional."""
         
         if action.type == "create":
-            if "spov" in action.userPrompt.lower() or action.section == "spov":
+            # Analyze the prompt to determine target section
+            prompt_lower = action.userPrompt.lower()
+            
+            # Determine the appropriate section and parent
+            target_section = None
+            section_instructions = ""
+            
+            if outline_context and existing_sections:
+                # Check for section-specific keywords
+                if ("expert" in prompt_lower or "advisor" in prompt_lower or 
+                    "council" in prompt_lower or "sme" in prompt_lower):
+                    target_section = "expert_council"
+                    section_instructions = "Place this content under the Expert Council section."
+                elif ("data" in prompt_lower or "fact" in prompt_lower or 
+                      "evidence" in prompt_lower or "citation" in prompt_lower or
+                      "statistic" in prompt_lower or "research" in prompt_lower):
+                    target_section = "dok1"
+                    section_instructions = "Place this content under DOK Level 1 - Evidence/Facts section."
+                elif ("insight" in prompt_lower or "analysis" in prompt_lower or
+                      "strategy" in prompt_lower or "implication" in prompt_lower):
+                    target_section = "dok3"
+                    section_instructions = "Place this content under DOK Level 3 - Insights section."
+                elif ("knowledge" in prompt_lower or "pattern" in prompt_lower or
+                      "synthesis" in prompt_lower or "understanding" in prompt_lower):
+                    target_section = "dok2"
+                    section_instructions = "Place this content under DOK Level 2 - Knowledge section."
+                elif "spov" in prompt_lower or "strategic point" in prompt_lower:
+                    target_section = "spov"
+                    section_instructions = "Place this content under the SPOV section."
+                elif "purpose" in prompt_lower:
+                    target_section = "purpose"
+                    section_instructions = "Place this content under the Purpose section."
+            
+            if "spov" in prompt_lower or action.section == "spov":
                 user_prompt = f"""Create a Strategic Point of View (SPOV) based on this request: {action.userPrompt}
+                
+                {section_instructions}
                 
                 Respond with this EXACT JSON structure:
                 {{
                     "items": [{{
                         "text": "[SPOV Title]",
+                        "targetSection": "{target_section or 'spov'}",
                         "children": [
                             {{
                                 "text": "Description:",
@@ -219,10 +396,13 @@ async def call_llm_api(action: LLMActionRequest, outline_context: Optional[Dict]
             else:
                 user_prompt = f"""Create content for this request: {action.userPrompt}
                 
+                {section_instructions}
+                
                 Respond with this JSON structure:
                 {{
                     "items": [{{
                         "text": "[Main content]",
+                        "targetSection": "{target_section or 'general'}",
                         "children": []
                     }}],
                     "suggestions": ["[Follow-up question]"]
@@ -295,7 +475,7 @@ async def call_llm_api(action: LLMActionRequest, outline_context: Optional[Dict]
 async def process_llm_action(
     outline_id: str,
     request: LLMActionRequest,
-    current_user: dict = Depends(get_current_user)
+    current_user: User = Depends(get_current_user)
 ) -> LLMActionResponse:
     """
     Process an LLM action for an outline.
@@ -306,16 +486,33 @@ async def process_llm_action(
     - research: Find information and citations
     """
     try:
-        # TODO: Load outline context from database
-        # outline = await get_outline(outline_id, current_user["id"])
-        outline_context = None  # Placeholder
+        # Import cosmos client based on testing mode
+        from app.core.config import settings
+        if settings.TESTING:
+            from app.db.mock_cosmos import mock_cosmos_client as cosmos_client
+        else:
+            from app.db.cosmos import cosmos_client
         
-        # Call LLM API or use mock response
+        # Load outline context from database
+        outline_context = None
+        try:
+            outline = await cosmos_client.get_document(outline_id, current_user.id)
+            if outline:
+                outline_context = outline
+                print(f"Loaded outline with {len(outline.get('items', []))} items")
+        except Exception as e:
+            print(f"Could not load outline context: {e}")
+            # Continue without context if loading fails
+        
+        # Call LLM API with outline context
         result = await call_llm_api(request, outline_context)
         
         # Log the action for analytics/debugging
         print(f"LLM Action: {request.type} for outline {outline_id}")
         print(f"Prompt: {request.userPrompt[:100]}...")
+        if outline_context:
+            sections = detect_outline_sections(outline_context)
+            print(f"Detected sections: {[k for k, v in sections.items() if v]}")
         
         return LLMActionResponse(
             action=request,
@@ -333,7 +530,7 @@ async def process_llm_action(
 async def get_suggestions(
     outline_id: str,
     section: Optional[str] = None,
-    current_user: dict = Depends(get_current_user)
+    current_user: User = Depends(get_current_user)
 ) -> Dict[str, List[str]]:
     """
     Get contextual suggestions for a specific section of the outline.

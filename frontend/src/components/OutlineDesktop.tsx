@@ -1035,32 +1035,44 @@ const OutlineDesktop: React.FC<OutlineDesktopProps> = ({
       // Determine the correct parent based on section
       let targetParentId = action.parentId;
       
+      // Check if the response includes a targetSection hint from the LLM
+      const targetSection = response.items[0]?.targetSection || action.section;
+      
       // If we have a section but no parentId, find the appropriate parent
-      if (action.section && !action.parentId) {
+      if (targetSection && !action.parentId) {
         const findSectionParent = (items: OutlineItem[]): string | null => {
           for (const item of items) {
             const itemTextLower = item.text.toLowerCase();
             
-            // Match section headers
-            if (action.section === 'spov' && itemTextLower.includes('spov')) {
+            // Match section headers based on targetSection from LLM
+            if (targetSection === 'spov' && (itemTextLower.includes('spov') || itemTextLower.includes('strategic point'))) {
               return item.id;
             }
-            if (action.section === 'purpose' && itemTextLower.includes('purpose')) {
+            if (targetSection === 'purpose' && itemTextLower.includes('purpose')) {
               return item.id;
             }
-            if (action.section === 'owner' && itemTextLower.includes('owner')) {
+            if (targetSection === 'owner' && itemTextLower.includes('owner')) {
               return item.id;
             }
-            if (action.section === 'out_of_scope' && itemTextLower.includes('scope')) {
+            if ((targetSection === 'out_of_scope' || targetSection === 'scope') && itemTextLower.includes('scope')) {
               return item.id;
             }
-            if (action.section === 'initiative_overview' && itemTextLower.includes('overview')) {
+            if ((targetSection === 'initiative_overview' || targetSection === 'overview') && itemTextLower.includes('overview')) {
               return item.id;
             }
-            if ((action.section === 'dok1' || action.section === 'dok2' || action.section === 'dok3') && itemTextLower.includes('dok')) {
+            if (targetSection === 'expert_council' && (itemTextLower.includes('expert') || itemTextLower.includes('council') || itemTextLower.includes('advisor'))) {
               return item.id;
             }
-            if (action.section === 'expert_council' && (itemTextLower.includes('expert') || itemTextLower.includes('council'))) {
+            if (targetSection === 'dok1' && (itemTextLower.includes('dok') && itemTextLower.includes('1')) || 
+                (itemTextLower.includes('evidence') || itemTextLower.includes('fact') || itemTextLower.includes('citation'))) {
+              return item.id;
+            }
+            if (targetSection === 'dok2' && (itemTextLower.includes('dok') && itemTextLower.includes('2')) || 
+                itemTextLower.includes('knowledge')) {
+              return item.id;
+            }
+            if (targetSection === 'dok3' && (itemTextLower.includes('dok') && itemTextLower.includes('3')) || 
+                itemTextLower.includes('insight')) {
               return item.id;
             }
             
@@ -1074,6 +1086,13 @@ const OutlineDesktop: React.FC<OutlineDesktopProps> = ({
         };
         
         targetParentId = findSectionParent(outline);
+        
+        // Log for debugging
+        if (targetParentId) {
+          console.log(`Found parent for section ${targetSection}: ${targetParentId}`);
+        } else {
+          console.log(`No parent found for section ${targetSection}, will add at root level`);
+        }
       }
       
       // Save new items to backend FIRST to get real IDs

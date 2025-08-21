@@ -23,6 +23,7 @@ export interface LLMResponse {
   content?: string;
   items?: Array<{
     text: string;
+    targetSection?: string;  // Section hint from LLM for placement
     children?: Array<{ text: string }>;
   }>;
   suggestions?: string[];
@@ -274,18 +275,14 @@ export const LLMAssistantPanel: React.FC<LLMAssistantPanelProps> = ({
     };
   };
 
-  const detectSection = (prompt: string): string => {
+  // Section detection is now handled by the backend with full context
+  const detectSection = (prompt: string): string | undefined => {
+    // Only detect if explicitly mentioned in a clear way
     const lower = prompt.toLowerCase();
-    if (lower.includes('spov')) return 'spov';
-    if (lower.includes('purpose')) return 'purpose';
-    if (lower.includes('owner')) return 'owner';
-    if (lower.includes('scope')) return 'out_of_scope';
-    if (lower.includes('overview')) return 'initiative_overview';
-    if (lower.includes('dok') || lower.includes('insight')) return 'dok3';
-    if (lower.includes('knowledge')) return 'dok2';
-    if (lower.includes('evidence') || lower.includes('fact')) return 'dok1';
-    if (lower.includes('expert') || lower.includes('advisor')) return 'expert_council';
-    return 'general';
+    if (lower.startsWith('add to spov') || lower.startsWith('create spov')) return 'spov';
+    if (lower.startsWith('add to purpose')) return 'purpose';
+    // Otherwise let backend decide based on full context
+    return undefined;
   };
 
   const formatResponseForDisplay = (response: LLMResponse): string => {
