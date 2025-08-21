@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { X, Send, Sparkles, Edit3, Plus, Search } from 'lucide-react';
+import { X, Send, Sparkles, Edit3, Plus, Search, CheckCircle, XCircle } from 'lucide-react';
 import type { OutlineItem } from '@/types/outline';
 
 interface LLMAssistantPanelProps {
@@ -123,6 +123,8 @@ export const LLMAssistantPanel: React.FC<LLMAssistantPanelProps> = ({
   const [isProcessing, setIsProcessing] = useState(false);
   const [actionMode, setActionMode] = useState<'create' | 'edit' | 'research'>('create');
   const [pendingAction, setPendingAction] = useState<{ action: LLMAction; response: LLMResponse } | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [success, setSuccess] = useState<string | null>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const conversationEndRef = useRef<HTMLDivElement>(null);
 
@@ -157,8 +159,21 @@ export const LLMAssistantPanel: React.FC<LLMAssistantPanelProps> = ({
       setIsProcessing(false);
       // Clear any pending actions
       setPendingAction(null);
+      // Clear any error/success messages
+      setError(null);
+      setSuccess(null);
     }
   }, [isOpen]);
+
+  // Auto-dismiss success messages
+  useEffect(() => {
+    if (success) {
+      const timer = setTimeout(() => {
+        setSuccess(null);
+      }, 3000);
+      return () => clearTimeout(timer);
+    }
+  }, [success]);
 
   // Scroll to bottom of conversation
   useEffect(() => {
@@ -172,6 +187,8 @@ export const LLMAssistantPanel: React.FC<LLMAssistantPanelProps> = ({
     const userPrompt = prompt.trim();
     setPrompt('');
     setIsProcessing(true);
+    setError(null);  // Clear any previous errors
+    setSuccess(null);  // Clear any previous success
 
     // Create action based on current mode
     const action: LLMAction = {
@@ -214,7 +231,13 @@ export const LLMAssistantPanel: React.FC<LLMAssistantPanelProps> = ({
       });
 
       if (!apiResponse.ok) {
-        throw new Error(`API error: ${apiResponse.status}`);
+        if (apiResponse.status === 401) {
+          throw new Error('Authentication failed. Please log in again.');
+        } else if (apiResponse.status === 500) {
+          throw new Error('AI service error. Please try again.');
+        } else {
+          throw new Error(`Failed to process request (${apiResponse.status})`);
+        }
       }
 
       const data = await apiResponse.json();
@@ -235,7 +258,14 @@ export const LLMAssistantPanel: React.FC<LLMAssistantPanelProps> = ({
     } catch (error) {
       console.error('Error calling LLM API:', error);
       
-      // Fall back to mock response on error
+      // Set error message for user
+      if (error instanceof Error) {
+        setError(error.message);
+      } else {
+        setError('Failed to connect to AI service. Please try again.');
+      }
+      
+      // Still try to use mock response as fallback
       const response = getMockResponse(action);
       
       const assistantEntry: ConversationEntry = {
@@ -305,12 +335,25 @@ export const LLMAssistantPanel: React.FC<LLMAssistantPanelProps> = ({
 
   const handleApplyPending = () => {
     if (pendingAction) {
-      // Apply the action using the existing persistence logic
-      onApplyAction(pendingAction.action, pendingAction.response);
-      // Clear the pending action
-      setPendingAction(null);
-      // Clear the prompt for next interaction
-      setPrompt('');
+      try {
+        // Apply the action using the existing persistence logic
+        onApplyAction(pendingAction.action, pendingAction.response);
+        // Clear the pending action
+        setPendingAction(null);
+        // Clear the prompt for next interaction
+        setPrompt('');
+        // Show success message
+        if (pendingAction.action.type === 'create') {
+          setSuccess('Content added successfully!');
+        } else if (pendingAction.action.type === 'edit') {
+          setSuccess('Edit applied successfully!');
+        } else {
+          setSuccess('Action completed successfully!');
+        }
+      } catch (error) {
+        console.error('Failed to apply action:', error);
+        setError('Failed to apply changes. Please try again.');
+      }
     }
   };
 
@@ -390,6 +433,26 @@ export const LLMAssistantPanel: React.FC<LLMAssistantPanelProps> = ({
           </div>
         )}
       </div>
+
+      {/* Error/Success Messages */}
+      {error && (
+        <div className="px-4 py-3 bg-red-50 border-b border-red-200 flex items-center gap-2">
+          <XCircle className="w-4 h-4 text-red-500 flex-shrink-0" />
+          <p className="text-sm text-red-700 flex-1">{error}</p>
+          <button
+            onClick={() => setError(null)}
+            className="p-1 hover:bg-red-100 rounded transition-colors"
+          >
+            <X className="w-3 h-3 text-red-500" />
+          </button>
+        </div>
+      )}
+      {success && (
+        <div className="px-4 py-3 bg-green-50 border-b border-green-200 flex items-center gap-2">
+          <CheckCircle className="w-4 h-4 text-green-500 flex-shrink-0" />
+          <p className="text-sm text-green-700 flex-1">{success}</p>
+        </div>
+      )}
 
       {/* Conversation Area */}
       <div className="flex-1 overflow-y-auto p-4 space-y-4">
