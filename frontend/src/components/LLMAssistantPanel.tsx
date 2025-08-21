@@ -119,6 +119,7 @@ export const LLMAssistantPanel: React.FC<LLMAssistantPanelProps> = ({
   const [conversation, setConversation] = useState<ConversationEntry[]>([]);
   const [isProcessing, setIsProcessing] = useState(false);
   const [actionMode, setActionMode] = useState<'create' | 'edit' | 'research'>('create');
+  const [pendingAction, setPendingAction] = useState<{ action: LLMAction; response: LLMResponse } | null>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const conversationEndRef = useRef<HTMLDivElement>(null);
 
@@ -140,6 +141,8 @@ export const LLMAssistantPanel: React.FC<LLMAssistantPanelProps> = ({
       setConversation([]);
       // Reset processing state
       setIsProcessing(false);
+      // Clear any pending actions
+      setPendingAction(null);
     }
   }, [isOpen]);
 
@@ -213,8 +216,8 @@ export const LLMAssistantPanel: React.FC<LLMAssistantPanelProps> = ({
       };
       setConversation(prev => [...prev, assistantEntry]);
 
-      // Apply the action
-      onApplyAction(action, response);
+      // Store the pending action for user approval instead of immediately applying
+      setPendingAction({ action, response });
     } catch (error) {
       console.error('Error calling LLM API:', error);
       
@@ -230,8 +233,8 @@ export const LLMAssistantPanel: React.FC<LLMAssistantPanelProps> = ({
       };
       setConversation(prev => [...prev, assistantEntry]);
       
-      // Still apply the action with mock response
-      onApplyAction(action, response);
+      // Store the pending action for user approval instead of immediately applying
+      setPendingAction({ action, response });
     } finally {
       setIsProcessing(false);
       // Focus back on input
@@ -287,6 +290,24 @@ export const LLMAssistantPanel: React.FC<LLMAssistantPanelProps> = ({
 
   const handleSuggestionClick = (suggestion: string) => {
     setPrompt(suggestion);
+    textareaRef.current?.focus();
+  };
+
+  const handleApplyPending = () => {
+    if (pendingAction) {
+      // Apply the action using the existing persistence logic
+      onApplyAction(pendingAction.action, pendingAction.response);
+      // Clear the pending action
+      setPendingAction(null);
+      // Clear the prompt for next interaction
+      setPrompt('');
+    }
+  };
+
+  const handleRejectPending = () => {
+    // Clear the pending action but keep conversation
+    setPendingAction(null);
+    // Focus back on input for user to provide feedback
     textareaRef.current?.focus();
   };
 
@@ -444,6 +465,49 @@ export const LLMAssistantPanel: React.FC<LLMAssistantPanelProps> = ({
           </>
         )}
       </div>
+
+      {/* Pending Action Preview */}
+      {pendingAction && (
+        <div className="p-4 bg-yellow-50 border-t border-yellow-200">
+          <div className="text-sm font-medium text-gray-700 mb-2">Preview - Review before applying:</div>
+          <div className="bg-white rounded-lg p-3 border border-yellow-300 mb-3">
+            {pendingAction.response.content ? (
+              <div className="text-sm text-gray-800">{pendingAction.response.content}</div>
+            ) : pendingAction.response.items ? (
+              <div className="text-sm text-gray-800">
+                {pendingAction.response.items.map((item: any, idx: number) => (
+                  <div key={idx} className="mb-2">
+                    <div className="font-medium">{item.text}</div>
+                    {item.children && item.children.length > 0 && (
+                      <div className="ml-4 mt-1">
+                        {item.children.map((child: any, childIdx: number) => (
+                          <div key={childIdx} className="text-gray-600">• {child.text}</div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="text-sm text-gray-800">Content to be applied</div>
+            )}
+          </div>
+          <div className="flex gap-2">
+            <button
+              onClick={handleApplyPending}
+              className="flex-1 px-3 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors text-sm font-medium"
+            >
+              Apply to Outline
+            </button>
+            <button
+              onClick={handleRejectPending}
+              className="flex-1 px-3 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors text-sm font-medium"
+            >
+              Regenerate
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* Input Area */}
       <form onSubmit={handleSubmit} className="p-4 border-t border-gray-200 bg-white">
