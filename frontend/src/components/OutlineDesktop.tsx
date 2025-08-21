@@ -1244,21 +1244,38 @@ const OutlineDesktop: React.FC<OutlineDesktopProps> = ({
     
     // Apply the template
     const templateItems = createBrainliftTemplate();
-    console.log('Generated template items:', templateItems);
-    console.log('Current outline ID:', currentOutlineId);
     setOutline(templateItems);
     
     // Save items directly using the API since we have the outline ID
     try {
-      console.log('Saving template items to outline:', currentOutlineId);
-      const { outlinesApi } = await import('@/services/api/apiClient');
+      // First, delete all existing items from the backend
+      const deleteAllItems = async (items: OutlineItem[]) => {
+        for (const item of items) {
+          // Delete children first (recursively)
+          if (item.children && item.children.length > 0) {
+            await deleteAllItems(item.children);
+          }
+          // Only delete items that have been saved to backend (have proper IDs)
+          if (item.id && item.id.startsWith('item_')) {
+            try {
+              await outlinesApi.deleteItem(currentOutlineId, item.id);
+            } catch (error) {
+              console.error('Failed to delete item:', item.id, error);
+            }
+          }
+        }
+      };
       
-      // Create each item
+      // Delete all existing items
+      if (outline.length > 0) {
+        await deleteAllItems(outline);
+      }
+      
+      // Now create the new template items
       for (const item of templateItems) {
         await createItemWithChildren(item, null, outlinesApi, currentOutlineId);
       }
       
-      console.log('Template items saved successfully');
     } catch (error) {
       console.error('Failed to save template items:', error);
     }
