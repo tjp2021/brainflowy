@@ -171,12 +171,24 @@ const OutlineDesktop: React.FC<OutlineDesktopProps> = ({
           setOutline([]);
         } else {
           setUserOutlines(outlines);
-          // Load first outline if available
-          if (!currentOutlineId) {
-            setCurrentOutlineId(outlines[0].id);
-            setOutlineTitle(outlines[0].title);
-            const items = await outlinesApi.getOutlineItems(outlines[0].id);
+          
+          // Determine which outline to load
+          let outlineToLoad = currentOutlineId;
+          
+          // If no current outline ID or it doesn't exist in the list, use first outline
+          if (!outlineToLoad || !outlines.find(o => o.id === outlineToLoad)) {
+            outlineToLoad = outlines[0]?.id;
+          }
+          
+          if (outlineToLoad) {
+            const outlineData = outlines.find(o => o.id === outlineToLoad) || outlines[0];
+            setCurrentOutlineId(outlineToLoad);
+            setOutlineTitle(outlineData.title);
+            
+            // Always load items for the current outline
+            const items = await outlinesApi.getOutlineItems(outlineToLoad);
             console.log('RAW BACKEND ITEMS:', JSON.stringify(items, null, 2));
+            
             // Convert backend format to frontend format recursively with level calculation
             const convertItems = (items: any[], level: number = 0): OutlineItem[] => {
               return items.map((item: any) => {
