@@ -1393,11 +1393,102 @@ const OutlineDesktop: React.FC<OutlineDesktopProps> = ({
     }
   };
 
-  const handleAcceptStructure = (items: OutlineItem[]) => {
-    // Add structured items to outline
-    const updated = [...outline, ...items];
-    setOutline(updated);
-    setTimeout(() => onItemsChange?.(updated), 0);
+  const handleAcceptStructure = async (items: OutlineItem[]) => {
+    // Save structured items to backend and add to outline
+    if (currentOutlineId) {
+      try {
+        const savedItems: OutlineItem[] = [];
+        
+        // Helper to save items recursively with proper order
+        const saveItemRecursively = async (item: OutlineItem, parentId: string | null = null): Promise<OutlineItem | null> => {
+          try {
+            // Calculate the correct order - count existing siblings
+            const countSiblings = (items: OutlineItem[], targetParentId: string | null): number => {
+              if (targetParentId === null) {
+                // Count root level items
+                return items.filter(i => !i.parentId).length;
+              } else {
+                // Find parent and count its children
+                const findParent = (items: OutlineItem[]): OutlineItem | null => {
+                  for (const i of items) {
+                    if (i.id === targetParentId) return i;
+                    if (i.children) {
+                      const found = findParent(i.children);
+                      if (found) return found;
+                    }
+                  }
+                  return null;
+                };
+                const parent = findParent(outline);
+                return parent ? (parent.children?.length || 0) : 0;
+              }
+            };
+            
+            const order = countSiblings(outline, parentId);
+            
+            // Create the item in backend
+            const created = await outlinesApi.createItem(currentOutlineId, {
+              content: item.text,
+              parentId: parentId,
+              order: order,
+              style: item.style,
+              formatting: item.formatting
+            });
+            
+            // Create the OutlineItem with the real backend ID
+            const outlineItem: OutlineItem = {
+              ...item,
+              id: created.id,  // Use real backend ID
+              parentId: parentId,
+              createdAt: created.createdAt,
+              updatedAt: created.updatedAt
+            };
+            
+            // Save children recursively
+            if (item.children && item.children.length > 0) {
+              outlineItem.children = [];
+              for (const child of item.children) {
+                const savedChild = await saveItemRecursively(child, created.id);
+                if (savedChild) {
+                  outlineItem.children.push(savedChild);
+                }
+              }
+            }
+            
+            return outlineItem;
+          } catch (error) {
+            console.error('Failed to save voice item to backend:', error);
+            return null;
+          }
+        };
+        
+        // Save all items and collect them with real IDs
+        for (const item of items) {
+          const savedItem = await saveItemRecursively(item, null);
+          if (savedItem) {
+            savedItems.push(savedItem);
+          }
+        }
+        
+        // Update UI with items that have real backend IDs
+        if (savedItems.length > 0) {
+          const updated = [...outline, ...savedItems];
+          setOutline(updated);
+          setTimeout(() => onItemsChange?.(updated), 0);
+        }
+      } catch (error) {
+        console.error('Failed to save voice structure:', error);
+        // Fallback: just update locally if backend fails
+        const updated = [...outline, ...items];
+        setOutline(updated);
+        setTimeout(() => onItemsChange?.(updated), 0);
+      }
+    } else {
+      // No outline ID, just update locally
+      const updated = [...outline, ...items];
+      setOutline(updated);
+      setTimeout(() => onItemsChange?.(updated), 0);
+    }
   };
 
   const addNewItemAfter = (afterId: string) => {
