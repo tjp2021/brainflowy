@@ -1612,7 +1612,7 @@ const OutlineDesktop: React.FC<OutlineDesktopProps> = ({
                             stopEditing();
                           }}
                           onKeyDown={(e) => handleKeyDown(e, item.id)}
-                          className="w-full px-2 py-1 text-sm leading-relaxed bg-white border border-blue-300 rounded resize-none focus:outline-none focus:ring-1 focus:ring-blue-500"
+                          className="w-full px-2 py-1 text-sm text-gray-900 leading-relaxed bg-white border border-blue-300 rounded resize-none focus:outline-none focus:ring-1 focus:ring-blue-500"
                           rows={item.style === 'code' ? 5 : 1}
                           placeholder=""
                         />
