@@ -75,6 +75,7 @@ const OutlineDesktop: React.FC<OutlineDesktopProps> = ({
   const [showLLMAssistant, setShowLLMAssistant] = useState(false);
   const [llmCurrentItem, setLLMCurrentItem] = useState<OutlineItem | null>(null);
   const [llmCurrentSection, setLLMCurrentSection] = useState<string | undefined>();
+  const [llmInitialPrompt, setLLMInitialPrompt] = useState<string>('');
   const textAreaRefs = useRef<{ [key: string]: HTMLTextAreaElement | null }>({});
 
   // Handle logout
@@ -1206,12 +1207,23 @@ const OutlineDesktop: React.FC<OutlineDesktopProps> = ({
   const openLLMAssistantForItem = (item: OutlineItem) => {
     setLLMCurrentItem(item);
     setLLMCurrentSection(detectSectionFromItem(item));
+    setLLMInitialPrompt('');
     setShowLLMAssistant(true);
   };
   
   const openLLMAssistantForCreate = (parentId?: string, section?: string) => {
     setLLMCurrentItem(null);
     setLLMCurrentSection(section);
+    setLLMInitialPrompt('');
+    setShowLLMAssistant(true);
+  };
+  
+  const handleVoiceToAI = (transcription: string) => {
+    // Open AI Assistant in create mode with the transcription as the initial prompt
+    setLLMCurrentItem(null);
+    setLLMCurrentSection(undefined);
+    setLLMInitialPrompt(transcription);
+    setShowVoiceModal(false);
     setShowLLMAssistant(true);
   };
   
@@ -1788,6 +1800,7 @@ const OutlineDesktop: React.FC<OutlineDesktopProps> = ({
         isOpen={showVoiceModal}
         onClose={() => setShowVoiceModal(false)}
         onAcceptStructure={handleAcceptStructure}
+        onSendToAI={handleVoiceToAI}
       />
       
       {/* LLM Assistant Panel with click-outside overlay */}
@@ -1800,6 +1813,7 @@ const OutlineDesktop: React.FC<OutlineDesktopProps> = ({
               setShowLLMAssistant(false);
               setLLMCurrentItem(null);
               setLLMCurrentSection(undefined);
+              setLLMInitialPrompt('');
             }}
           />
           <LLMAssistantPanel
@@ -1808,9 +1822,11 @@ const OutlineDesktop: React.FC<OutlineDesktopProps> = ({
               setShowLLMAssistant(false);
               setLLMCurrentItem(null);
               setLLMCurrentSection(undefined);
+              setLLMInitialPrompt('');
             }}
             currentItem={llmCurrentItem}
             currentSection={llmCurrentSection}
+            initialPrompt={llmInitialPrompt}
             onApplyAction={handleLLMAction}
           />
         </>

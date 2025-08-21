@@ -8,11 +8,12 @@ interface VoiceModalProps {
   isOpen: boolean;
   onClose: () => void;
   onAcceptStructure: (items: OutlineItem[]) => void;
+  onSendToAI?: (transcription: string) => void;
 }
 
 type VoiceState = 'idle' | 'listening' | 'processing' | 'structured';
 
-const VoiceModal: React.FC<VoiceModalProps> = ({ isOpen, onClose, onAcceptStructure }) => {
+const VoiceModal: React.FC<VoiceModalProps> = ({ isOpen, onClose, onAcceptStructure, onSendToAI }) => {
   const [voiceState, setVoiceState] = useState<VoiceState>('idle');
   const [transcriptText, setTranscriptText] = useState('');
   const [structuredOutput, setStructuredOutput] = useState<OutlineItem[]>([]);
@@ -218,6 +219,13 @@ const VoiceModal: React.FC<VoiceModalProps> = ({ isOpen, onClose, onAcceptStruct
     onClose();
   };
 
+  const sendToAIAssistant = () => {
+    if (onSendToAI && transcriptText) {
+      onSendToAI(transcriptText);
+      onClose();
+    }
+  };
+
   const rejectStructure = () => {
     setVoiceState('idle');
     setStructuredOutput([]);
@@ -395,13 +403,23 @@ const VoiceModal: React.FC<VoiceModalProps> = ({ isOpen, onClose, onAcceptStruct
 
               {/* Action Buttons */}
               <div className="flex flex-col gap-2">
-                <button
-                  onClick={acceptStructure}
-                  className="flex items-center justify-center space-x-2 w-full px-4 py-3 bg-green-500 hover:bg-green-600 text-white rounded-lg font-medium transition-all"
-                >
-                  <Check className="w-5 h-5" />
-                  <span>Add to Outline</span>
-                </button>
+                {onSendToAI ? (
+                  <button
+                    onClick={sendToAIAssistant}
+                    className="flex items-center justify-center space-x-2 w-full px-4 py-3 bg-purple-600 hover:bg-purple-700 text-white rounded-lg font-medium transition-all"
+                  >
+                    <Check className="w-5 h-5" />
+                    <span>Send to AI Assistant</span>
+                  </button>
+                ) : (
+                  <button
+                    onClick={acceptStructure}
+                    className="flex items-center justify-center space-x-2 w-full px-4 py-3 bg-green-500 hover:bg-green-600 text-white rounded-lg font-medium transition-all"
+                  >
+                    <Check className="w-5 h-5" />
+                    <span>Add to Outline</span>
+                  </button>
+                )}
                 
                 <div className="flex gap-2">
                   <button

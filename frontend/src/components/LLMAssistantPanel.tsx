@@ -7,6 +7,7 @@ interface LLMAssistantPanelProps {
   onClose: () => void;
   currentItem?: OutlineItem | null;
   currentSection?: string;
+  initialPrompt?: string;
   onApplyAction: (action: LLMAction, response: LLMResponse) => void;
 }
 
@@ -113,6 +114,7 @@ export const LLMAssistantPanel: React.FC<LLMAssistantPanelProps> = ({
   onClose,
   currentItem,
   currentSection,
+  initialPrompt,
   onApplyAction
 }) => {
   const [prompt, setPrompt] = useState('');
@@ -131,6 +133,17 @@ export const LLMAssistantPanel: React.FC<LLMAssistantPanelProps> = ({
       setActionMode('create');
     }
   }, [currentItem]);
+
+  // Set initial prompt when provided (from voice transcription)
+  useEffect(() => {
+    if (initialPrompt && isOpen) {
+      setPrompt(initialPrompt);
+      // Focus the textarea after setting the prompt
+      setTimeout(() => {
+        textareaRef.current?.focus();
+      }, 100);
+    }
+  }, [initialPrompt, isOpen]);
 
   // Clear everything when panel closes
   useEffect(() => {
