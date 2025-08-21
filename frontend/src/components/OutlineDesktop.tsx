@@ -29,6 +29,7 @@ import type { OutlineItem } from '@/types/outline';
 import VoiceModal from './VoiceModal';
 import { createBrainliftTemplate } from '@/templates/brainliftTemplate';
 import LLMAssistantPanel, { type LLMAction, type LLMResponse } from './LLMAssistantPanel';
+import { outlinesApi, authApi } from '@/services/api/apiClient';
 import '../styles/outline.css';
 
 interface OutlineDesktopProps {
@@ -146,7 +147,6 @@ const OutlineDesktop: React.FC<OutlineDesktopProps> = ({
       setIsLoadingOutlines(true);
       
       try {
-        const { outlinesApi, authApi } = await import('@/services/api/apiClient');
         const user = await authApi.getCurrentUser();
         
         if (!user) {
