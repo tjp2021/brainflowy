@@ -1710,18 +1710,31 @@ const OutlineDesktop: React.FC<OutlineDesktopProps> = ({
         onAcceptStructure={handleAcceptStructure}
       />
       
-      {/* LLM Assistant Panel */}
-      <LLMAssistantPanel
-        isOpen={showLLMAssistant}
-        onClose={() => {
-          setShowLLMAssistant(false);
-          setLLMCurrentItem(null);
-          setLLMCurrentSection(undefined);
-        }}
-        currentItem={llmCurrentItem}
-        currentSection={llmCurrentSection}
-        onApplyAction={handleLLMAction}
-      />
+      {/* LLM Assistant Panel with click-outside overlay */}
+      {showLLMAssistant && (
+        <>
+          {/* Invisible overlay to capture outside clicks */}
+          <div 
+            className="fixed inset-0 z-40"
+            onClick={() => {
+              setShowLLMAssistant(false);
+              setLLMCurrentItem(null);
+              setLLMCurrentSection(undefined);
+            }}
+          />
+          <LLMAssistantPanel
+            isOpen={showLLMAssistant}
+            onClose={() => {
+              setShowLLMAssistant(false);
+              setLLMCurrentItem(null);
+              setLLMCurrentSection(undefined);
+            }}
+            currentItem={llmCurrentItem}
+            currentSection={llmCurrentSection}
+            onApplyAction={handleLLMAction}
+          />
+        </>
+      )}
     </div>
   );
 };
