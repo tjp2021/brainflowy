@@ -131,6 +131,18 @@ export const LLMAssistantPanel: React.FC<LLMAssistantPanelProps> = ({
     }
   }, [currentItem]);
 
+  // Clear everything when panel closes
+  useEffect(() => {
+    if (!isOpen) {
+      // Clear the text field
+      setPrompt('');
+      // Clear the conversation history
+      setConversation([]);
+      // Reset processing state
+      setIsProcessing(false);
+    }
+  }, [isOpen]);
+
   // Scroll to bottom of conversation
   useEffect(() => {
     conversationEndRef.current?.scrollIntoView({ behavior: 'smooth' });
