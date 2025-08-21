@@ -1,7 +1,10 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Plus, Mic, Search, Menu, ChevronRight, ChevronDown, ChevronLeft } from 'lucide-react';
+import { Plus, Mic, Search, Menu, ChevronRight, ChevronDown, ChevronLeft, LogOut } from 'lucide-react';
 import type { OutlineItem, SwipeState } from '@/types/outline';
 import VoiceModal from './VoiceModal';
+import { flattenHierarchy } from '@/utils/hierarchyUtils';
+import { authApi } from '@/services/api/apiClient';
+import { useNavigate } from 'react-router-dom';
 import '../styles/outline.css';
 
 interface OutlineMobileProps {
@@ -15,7 +18,28 @@ const OutlineMobile: React.FC<OutlineMobileProps> = ({
   initialItems = [],
   onItemsChange 
 }) => {
+  const navigate = useNavigate();
+  
+  // Debug: Check if mobile is receiving items with children
+  console.log('Mobile: Received', initialItems.length, 'items');
+  initialItems.forEach(item => {
+    console.log(`- ${item.text} (children: ${item.children ? item.children.length : 0})`);
+  });
+  
+  // Just use the items directly, same as desktop
   const [outline, setOutline] = useState<OutlineItem[]>(initialItems);
+  const [isInitialized, setIsInitialized] = useState(false);
+  const [showMenu, setShowMenu] = useState(false);
+  
+  // Sync with parent when initialItems changes
+  useEffect(() => {
+    setOutline(initialItems);
+    
+    // Mark as initialized after first render
+    if (!isInitialized) {
+      setIsInitialized(true);
+    }
+  }, [initialItems, isInitialized]);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [showVoiceModal, setShowVoiceModal] = useState(false);
   const [swipeState, setSwipeState] = useState<SwipeState>({ id: null, direction: null, startX: 0 });
@@ -33,50 +57,24 @@ const OutlineMobile: React.FC<OutlineMobileProps> = ({
     return () => clearTimeout(timer);
   }, []);
 
-  // Load user's outlines on mount
+  // Close menu when clicking outside
   useEffect(() => {
-    const loadUserOutlines = async () => {
-      try {
-        const { outlinesApi, authApi } = await import('@/services/api/apiClient');
-        const user = await authApi.getCurrentUser();
-        
-        if (user) {
-          const outlines = await outlinesApi.getOutlines();
-          
-          // Create or load first outline
-          if (outlines.length > 0) {
-            setCurrentOutlineId(outlines[0].id);
-            const items = await outlinesApi.getOutlineItems(outlines[0].id);
-            setOutline(items as any);
-          } else {
-            // Create a new outline for the user
-            const newOutline = await outlinesApi.createOutline({
-              title: `Mobile Outline ${new Date().toLocaleDateString()}`,
-              userId: user.id
-            });
-            setCurrentOutlineId(newOutline.id);
-          }
-        }
-      } catch (error) {
-        console.error('Failed to load outlines:', error);
+    const handleClickOutside = (event: MouseEvent) => {
+      if (showMenu) {
+        setShowMenu(false);
       }
     };
-    
-    loadUserOutlines();
-  }, []);
+    document.addEventListener('click', handleClickOutside);
+    return () => document.removeEventListener('click', handleClickOutside);
+  }, [showMenu]);
 
-  // Flatten outline for rendering
-  const flattenOutline = (items: OutlineItem[], result: OutlineItem[] = []): OutlineItem[] => {
-    items.forEach(item => {
-      result.push(item);
-      if (item.expanded && item.children.length > 0) {
-        flattenOutline(item.children, result);
-      }
-    });
-    return result;
-  };
+  // Mobile component should NOT load its own data when used within OutlineView
+  // OutlineView handles all data loading and passes it via initialItems
+  // This effect is only for standalone use (which shouldn't happen in production)
 
-  const flatItems = flattenOutline(outline);
+  // Use unified flatten function for rendering
+  const flatItems = flattenHierarchy(outline);
+  console.log('Mobile: Rendering', flatItems.length, 'flattened items from', outline.length, 'root items');
 
   const handleTouchStart = (e: React.TouchEvent, itemId: string) => {
     const touch = e.touches[0];
@@ -150,7 +148,10 @@ const OutlineMobile: React.FC<OutlineMobileProps> = ({
 
     const updated = updateItems([...outline]);
     setOutline(updated);
-    onItemsChange?.(updated);
+    // Only call parent callback if initialized (user action, not initial render)
+    if (isInitialized && onItemsChange) {
+      onItemsChange(updated);
+    }
   };
 
   const outdentItem = (itemId: string) => {
@@ -175,7 +176,10 @@ const OutlineMobile: React.FC<OutlineMobileProps> = ({
 
     const updated = updateItems([...outline]);
     setOutline(updated);
-    onItemsChange?.(updated);
+    // Only call parent callback if initialized (user action, not initial render)
+    if (isInitialized && onItemsChange) {
+      onItemsChange(updated);
+    }
   };
 
   const toggleExpanded = (itemId: string) => {
@@ -320,9 +324,10 @@ const OutlineMobile: React.FC<OutlineMobileProps> = ({
     }
   };
 
-  const addNewItem = (text: string = 'New item', style?: 'header' | 'code' | 'quote' | 'normal') => {
+  const addNewItem = async (text: string = 'New item', style?: 'header' | 'code' | 'quote' | 'normal') => {
+    const tempId = `item_${Date.now()}_${Math.random()}`;
     const newItem: OutlineItem = {
-      id: `item_${Date.now()}`,
+      id: tempId,
       text: text,
       level: 0,
       expanded: false,
@@ -332,10 +337,34 @@ const OutlineMobile: React.FC<OutlineMobileProps> = ({
                  (style || selectedStyle) === 'quote' ? { italic: true, size: 'medium' as const } :
                  undefined
     };
+    
+    // Add to local state immediately
     const updated = [...outline, newItem];
     setOutline(updated);
-    onItemsChange?.(updated);
-    startEditing(newItem.id);
+    // Don't call onItemsChange here - it would trigger a full re-save
+    // We'll handle the save directly below
+    startEditing(tempId);
+    
+    // Save to backend if we have an outline ID
+    if (currentOutlineId) {
+      try {
+        const { outlinesApi } = await import('@/services/api/apiClient');
+        const createdItem = await outlinesApi.createItem(currentOutlineId, {
+          content: text,
+          parentId: null,
+          order: outline.length
+        });
+        
+        // Update the item with the real backend ID
+        const updatedWithBackendId = updated.map(item => 
+          item.id === tempId ? { ...item, id: createdItem.id } : item
+        );
+        setOutline(updatedWithBackendId);
+        // Don't call onItemsChange - we've already saved to backend
+      } catch (error) {
+        console.error('Failed to save item to backend:', error);
+      }
+    }
   };
 
   const toggleItemStyle = (itemId: string, style: 'header' | 'code' | 'quote' | 'normal') => {
@@ -366,7 +395,19 @@ const OutlineMobile: React.FC<OutlineMobileProps> = ({
     // Add structured items to outline
     const updated = [...outline, ...items];
     setOutline(updated);
-    onItemsChange?.(updated);
+    // Only call parent callback if initialized (user action, not initial render)
+    if (isInitialized && onItemsChange) {
+      onItemsChange(updated);
+    }
+  };
+
+  const handleLogout = async () => {
+    try {
+      await authApi.logout();
+      navigate('/login');
+    } catch (error) {
+      console.error('Logout failed:', error);
+    }
   };
 
   return (
@@ -381,13 +422,44 @@ const OutlineMobile: React.FC<OutlineMobileProps> = ({
             <h1 className="text-lg font-semibold text-gray-900 truncate">{title}</h1>
           </div>
           
-          <div className="flex items-center space-x-1">
+          <div className="flex items-center space-x-1 relative">
             <button className="p-2 rounded-lg hover:bg-gray-100 transition-colors">
               <Search className="w-5 h-5 text-gray-600" />
             </button>
-            <button className="p-2 rounded-lg hover:bg-gray-100 transition-colors">
+            <button 
+              onClick={(e) => {
+                e.stopPropagation();
+                setShowMenu(!showMenu);
+              }}
+              className="p-2 rounded-lg hover:bg-gray-100 transition-colors"
+            >
               <Menu className="w-5 h-5 text-gray-600" />
             </button>
+            
+            {/* Dropdown Menu */}
+            {showMenu && (
+              <div 
+                className="absolute right-0 top-10 w-48 bg-white rounded-lg shadow-xl border border-gray-300"
+                style={{ zIndex: 9999 }}
+                onClick={(e) => e.stopPropagation()}
+              >
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleLogout();
+                  }}
+                  className="w-full px-4 py-3 text-left text-gray-700 hover:bg-gray-100 flex items-center space-x-2 rounded-t-lg"
+                >
+                  <LogOut className="w-4 h-4" />
+                  <span>Logout</span>
+                </button>
+                <div className="border-t border-gray-200">
+                  <button className="w-full px-4 py-3 text-left text-gray-700 hover:bg-gray-100 rounded-b-lg">
+                    Settings
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
         </div>
       </div>

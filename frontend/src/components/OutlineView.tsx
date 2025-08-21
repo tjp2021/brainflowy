@@ -27,14 +27,62 @@ const OutlineView: React.FC<OutlineViewProps> = ({ outlineId }) => {
     return () => window.removeEventListener('resize', checkMobile);
   }, []);
 
-  // Don't load outline data here - let OutlineDesktop handle it
+  // Load outline data once for both mobile and desktop
   useEffect(() => {
-    setLoading(false);
+    const loadOutlineData = async () => {
+      try {
+        const { outlinesApi, authApi } = await import('@/services/api/apiClient');
+        const user = await authApi.getCurrentUser();
+        
+        if (user) {
+          const outlines = await outlinesApi.getOutlines();
+          
+          if (outlines.length > 0) {
+            setCurrentOutlineId(outlines[0].id);
+            const backendItems = await outlinesApi.getOutlineItems(outlines[0].id);
+            
+            // Debug: Log what we got from backend
+            console.log('OutlineView: Got', backendItems.length, 'items from backend');
+            console.log('Sample backend item:', backendItems[0]);
+            
+            // The mock API returns hierarchical data with children already populated
+            // We just need to map 'content' to 'text' and set the levels
+            const mapHierarchicalItems = (items: any[], level: number = 0): OutlineItem[] => {
+              return items.map(item => ({
+                ...item,
+                text: item.content || item.text || '',
+                level: level,
+                expanded: true,
+                children: item.children ? mapHierarchicalItems(item.children, level + 1) : []
+              }));
+            };
+            
+            const hierarchicalItems = mapHierarchicalItems(backendItems);
+            
+            console.log('OutlineView: After mapping:', hierarchicalItems.length, 'root items');
+            hierarchicalItems.forEach(item => {
+              console.log(`- ${item.text} (children: ${item.children ? item.children.length : 0})`);
+            });
+            
+            // Debug: Log the converted structure
+            if (hierarchicalItems.length > 0) {
+              console.log('First root item:', hierarchicalItems[0]);
+            }
+            
+            setItems(hierarchicalItems);
+          }
+        }
+      } catch (error) {
+        console.error('Failed to load outline:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    
+    loadOutlineData();
   }, []);
 
   const handleItemsChange = async (updatedItems: OutlineItem[]) => {
-    console.log('handleItemsChange called with', updatedItems.length, 'items');
-    console.log('currentOutlineId:', currentOutlineId);
     
     // Use setTimeout to avoid setState during render warning
     setTimeout(() => {
@@ -152,12 +200,14 @@ const OutlineView: React.FC<OutlineViewProps> = ({ outlineId }) => {
         <OutlineMobile 
           title={title}
           initialItems={items} 
-          onItemsChange={handleItemsChange}
+          onItemsChange={(updatedItems) => {
+            setItems(updatedItems);
+          }}
         />
       ) : (
         <OutlineDesktop 
           title={title}
-          initialItems={[]} 
+          initialItems={items} 
           onItemsChange={handleItemsChange}
         />
       )}
@@ -165,20 +215,7 @@ const OutlineView: React.FC<OutlineViewProps> = ({ outlineId }) => {
   );
 };
 
-// Helper function to convert flat items to hierarchical structure
-function convertToHierarchical(flatItems: any[]): OutlineItem[] {
-  // This is a simplified version - in real app would properly build hierarchy
-  return flatItems.map(item => ({
-    id: item.id,
-    text: item.content || item.text,
-    level: item.level || 0,
-    expanded: item.expanded !== false,
-    children: item.children || [],
-    parentId: item.parentId,
-    createdAt: item.createdAt,
-    updatedAt: item.updatedAt
-  }));
-}
+// Helper function removed - now using unified utility from hierarchyUtils.ts
 
 // Sample data for development
 function getSampleOutlineData(): OutlineItem[] {
