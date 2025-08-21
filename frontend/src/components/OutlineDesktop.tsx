@@ -1038,11 +1038,50 @@ const OutlineDesktop: React.FC<OutlineDesktopProps> = ({
           
           const saveItemRecursively = async (item: any, parentId: string | null = null, level: number = 0): Promise<OutlineItem | null> => {
             try {
+              // Calculate the correct order - count existing siblings with same parent
+              const countSiblings = (items: OutlineItem[], targetParentId: string | null): number => {
+                let count = 0;
+                const traverse = (items: OutlineItem[]) => {
+                  for (const item of items) {
+                    if (item.parentId === targetParentId) {
+                      count++;
+                    }
+                    if (item.children && item.children.length > 0) {
+                      traverse(item.children);
+                    }
+                  }
+                };
+                
+                if (targetParentId === null) {
+                  // Count root level items
+                  return items.filter(item => !item.parentId).length;
+                } else {
+                  // Find the parent and count its children
+                  const findParent = (items: OutlineItem[]): OutlineItem | null => {
+                    for (const item of items) {
+                      if (item.id === targetParentId) {
+                        return item;
+                      }
+                      if (item.children) {
+                        const found = findParent(item.children);
+                        if (found) return found;
+                      }
+                    }
+                    return null;
+                  };
+                  
+                  const parent = findParent(outline);
+                  return parent ? (parent.children?.length || 0) : 0;
+                }
+              };
+              
+              const order = countSiblings(outline, parentId);
+              
               // Create the item in backend
               const created = await outlinesApi.createItem(currentOutlineId, {
                 content: item.text || item.content,
                 parentId: parentId,
-                order: 0,
+                order: order,
                 style: item.style,
                 formatting: item.formatting
               });
