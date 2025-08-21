@@ -1031,6 +1031,50 @@ const OutlineDesktop: React.FC<OutlineDesktopProps> = ({
       }
       
     } else if (action.type === 'create' && response.items) {
+      // Determine the correct parent based on section
+      let targetParentId = action.parentId;
+      
+      // If we have a section but no parentId, find the appropriate parent
+      if (action.section && !action.parentId) {
+        const findSectionParent = (items: OutlineItem[]): string | null => {
+          for (const item of items) {
+            const itemTextLower = item.text.toLowerCase();
+            
+            // Match section headers
+            if (action.section === 'spov' && itemTextLower.includes('spov')) {
+              return item.id;
+            }
+            if (action.section === 'purpose' && itemTextLower.includes('purpose')) {
+              return item.id;
+            }
+            if (action.section === 'owner' && itemTextLower.includes('owner')) {
+              return item.id;
+            }
+            if (action.section === 'out_of_scope' && itemTextLower.includes('scope')) {
+              return item.id;
+            }
+            if (action.section === 'initiative_overview' && itemTextLower.includes('overview')) {
+              return item.id;
+            }
+            if ((action.section === 'dok1' || action.section === 'dok2' || action.section === 'dok3') && itemTextLower.includes('dok')) {
+              return item.id;
+            }
+            if (action.section === 'expert_council' && (itemTextLower.includes('expert') || itemTextLower.includes('council'))) {
+              return item.id;
+            }
+            
+            // Recursively search children
+            if (item.children && item.children.length > 0) {
+              const found = findSectionParent(item.children);
+              if (found) return found;
+            }
+          }
+          return null;
+        };
+        
+        targetParentId = findSectionParent(outline);
+      }
+      
       // Save new items to backend FIRST to get real IDs
       if (currentOutlineId && response.items) {
         try {
@@ -1117,7 +1161,7 @@ const OutlineDesktop: React.FC<OutlineDesktopProps> = ({
           
           // Save all new items and collect them with real IDs
           for (const respItem of response.items) {
-            const savedItem = await saveItemRecursively(respItem, action.parentId || null);
+            const savedItem = await saveItemRecursively(respItem, targetParentId || null);
             if (savedItem) {
               savedItems.push(savedItem);
             }
@@ -1125,11 +1169,11 @@ const OutlineDesktop: React.FC<OutlineDesktopProps> = ({
           
           // Now update the UI with items that have real backend IDs
           if (savedItems.length > 0) {
-            if (action.parentId) {
+            if (targetParentId) {
               // Insert as children of specific parent
               const insertIntoParent = (items: OutlineItem[]): OutlineItem[] => {
                 return items.map(item => {
-                  if (item.id === action.parentId) {
+                  if (item.id === targetParentId) {
                     return {
                       ...item,
                       children: [...(item.children || []), ...savedItems]
