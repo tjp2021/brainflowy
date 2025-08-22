@@ -80,7 +80,7 @@ const OutlineMobile: React.FC<OutlineMobileProps> = ({
   const [currentOutlineId, setCurrentOutlineId] = useState<string | null>(outlineId || null);
   const [showLLMAssistant, setShowLLMAssistant] = useState(false);
   const [llmCurrentItem, setLLMCurrentItem] = useState<OutlineItem | null>(null);
-  const [llmCurrentSection, setLLMCurrentSection] = useState<OutlineItem[] | undefined>(undefined);
+  const [llmCurrentSection, setLLMCurrentSection] = useState<string | undefined>(undefined);
   const [llmInitialPrompt, setLLMInitialPrompt] = useState<string>('');
 
   useEffect(() => {
@@ -116,8 +116,8 @@ const OutlineMobile: React.FC<OutlineMobileProps> = ({
     setCurrentOutlineId(outlineId);
     setShowMenu(false);
     // The parent component should handle reloading the outline data
-    if (window.location.pathname !== `/outline/${outlineId}`) {
-      navigate(`/outline/${outlineId}`);
+    if (window.location.pathname !== `/outlines/${outlineId}`) {
+      navigate(`/outlines/${outlineId}`);
     }
   };
 
@@ -440,8 +440,8 @@ const OutlineMobile: React.FC<OutlineMobileProps> = ({
         <div className="flex items-center space-x-2">
           <button 
             onClick={() => {
-              // Open LLM assistant with current outline context
-              setLLMCurrentSection(outline);
+              // Open LLM assistant without specific section context
+              setLLMCurrentSection(undefined);
               setShowLLMAssistant(true);
             }}
             className="p-2 rounded-lg text-gray-600 hover:bg-gray-100"
