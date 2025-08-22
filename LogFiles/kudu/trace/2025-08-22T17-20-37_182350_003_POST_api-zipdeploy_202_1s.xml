@@ -1,0 +1,17 @@
+<step title="Incoming Request" date="2025-08-22T17:20:37.848" instance="182350" url="/api/zipdeploy?isAsync=true" method="POST" type="request" pid="769,1,20" Accept="*/*" Host="brainflowy-backend.scm.azurewebsites.net" User-Agent="AZURECLI/2.76.0 (HOMEBREW)" Accept-Encoding="gzip, deflate" Authorization="Bea..." Cache-Control="no-cache" Content-Type="application/octet-stream" Cookie="ARRAffinity=182350d73622b11ccdbe6e8c1485ddc261ae27ae445eca9fe52ac50e417c829d; ARRAffinitySameSite=182350d73622b11ccdbe6e8c1485ddc261ae27ae445eca9fe52ac50e417c829d" Content-Length="410163" x-ms-client-request-id="4a86daac-7f7c-11f0-997e-2e924baabeba" x-ms-artifact-checksum="04b8845d6065240f42b04ad4ca2159b1ba6c51ea48b677b5dfb4904c78ad9528" X-ARR-LOG-ID="4a86daac-7f7c-11f0-997e-2e924baabeba" CLIENT-IP="35.146.24.176:18329" X-SITE-DEPLOYMENT-ID="brainflowy-backend" WAS-DEFAULT-HOSTNAME="brainflowy-backend.scm.azurewebsites.net" X-Forwarded-Proto="https" X-AppService-Proto="https" X-Forwarded-TlsVersion="1.3" X-WAWS-Unencoded-URL="/api/zipdeploy?isAsync=true" X-Client-IP="35.146.24.176" X-Client-Port="18329" >
+  <step title="ZipPushDeploy" date="2025-08-22T17:20:37.971" >
+    <step title="ZipDeploy. Extract zip." date="2025-08-22T17:20:37.982" /><!-- duration: 1ms -->
+    <step title="None repository commit" date="2025-08-22T17:20:38.000" >
+      <step title="Commit id: 5840fa9b-d3cc-402e-ac58-65ca01e5976a" date="2025-08-22T17:20:38.001" Message="N/A" AuthorName="N/A" AuthorEmail="N/A" /><!-- duration: 1ms -->
+    </step><!-- duration: 4ms -->
+    <step title="Starting PushDeployAsync" date="2025-08-22T17:20:38.004" /><!-- duration: 1ms -->
+    <step title="Writing artifact to /tmp/zipdeploy/b7c0a8de-7f82-4d93-a834-cc05dc690c64.zip" date="2025-08-22T17:20:38.023" >
+      <step title="Writing multipart request body to /tmp/zipdeploy/b7c0a8de-7f82-4d93-a834-cc05dc690c64.zip" date="2025-08-22T17:20:38.038" /><!-- duration: 2ms -->
+    </step><!-- duration: 199ms -->
+    <step title="Start deployment in the background" date="2025-08-22T17:20:38.253" >
+      <step title="Acquiring Deployment Lock" date="2025-08-22T17:20:38.291" /><!-- duration: 3ms -->
+      <step title="Acquired Deployment Lock" date="2025-08-22T17:20:38.353" /><!-- duration: 1ms -->
+    </step><!-- duration: 185ms -->
+  </step><!-- duration: 474ms -->
+  <step title="Outgoing response" date="2025-08-22T17:20:38.460" type="response" statusCode="202" statusText="Accepted" /><!-- duration: 1ms -->
+</step><!-- duration: 614ms -->

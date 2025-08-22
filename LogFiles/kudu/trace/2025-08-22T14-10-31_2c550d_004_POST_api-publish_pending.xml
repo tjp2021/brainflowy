@@ -1,0 +1,48 @@
+<step title="Incoming Request" date="2025-08-22T14:10:31.439" instance="2c550d" url="/api/publish?type=zip" method="POST" type="request" pid="768,1,17" Accept="*/*" Host="brainflowy-backend.scm.azurewebsites.net" User-Agent="AZURECLI/2.76.0 (HOMEBREW)" Accept-Encoding="gzip, deflate" Authorization="Bea..." Cache-Control="no-cache" Content-Type="application/octet-stream" Cookie="ARRAffinity=2c550d49ed3e1b1a45dc9c4395b7293b5ef7655bd4027d094c053da6ad53b43c; ARRAffinitySameSite=2c550d49ed3e1b1a45dc9c4395b7293b5ef7655bd4027d094c053da6ad53b43c" Content-Length="39006309" x-ms-client-request-id="b6ae4f82-7f61-11f0-9fe2-2e924baabeba" x-ms-artifact-checksum="dde4d1847f9936962544297d92917924a419f3420600d644332b39dd4eb0726d" X-ARR-LOG-ID="b6ae4f82-7f61-11f0-9fe2-2e924baabeba" CLIENT-IP="35.146.24.176:18478" X-SITE-DEPLOYMENT-ID="brainflowy-backend" WAS-DEFAULT-HOSTNAME="brainflowy-backend.scm.azurewebsites.net" X-Forwarded-Proto="https" X-AppService-Proto="https" X-Forwarded-TlsVersion="1.3" X-WAWS-Unencoded-URL="/api/publish?type=zip" X-Client-IP="35.146.24.176" X-Client-Port="18478" >
+  <step title="OneDeploy" date="2025-08-22T14:10:31.478" >
+    <step title="Starting PushDeployAsync" date="2025-08-22T14:10:31.493" /><!-- duration: 5ms -->
+    <step title="Writing artifact to /tmp/zipdeploy/163dc799-a9bf-4fc7-85d8-98b13d903298.zip" date="2025-08-22T14:10:31.512" >
+      <step title="Writing multipart request body to /tmp/zipdeploy/163dc799-a9bf-4fc7-85d8-98b13d903298.zip" date="2025-08-22T14:10:31.530" /><!-- duration: 8ms -->
+    </step><!-- duration: 24146ms -->
+    <step title="Attempting to fetch target branch HEAD" date="2025-08-22T14:10:55.694" /><!-- duration: 6ms -->
+    <step title="Acquiring Deployment Lock" date="2025-08-22T14:10:55.707" /><!-- duration: 7ms -->
+    <step title="Acquired Deployment Lock" date="2025-08-22T14:10:55.768" /><!-- duration: 6ms -->
+    <step title="Performing fetch based deployment" date="2025-08-22T14:10:55.791" >
+      <step title="Creating temporary deployment" date="2025-08-22T14:10:55.799" /><!-- duration: 123ms -->
+      <step title="Releasing Deployment Lock" date="2025-08-22T14:10:57.156" /><!-- duration: 14ms -->
+      <step title="Cleaning up temp folders from previous zip deployments and extracting pushed zip file /tmp/zipdeploy/163dc799-a9bf-4fc7-85d8-98b13d903298.zip (37.20 MB) to /tmp/zipdeploy/extracted" date="2025-08-22T14:10:57.226" >
+        <step title="ChmodRecursive Process exited with total time taken in ms: 300" date="2025-08-22T14:11:05.569" /><!-- duration: 17ms -->
+      </step><!-- duration: 8371ms -->
+      <step title="None repository commit" date="2025-08-22T14:11:05.603" >
+        <step title="Commit id: 24615f8b-6fa0-4d32-8f22-3bd5d5a99390" date="2025-08-22T14:11:05.610" Message="OneDeploy" AuthorName="N/A" AuthorEmail="N/A" /><!-- duration: 6ms -->
+      </step><!-- duration: 18ms -->
+      <step title="Deployment timer started" date="2025-08-22T14:11:07.633" >
+        <step title="DeploymentManager.Deploy(id:24615f8b-6fa0-4d32-8f22-3bd5d5a99390)" date="2025-08-22T14:11:07.644" >
+          <step title="Collecting changeset information" date="2025-08-22T14:11:07.669" /><!-- duration: 153ms -->
+          <step title="Updating submodules" date="2025-08-22T14:11:07.836" /><!-- duration: 1165ms -->
+          <step title="Determining deployment builder" date="2025-08-22T14:11:09.295" >
+            <step title="Builder is OneDeployBuilder" date="2025-08-22T14:11:09.317" /><!-- duration: 6ms -->
+          </step><!-- duration: 35ms -->
+          <step title="PreDeployment: context.CleanOutputPath False" date="2025-08-22T14:11:09.412" >
+            <step title="PreDeployment: context.OutputPath /home/site/wwwroot" date="2025-08-22T14:11:09.568" >
+              <step title="Building" date="2025-08-22T14:11:09.784" >
+                <step title="Executing external process" date="2025-08-22T14:11:10.437" type="process" path="starter.sh" arguments="/opt/Kudu/Scripts/parallel_rsync.sh /tmp/zipdeploy/extracted /home/site/wwwroot 8 /tmp/ False False  " >
+                  <step title="Cpu: rsync(908,0.350s)+rsync(903,0.130s)+rsync(892,0.320s)+bash(884,0.000s)+rsync(911,0.310s)+rsync(900,0.140s)+rsync(889,0.280s)+bash(885,0.000s)+rsync(910,0.330s)+rsync(902,0.110s)+rsync(898,0.250s)+bash(886,0.000s)+rsync(915,0.330s)+rsync(905,0.140s)+rsync(893,0.260s)+bash(887,0.000s)+rsync(913,0.350s)+rsync(901,0.500s)+rsync(891,0.270s)+bash(888,0.000s)+rsync(914,0.300s)+rsync(904,0.100s)+rsync(896,0.260s)+bash(890,0.000s)+rsync(909,0.390s)+rsync(906,0.160s)+rsync(899,0.440s)+bash(894,0.000s)+rsync(912,0.270s)+rsync(907,0.110s)+rsync(897,0.230s)+bash(895,0.000s)+xargs(883,0.000s)+parallel_rsync.sh(875,0.010s)=total(6.320s)" date="2025-08-22T14:12:12.520" /><!-- duration: 88ms -->
+                  <step title="starter.sh: no io activity for 61s, prev-cpu=-1.000s, current-cpu=6.320s" date="2025-08-22T14:12:12.647" /><!-- duration: 40ms -->
+                  <step title="Cpu: rsync(908,1.260s)+rsync(903,0.130s)+rsync(892,0.560s)+bash(884,0.000s)+rsync(911,1.190s)+rsync(900,0.140s)+rsync(889,0.970s)+bash(885,0.000s)+rsync(910,1.230s)+rsync(902,0.110s)+rsync(898,0.430s)+bash(886,0.000s)+rsync(915,1.270s)+rsync(905,0.140s)+rsync(893,0.760s)+bash(887,0.000s)+rsync(913,1.330s)+rsync(901,0.500s)+rsync(891,0.690s)+bash(888,0.000s)+rsync(914,1.160s)+rsync(904,0.100s)+rsync(896,0.300s)+bash(890,0.000s)+rsync(909,1.350s)+rsync(906,0.160s)+rsync(899,0.730s)+bash(894,0.000s)+rsync(912,1.220s)+rsync(907,0.110s)+rsync(897,1.130s)+bash(895,0.000s)+xargs(883,0.000s)+parallel_rsync.sh(875,0.010s)=total(16.980s)" date="2025-08-22T14:13:13.102" /><!-- duration: 74ms -->
+                  <step title="starter.sh: no io activity for 122s, prev-cpu=6.320s, current-cpu=16.980s" date="2025-08-22T14:13:13.192" /><!-- duration: 37ms -->
+                </step><!-- duration: 154831ms -->
+                <step title="Modified file to trigger a restart of the app container." date="2025-08-22T14:13:45.913" /><!-- duration: 8ms -->
+                <step title="Skip function trigger and logicapp sync because function is not enabled." date="2025-08-22T14:13:46.028" /><!-- duration: 18ms -->
+              </step><!-- duration: 157136ms -->
+            </step><!-- duration: 157371ms -->
+            <step title="Cleaning up temp files" date="2025-08-22T14:13:46.946" /><!-- duration: 8ms -->
+            <step title="Cleaning up temp files" date="2025-08-22T14:13:46.972" /><!-- duration: 549ms -->
+            <step title="Reloading status file with latest updates" date="2025-08-22T14:13:47.569" >
+              <step title="WebHooksManager.PublishEventAsync: PostDeployment" date="2025-08-22T14:13:47.621" /><!-- duration: 177ms -->
+            </step><!-- duration: 236ms -->
+            <step title="Cleaning up temporary deployment - fetch deployment was successful" date="2025-08-22T14:13:47.834" /><!-- duration: 13ms -->
+          </step><!-- duration: 158559ms -->
+        </step><!-- duration: 160345ms -->
+        <step title="Outgoing response" date="2025-08-22T14:13:48.012" type="response" statusCode="200" statusText="OK" /><!-- duration: 7ms -->
+      </step><!-- duration: 160395ms -->

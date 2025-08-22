@@ -1,0 +1,9 @@
+<step title="Incoming Request" date="2025-08-22T14:16:55.213" instance="2c550d" url="/api/deployments/latest" method="GET" type="request" pid="767,1,17" Accept="*/*" Host="brainflowy-backend.scm.azurewebsites.net" User-Agent="AZURECLI/2.76.0 (HOMEBREW)" Accept-Encoding="gzip, deflate" Authorization="Bea..." x-ms-client-request-id="93f0e8f0-7f62-11f0-b16a-2e924baabeba" X-ARR-LOG-ID="93f0e8f0-7f62-11f0-b16a-2e924baabeba" CLIENT-IP="35.146.24.176:19788" X-SITE-DEPLOYMENT-ID="brainflowy-backend" WAS-DEFAULT-HOSTNAME="brainflowy-backend.scm.azurewebsites.net" X-Forwarded-Proto="https" X-AppService-Proto="https" X-Forwarded-TlsVersion="1.3" X-WAWS-Unencoded-URL="/api/deployments/latest" X-Client-IP="35.146.24.176" X-Client-Port="19788" >
+  <step title="Cleanup Xml Logs" date="2025-08-22T14:16:55.222" /><!-- duration: 13ms -->
+  <step title="DeploymentService.GetResult" date="2025-08-22T14:16:55.263" >
+    <step title="DeploymentService.GetLatestDeployment" date="2025-08-22T14:16:55.269" >
+      <step title="DeploymentManager.GetResults" date="2025-08-22T14:16:55.275" /><!-- duration: 246ms -->
+    </step><!-- duration: 267ms -->
+  </step><!-- duration: 279ms -->
+  <step title="Outgoing response" date="2025-08-22T14:16:55.549" type="response" statusCode="202" statusText="Accepted" /><!-- duration: 6ms -->
+</step><!-- duration: 347ms -->
