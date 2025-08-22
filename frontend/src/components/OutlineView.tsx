@@ -41,9 +41,6 @@ const OutlineView: React.FC<OutlineViewProps> = ({ outlineId }) => {
             setCurrentOutlineId(outlines[0].id);
             const backendItems = await outlinesApi.getOutlineItems(outlines[0].id);
             
-            // Debug: Log what we got from backend
-            console.log('OutlineView: Got', backendItems.length, 'items from backend');
-            console.log('Sample backend item:', backendItems[0]);
             
             // The mock API returns hierarchical data with children already populated
             // We just need to map 'content' to 'text' and set the levels
@@ -58,17 +55,6 @@ const OutlineView: React.FC<OutlineViewProps> = ({ outlineId }) => {
             };
             
             const hierarchicalItems = mapHierarchicalItems(backendItems);
-            
-            console.log('OutlineView: After mapping:', hierarchicalItems.length, 'root items');
-            hierarchicalItems.forEach(item => {
-              console.log(`- ${item.text} (children: ${item.children ? item.children.length : 0})`);
-            });
-            
-            // Debug: Log the converted structure
-            if (hierarchicalItems.length > 0) {
-              console.log('First root item:', hierarchicalItems[0]);
-            }
-            
             setItems(hierarchicalItems);
           }
         }
@@ -91,54 +77,75 @@ const OutlineView: React.FC<OutlineViewProps> = ({ outlineId }) => {
     
     // Save to backend if we have an outline ID
     if (currentOutlineId) {
-      console.log('Have outline ID, proceeding with save...');
       setSaving(true);
       try {
-        // Map to track old ID -> new ID mappings
-        const idMap = new Map<string, string>();
+        // STEP 1: Get current backend state to compare
+        const backendItems = await outlinesApi.getOutlineItems(currentOutlineId);
         
-        // Track which items need updating (existing items that changed parentId)
-        const itemsToUpdate: Array<{ id: string, parentId: string | null }> = [];
-        
-        // Build a flat list of all items with their expected parentId
-        const buildFlatList = (items: OutlineItem[], parentId: string | null = null): void => {
+        // STEP 2: Build set of frontend IDs and their data
+        const frontendItemsMap = new Map<string, OutlineItem>();
+        const collectFrontendItems = (items: OutlineItem[], parentId: string | null = null) => {
           for (const item of items) {
-            // For existing items (not new), track their expected parentId
-            if (!item.id.startsWith('item_') && !item.id.startsWith('voice-')) {
-              itemsToUpdate.push({ id: item.id, parentId: parentId });
+            const isNewItem = item.id.match(/^item_\d{13}$/) || item.id.startsWith('voice-');
+            if (!isNewItem) {
+              frontendItemsMap.set(item.id, { ...item, parentId });
             }
-            // Process children recursively
             if (item.children && item.children.length > 0) {
-              buildFlatList(item.children, item.id);
+              collectFrontendItems(item.children, item.id);
             }
           }
         };
+        collectFrontendItems(updatedItems);
         
-        // First, identify all items that need parentId updates
-        buildFlatList(updatedItems);
+        // STEP 3: Delete items that exist in backend but not in frontend
+        const backendIds = new Set<string>();
+        const collectBackendIds = (items: any[]) => {
+          for (const item of items) {
+            backendIds.add(item.id);
+            if (item.children && item.children.length > 0) {
+              collectBackendIds(item.children);
+            }
+          }
+        };
+        collectBackendIds(backendItems);
         
-        // Update existing items' parentId values
-        for (const update of itemsToUpdate) {
-          try {
-            await outlinesApi.updateItem(currentOutlineId, update.id, {
-              parentId: update.parentId
-            } as any);
-          } catch (error) {
-            console.error(`Failed to update parentId for item ${update.id}:`, error);
+        // Delete items that are in backend but not in frontend
+        for (const backendId of backendIds) {
+          if (!frontendItemsMap.has(backendId)) {
+            try {
+              await outlinesApi.deleteItem(currentOutlineId, backendId);
+            } catch (error) {
+              console.error(`Failed to delete item ${backendId}:`, error);
+            }
           }
         }
         
-        // Process items in order to handle parent-child relationships
+        // STEP 4: Update existing items (content and parentId)
+        for (const [itemId, frontendItem] of frontendItemsMap) {
+          try {
+            await outlinesApi.updateItem(currentOutlineId, itemId, {
+              content: frontendItem.text,
+              parentId: frontendItem.parentId,
+              style: frontendItem.style,
+              formatting: frontendItem.formatting
+            } as any);
+          } catch (error) {
+            console.error(`Failed to update item ${itemId}:`, error);
+          }
+        }
+        
+        // Map to track old ID -> new ID mappings
+        const idMap = new Map<string, string>();
+        
+        // STEP 5: Create any new items
         const processNewItems = async (items: OutlineItem[], parentId: string | null = null): Promise<void> => {
-          console.log('Processing items for save:', items.length, 'items');
           for (const item of items) {
-            console.log('Processing item:', item.id, 'text:', item.text);
-            // Check if this is a new item
-            if (item.id.startsWith('item_') || item.id.startsWith('voice-')) {
-              console.log('Item identified as new, checking text...');
+            // Check if this is a new item (temporary IDs are exactly 13 digits after item_)
+            // Backend IDs have additional suffixes like item_1755834646913665_366
+            const isNewItem = item.id.match(/^item_\d{13}$/) || item.id.startsWith('voice-');
+            if (isNewItem) {
               // Skip items without text or with default "New Item" text
               if (!item.text || item.text === 'New Item' || item.text.trim() === '') {
-                console.log('Skipping item with empty/default text');
                 continue;
               }
               
@@ -200,15 +207,14 @@ const OutlineView: React.FC<OutlineViewProps> = ({ outlineId }) => {
         <OutlineMobile 
           title={title}
           initialItems={items} 
-          onItemsChange={(updatedItems) => {
-            setItems(updatedItems);
-          }}
+          onItemsChange={handleItemsChange}
         />
       ) : (
         <OutlineDesktop 
           title={title}
           initialItems={items} 
           onItemsChange={handleItemsChange}
+          outlineId={currentOutlineId}
         />
       )}
     </>

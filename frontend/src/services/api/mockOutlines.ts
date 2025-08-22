@@ -223,26 +223,29 @@ export const mockOutlineService = {
     throw new Error('Item not found');
   },
 
-  async deleteItem(itemId: string): Promise<void> {
+  async deleteItem(outlineId: string, itemId: string): Promise<void> {
     await simulateDelay();
     
-    for (const [outlineId, items] of mockItems.entries()) {
-      const index = items.findIndex(i => i.id === itemId);
-      if (index !== -1) {
-        // Delete item and all children
-        const toDelete = this.getItemWithChildren(items, itemId);
-        const updatedItems = items.filter(item => !toDelete.includes(item.id));
-        mockItems.set(outlineId, updatedItems);
-        
-        // Update outline
-        const outline = mockOutlines.get(outlineId);
-        if (outline) {
-          outline.itemCount = updatedItems.length;
-          outline.updatedAt = new Date().toISOString();
-        }
-        
-        return;
+    const items = mockItems.get(outlineId);
+    if (!items) {
+      throw new Error('Outline not found');
+    }
+    
+    const index = items.findIndex(i => i.id === itemId);
+    if (index !== -1) {
+      // Delete item and all children
+      const toDelete = this.getItemWithChildren(items, itemId);
+      const updatedItems = items.filter(item => !toDelete.includes(item.id));
+      mockItems.set(outlineId, updatedItems);
+      
+      // Update outline
+      const outline = mockOutlines.get(outlineId);
+      if (outline) {
+        outline.itemCount = updatedItems.length;
+        outline.updatedAt = new Date().toISOString();
       }
+      
+      return;
     }
     
     throw new Error('Item not found');
@@ -336,10 +339,117 @@ export const mockOutlineService = {
     
     return result;
   },
+
+  // Batch operations (mock implementation)
+  async batchOperations(outlineId: string, request: { operations: any[] }): Promise<any> {
+    const items = mockItems.get(outlineId) || [];
+    const errors: string[] = [];
+    
+    for (const op of request.operations) {
+      try {
+        if (op.type === 'CREATE') {
+          const newItem = {
+            id: `item_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+            content: op.data?.text || op.data?.content || '',
+            parentId: op.parentId || null,
+            outlineId,
+            order: op.position || 0,
+            style: op.data?.style,
+            formatting: op.data?.formatting,
+            createdAt: new Date(),
+            updatedAt: new Date()
+          };
+          items.push(newItem);
+        } else if (op.type === 'UPDATE') {
+          const item = items.find(i => i.id === op.id);
+          if (item) {
+            if (op.data?.text || op.data?.content) {
+              item.content = op.data.text || op.data.content;
+            }
+            if (op.data?.style !== undefined) item.style = op.data.style;
+            if (op.data?.formatting !== undefined) item.formatting = op.data.formatting;
+            if (op.parentId !== undefined) item.parentId = op.parentId;
+            item.updatedAt = new Date();
+          }
+        } else if (op.type === 'DELETE') {
+          const index = items.findIndex(i => i.id === op.id);
+          if (index !== -1) {
+            items.splice(index, 1);
+          }
+        }
+      } catch (error: any) {
+        errors.push(`Operation ${op.type} failed: ${error.message}`);
+      }
+    }
+    
+    mockItems.set(outlineId, items);
+    
+    // Build hierarchical response
+    const hierarchicalItems = buildHierarchicalStructure(items);
+    
+    return {
+      success: errors.length === 0,
+      items: hierarchicalItems,
+      errors
+    };
+  },
+
+  // Template operations (mock implementation)
+  async createFromTemplate(outlineId: string, request: { items: any[], clearExisting?: boolean }): Promise<any[]> {
+    if (request.clearExisting) {
+      mockItems.set(outlineId, []);
+    }
+    
+    const items = mockItems.get(outlineId) || [];
+    
+    const createItemsRecursive = (templateItems: any[], parentId: string | null = null): any[] => {
+      const created: any[] = [];
+      
+      for (const templateItem of templateItems) {
+        const newItem = {
+          id: `item_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+          content: templateItem.text || templateItem.content || '',
+          parentId,
+          outlineId,
+          order: items.length,
+          style: templateItem.style,
+          formatting: templateItem.formatting,
+          createdAt: new Date(),
+          updatedAt: new Date(),
+          children: []
+        };
+        
+        items.push(newItem);
+        
+        if (templateItem.children && templateItem.children.length > 0) {
+          newItem.children = createItemsRecursive(templateItem.children, newItem.id);
+        }
+        
+        created.push(newItem);
+      }
+      
+      return created;
+    };
+    
+    const hierarchicalItems = createItemsRecursive(request.items);
+    mockItems.set(outlineId, items);
+    
+    return hierarchicalItems;
+  },
 };
 
-// Initialize sample data
-initSampleData();
+// Initialize sample data only if it doesn't exist
+// Also check if we have way too many items (indicates duplication bug)
+const existingItems = mockItems.get('outline_1') || [];
+if (mockOutlines.size === 0) {
+  initSampleData();
+} else if (existingItems.length > 500) {
+  // Clear and reinitialize if we have accumulated too many items
+  console.warn('Mock data corruption detected - clearing and reinitializing');
+  mockOutlines.clear();
+  mockItems.clear();
+  initSampleData();
+}
 
 // Export with alternate name for compatibility
 export const mockOutlinesService = mockOutlineService;

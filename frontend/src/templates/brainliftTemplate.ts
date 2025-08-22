@@ -9,10 +9,11 @@ export function createBrainliftTemplate(): OutlineItem[] {
   
   const generateId = () => {
     // Use item_ prefix with exactly 13 digits so these are recognized as new items
-    // Format: item_TTTTTTTTTTTCC where T=timestamp(11) and C=counter(2)
-    const timestamp = Date.now().toString().slice(-11); // Take last 11 digits
-    const counter = String(idCounter++).padStart(2, '0'); // 2-digit counter
-    return `item_${timestamp}${counter}`;
+    // We need unique IDs, so add counter to timestamp
+    const timestamp = Date.now().toString();
+    const counter = String(idCounter++).padStart(3, '0');
+    const fullId = (timestamp + counter).slice(-13); // Take last 13 digits
+    return `item_${fullId}`;
   };
 
   const createItem = (

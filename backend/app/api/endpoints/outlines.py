@@ -5,7 +5,9 @@ from fastapi import APIRouter, HTTPException, status, Depends, Query
 
 from app.models.outline import (
     Outline, OutlineCreate, OutlineWithItems,
-    OutlineItem, ItemCreate, ItemUpdate
+    OutlineItem, ItemCreate, ItemUpdate,
+    BatchOperation, BatchOperationRequest, BatchOperationResponse,
+    TemplateRequest, OperationType
 )
 from app.models.user import User
 from app.api.dependencies import get_current_user
@@ -379,3 +381,173 @@ async def outdent_item(
     await cosmos_client.update_document(outline_id, outline)
     
     return OutlineItem(**updated_item)
+
+@router.post("/{outline_id}/batch", response_model=BatchOperationResponse)
+async def batch_operations(
+    outline_id: str,
+    request: BatchOperationRequest,
+    current_user: User = Depends(get_current_user)
+):
+    """Execute multiple operations in a single request"""
+    import random
+    
+    # Get outline
+    outline = await cosmos_client.get_document(outline_id, current_user.id)
+    
+    if not outline:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Outline not found"
+        )
+    
+    items = outline.get("items", [])
+    errors = []
+    
+    # Process each operation
+    for op in request.operations:
+        try:
+            if op.type == OperationType.CREATE:
+                # Generate ID server-side
+                item_id = f"item_{int(datetime.utcnow().timestamp() * 1000000)}_{random.randint(100, 999)}"
+                
+                # Calculate order
+                siblings = [i for i in items if i.get("parentId") == op.parentId]
+                order = op.position if op.position is not None else len(siblings)
+                
+                new_item = {
+                    "id": item_id,
+                    "content": op.data.get("text", op.data.get("content", "")),
+                    "parentId": op.parentId,
+                    "outlineId": outline_id,
+                    "order": order,
+                    "style": op.data.get("style"),
+                    "formatting": op.data.get("formatting"),
+                    "createdAt": datetime.utcnow().isoformat(),
+                    "updatedAt": datetime.utcnow().isoformat()
+                }
+                items.append(new_item)
+                
+            elif op.type == OperationType.UPDATE:
+                for item in items:
+                    if item["id"] == op.id:
+                        if op.data:
+                            if "text" in op.data or "content" in op.data:
+                                item["content"] = op.data.get("text", op.data.get("content"))
+                            if "style" in op.data:
+                                item["style"] = op.data["style"]
+                            if "formatting" in op.data:
+                                item["formatting"] = op.data["formatting"]
+                        if op.parentId is not None:
+                            item["parentId"] = op.parentId
+                        if op.position is not None:
+                            item["order"] = op.position
+                        item["updatedAt"] = datetime.utcnow().isoformat()
+                        break
+                        
+            elif op.type == OperationType.DELETE:
+                # Remove item and its children
+                items_to_remove = outline_service.get_item_and_children(items, op.id)
+                items = [i for i in items if i["id"] not in items_to_remove]
+                
+            elif op.type == OperationType.MOVE:
+                for item in items:
+                    if item["id"] == op.id:
+                        item["parentId"] = op.parentId
+                        if op.position is not None:
+                            item["order"] = op.position
+                        item["updatedAt"] = datetime.utcnow().isoformat()
+                        break
+                        
+        except Exception as e:
+            errors.append(f"Operation failed for {op.type} {op.id}: {str(e)}")
+    
+    # Update outline
+    outline["items"] = items
+    outline["itemCount"] = len(items)
+    outline["updatedAt"] = datetime.utcnow().isoformat()
+    
+    # Save to database
+    await cosmos_client.update_document(outline_id, outline)
+    
+    # Build hierarchical response
+    hierarchical_items = outline_service.build_item_tree(items)
+    
+    return BatchOperationResponse(
+        success=len(errors) == 0,
+        items=hierarchical_items,
+        errors=errors
+    )
+
+
+@router.post("/{outline_id}/template", response_model=List[OutlineItem])
+async def create_from_template(
+    outline_id: str,
+    request: TemplateRequest,
+    current_user: User = Depends(get_current_user)
+):
+    """Create items from a template structure"""
+    import random
+    
+    # Get outline
+    outline = await cosmos_client.get_document(outline_id, current_user.id)
+    
+    if not outline:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Outline not found"
+        )
+    
+    # Clear existing items if requested
+    if request.clearExisting:
+        outline["items"] = []
+    
+    items = outline.get("items", [])
+    
+    def create_items_recursive(template_items, parent_id=None):
+        """Recursively create items from template"""
+        created_items = []
+        
+        for idx, template_item in enumerate(template_items):
+            # Generate server-side ID
+            item_id = f"item_{int(datetime.utcnow().timestamp() * 1000000)}_{random.randint(100, 999)}"
+            
+            # Create the item
+            new_item = {
+                "id": item_id,
+                "content": template_item.get("text", template_item.get("content", "")),
+                "parentId": parent_id,
+                "outlineId": outline_id,
+                "order": idx,
+                "style": template_item.get("style"),
+                "formatting": template_item.get("formatting"),
+                "createdAt": datetime.utcnow().isoformat(),
+                "updatedAt": datetime.utcnow().isoformat()
+            }
+            
+            # Add to flat list
+            items.append(new_item)
+            
+            # Build hierarchical item for response
+            hierarchical_item = OutlineItem(**new_item)
+            
+            # Process children if any
+            if "children" in template_item and template_item["children"]:
+                child_items = create_items_recursive(template_item["children"], item_id)
+                hierarchical_item.children = child_items
+            
+            created_items.append(hierarchical_item)
+        
+        return created_items
+    
+    # Create all template items
+    hierarchical_items = create_items_recursive(request.items)
+    
+    # Update outline
+    outline["items"] = items
+    outline["itemCount"] = len(items)
+    outline["updatedAt"] = datetime.utcnow().isoformat()
+    
+    # Save to database
+    await cosmos_client.update_document(outline_id, outline)
+    
+    return hierarchical_items

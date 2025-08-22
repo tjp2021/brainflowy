@@ -226,6 +226,28 @@ export const outlineService = {
     if (!response.ok) {
       throw new Error(`Failed to delete item: ${response.status}`);
     }
+  },
+
+  // Batch operations
+  async batchOperations(outlineId: string, request: { operations: any[] }): Promise<any> {
+    const response = await fetch(getApiUrl(`/outlines/${outlineId}/batch`), {
+      method: 'POST',
+      headers: getAuthHeaders(),
+      body: JSON.stringify(request)
+    });
+    
+    return handleResponse<any>(response);
+  },
+
+  // Template operations
+  async createFromTemplate(outlineId: string, request: { items: any[], clearExisting?: boolean }): Promise<OutlineItem[]> {
+    const response = await fetch(getApiUrl(`/outlines/${outlineId}/template`), {
+      method: 'POST',
+      headers: getAuthHeaders(),
+      body: JSON.stringify(request)
+    });
+    
+    return handleResponse<OutlineItem[]>(response);
   }
 };
 

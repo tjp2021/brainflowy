@@ -1,7 +1,8 @@
 """Outline models and schemas"""
-from typing import List, Optional, Dict, Any
+from typing import List, Optional, Dict, Any, Union
 from datetime import datetime
 from pydantic import BaseModel, Field
+from enum import Enum
 
 
 class OutlineItem(BaseModel):
@@ -57,6 +58,42 @@ class ItemUpdate(BaseModel):
     order: Optional[int] = None
     style: Optional[str] = None
     formatting: Optional[Dict[str, Any]] = None
+
+
+# Batch operation models
+class OperationType(str, Enum):
+    """Types of batch operations"""
+    CREATE = "CREATE"
+    UPDATE = "UPDATE"
+    DELETE = "DELETE"
+    MOVE = "MOVE"
+
+
+class BatchOperation(BaseModel):
+    """Single operation in a batch"""
+    type: OperationType
+    id: Optional[str] = None  # Not needed for CREATE
+    data: Optional[Dict[str, Any]] = None  # For CREATE and UPDATE
+    parentId: Optional[str] = None  # For CREATE and MOVE
+    position: Optional[int] = None  # For CREATE and MOVE
+
+
+class BatchOperationRequest(BaseModel):
+    """Request for batch operations"""
+    operations: List[BatchOperation]
+
+
+class BatchOperationResponse(BaseModel):
+    """Response from batch operations"""
+    success: bool
+    items: List[OutlineItem]
+    errors: List[str] = []
+
+
+class TemplateRequest(BaseModel):
+    """Request for creating items from template"""
+    items: List[Dict[str, Any]]  # Template structure
+    clearExisting: bool = False  # Whether to clear existing items first
 
 
 # Allow forward references
