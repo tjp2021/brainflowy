@@ -20,10 +20,19 @@ const Layout: React.FC = () => {
     );
   }
 
+  // For outline page, use fixed height container to prevent body scroll
+  if (isOutlinePage) {
+    return (
+      <div className="h-screen overflow-hidden">
+        <Outlet />
+      </div>
+    );
+  }
+
   return (
     <div className="app-layout flex flex-col min-h-screen">
       {showHeader && <Header />}
-      <main className={`main-content flex-1 ${isOutlinePage ? 'overflow-hidden h-screen' : ''}`}>
+      <main className="main-content flex-1">
         <Outlet />
       </main>
     </div>
