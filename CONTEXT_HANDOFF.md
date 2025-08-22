@@ -1,240 +1,136 @@
-# BrainFlowy Context Handoff Document
-*Created: 2025-08-18*
+# Context Handoff - BrainFlowy Outline Editor
 
 ## Current State Summary
 
-### What's Working ✅
-1. **Backend API** (FastAPI + Cosmos DB mock):
-   - User authentication with JWT tokens
-   - Outline CRUD operations
-   - Item creation/update/delete with style persistence
-   - Models now include `style` and `formatting` fields (CRITICAL FIX)
+### What We Just Fixed
+1. **Brainlift Template ID Issue** - Template IDs weren't matching the pattern for new items
+   - Created centralized ID generator: `/frontend/src/utils/idGenerator.ts`
+   - Fixed all components to use consistent 13-digit IDs
 
-2. **Frontend Core Features**:
-   - Login/Register/Logout flow (logout now goes to home `/` not `/login`)
-   - Desktop and Mobile outline views
-   - Voice input with real OpenAI Whisper transcription
-   - Text structuring with Claude API
-   - Item editing with "New item" placeholder that clears on click
-   - Style system (header/code/quote/normal) with persistence
+2. **LLM Persistence Bug** - LLM-created child items weren't persisting
+   - Root cause: ID mismatch (LLM was creating `item_timestamp_idx_random` format)
+   - Solution: All IDs now use `generateNewItemId()` for consistency
 
-3. **Integration Points**:
-   - Frontend properly creates items in backend when Enter is pressed
-   - Frontend updates local items with backend IDs after creation
-   - Styles and formatting persist to Cosmos DB
-   - Real API mode enabled (no more mock data)
+### The Next Major Issue to Fix
 
-### Recent Critical Fixes 🔧
-1. **Mock Data Elimination**:
-   - Removed mock transcript simulation from VoiceModal
-   - Fixed buildHierarchy returning mockStructuredData
-   - Changed frontend .env.local to `VITE_ENABLE_MOCK_API=false`
+**INEFFICIENT FULL OUTLINE REFRESH ON EVERY OPERATION**
 
-2. **Style Persistence**:
-   - Added `style` and `formatting` fields to backend `OutlineItem` model
-   - Updated endpoints to save these fields to Cosmos DB
-   - Frontend now sends style data with all API calls
+Currently, editing ONE bullet point causes:
+1. Entire outline passed to `handleItemsChange`
+2. Fetches ALL backend items
+3. Compares EVERYTHING
+4. Re-renders ENTIRE outline
 
-3. **Item Creation Flow**:
-   - Fixed Enter key to save items to backend
-   - "New item" text clears when user starts editing
-   - Empty items are removed (not saved)
-   - Frontend updates with backend response ID
+This is terrible for performance and UX. We need surgical updates.
 
-## Current File Structure
+## Key Files to Review
 
-### Critical Backend Files
-```
-backend/
-├── app/
-│   ├── models/outline.py         # Has style/formatting fields
-│   ├── api/endpoints/outlines.py # Saves styles to DB
-│   └── services/cosmos_db.py     # Mock Cosmos DB client
-```
+### Frontend Core Components
+- `/frontend/src/components/OutlineView.tsx` - Main container, handles persistence (has the problematic `handleItemsChange`)
+- `/frontend/src/components/OutlineDesktop.tsx` - Desktop UI, handles LLM integration
+- `/frontend/src/components/OutlineMobile.tsx` - Mobile UI
+- `/frontend/src/components/LLMAssistantPanel.tsx` - LLM panel for create/edit operations
 
-### Critical Frontend Files
-```
-frontend/
-├── src/
-│   ├── components/
-│   │   ├── OutlineDesktop.tsx   # Desktop view with editing
-│   │   ├── OutlineMobile.tsx    # Mobile view with gestures
-│   │   └── VoiceModal.tsx       # Voice input (real AI)
-│   ├── services/api/
-│   │   ├── apiClient.ts         # Switches mock/real mode
-│   │   └── realApi.ts           # Real API implementation
-│   └── .env.local               # VITE_ENABLE_MOCK_API=false
-```
+### Critical Functions
+- `handleItemsChange` in OutlineView.tsx (line 72) - The inefficient function that needs replacing
+- `handleLLMAction` in OutlineDesktop.tsx (line ~930) - How LLM operations are processed
 
-## Environment Variables
+### Backend API
+- `/backend/app/api/endpoints/outlines.py` - Has batch operations we added but aren't using
+- `/backend/app/models/outline.py` - Data models
 
-### Backend (.env)
-```bash
-COSMOS_ENDPOINT=mock
-COSMOS_KEY=mock_key
-COSMOS_DATABASE_NAME=BrainFlowy
-COSMOS_CONTAINER_NAME=outlines
-JWT_SECRET_KEY=your-secret-key-change-in-production
-OPENAI_API_KEY=your-key-here
-ANTHROPIC_API_KEY=your-key-here
-```
+### Frontend API Layer  
+- `/frontend/src/services/api/realApi.ts` - Real API client
+- `/frontend/src/services/api/mockOutlines.ts` - Mock API for development
 
-### Frontend (.env.local)
-```bash
-VITE_API_URL=http://localhost:8001
-VITE_ENABLE_MOCK_API=false
-VITE_OPENAI_API_KEY=your-key-here
-VITE_ANTHROPIC_API_KEY=your-key-here
-```
+### The Plan (Already Created)
+- `/Users/timothyjoo/brainflowy/SURGICAL_UPDATE_PLAN.md` - Detailed plan for fixing the inefficiency
+
+## Current Architecture Problems
+
+1. **Every operation is O(n)** - Single item edit processes entire outline
+2. **Complex diffing logic** - Comparing frontend vs backend states
+3. **Poor UX** - Visible flickering on updates
+4. **Wasteful API calls** - Multiple calls for simple operations
+
+## What Needs to Be Done
+
+### Phase 1: Create Surgical Handlers
+Instead of `handleItemsChange(entireOutline)`, we need:
+- `handleCreateItem(parentId, text)` - Create single item
+- `handleUpdateItem(itemId, updates)` - Update single item  
+- `handleDeleteItem(itemId)` - Delete single item
+- `handleLLMCreate(parentId, items)` - LLM bulk create
+- `handleLLMEdit(itemId, text, children)` - LLM structural edit
+
+### Phase 2: Update Components
+- Modify OutlineDesktop to call surgical handlers instead of passing entire outline
+- Same for OutlineMobile
+- Update LLM integration to use new handlers
+
+### Phase 3: Test Everything
+Critical to test:
+- Manual edit → Refresh → Persisted
+- LLM Create → Refresh → Persisted
+- LLM Edit with children → Refresh → Structure persisted
+- Templates still work
+
+## Database Setup
+- Using Azure Cosmos DB (credentials in `/backend/.env`)
+- Mock API available for development (set `VITE_ENABLE_MOCK_API=true`)
 
 ## Running the Application
 
-### Terminal 1 - Backend
 ```bash
+# Backend (already running in bash_25)
 cd backend
-source venv/bin/activate  # or `venv\Scripts\activate` on Windows
-TESTING=true python -m uvicorn app.main:app --host 0.0.0.0 --port 8001 --reload
+source venv/bin/activate
+python -m uvicorn app.main:app --host 0.0.0.0 --port 8001 --reload
+
+# Frontend (already running in bash_27)
+npm run dev:frontend
 ```
 
-### Terminal 2 - Frontend
-```bash
-cd frontend
-npm run dev
-```
+## Recent Commits
 
-## What Needs Testing 🧪
+1. **Fix Brainlift template creation** - Fixed ID generation pattern
+2. **Fix LLM persistence** - Centralized ID generation
 
-1. **Item Creation Flow**:
-   - Create new item → type text → press Enter
-   - Verify saves to backend and updates with real ID
-   - Test empty item removal
+## Testing Priorities
 
-2. **Style Persistence**:
-   - Create items with different styles
-   - Refresh page and verify styles remain
+1. **Persistence is CRITICAL** - User emphasized this multiple times
+2. Test after EVERY change that edits persist after refresh
+3. LLM operations must work correctly (Create and Edit)
+4. Mobile and Desktop must behave identically
 
-3. **Voice Input**:
-   - Record voice → get real transcription
-   - Accept structure → items added to outline
+## User Preferences
 
-4. **Mobile Gestures**:
-   - Swipe right to indent
-   - Long press to expand/collapse
-   - Double tap to cycle styles
+- Wants surgical fixes, not band-aids
+- Emphasizes thorough testing
+- Frontend and backend state must be perfectly synchronized
+- Dislikes unnecessary full refreshes (current issue)
+- Wants careful analysis before implementation
 
-## Known Issues & Next Steps 🚀
+## Next Steps
 
-### Immediate Priorities
-1. **Complete Integration Testing**:
-   - Run pytest suite: `cd backend && pytest tests/test_integration.py -v`
-   - Test all UI features connect to backend
-   - Verify mobile gestures sync with backend
+1. Review the SURGICAL_UPDATE_PLAN.md
+2. Implement the surgical handlers in OutlineView.tsx
+3. Update OutlineDesktop.tsx to use new handlers
+4. Test each operation type thoroughly
+5. Remove the old inefficient system
 
-2. **Voice Features**:
-   - Test Whisper transcription with various audio inputs
-   - Verify Claude structuring creates proper hierarchy
-   - Ensure voice items save to backend
+## Important Context
 
-3. **Performance**:
-   - Items sometimes don't update immediately in UI
-   - Consider optimistic updates for better UX
+- The app is a hierarchical outline editor (like Notion/Workflowy)
+- Supports LLM assistance for creating/editing content
+- Has templates (like Brainlift) for structured documents
+- Mobile and Desktop views share the same data
+- Persistence to Azure Cosmos DB is essential
 
-### Future Enhancements
-1. **Real Cosmos DB Integration**:
-   - Replace mock client with real Azure Cosmos DB
-   - Set up proper connection strings
-   - Implement retry logic
+## Known Issues
 
-2. **Collaboration Features**:
-   - Real-time sync between devices
-   - Share outlines with other users
-   - Collaborative editing
+1. Full outline refresh on every operation (main issue to fix)
+2. TypeScript errors in build (app runs in dev mode)
+3. Some test files have issues but core app works
 
-3. **Export/Import**:
-   - Export to Markdown/JSON
-   - Import from other outline tools
-   - PDF generation
-
-## Testing Checklist
-
-### User Flow
-- [ ] Register new user
-- [ ] Login with credentials
-- [ ] Create new outline
-- [ ] Add items with keyboard
-- [ ] Add items with voice
-- [ ] Edit existing items
-- [ ] Change item styles
-- [ ] Indent/outdent items
-- [ ] Delete items
-- [ ] Switch between outlines
-- [ ] Logout (should go to home page)
-
-### Backend Persistence
-- [ ] Items save to database
-- [ ] Styles persist across sessions
-- [ ] Hierarchy maintained correctly
-- [ ] User data isolated properly
-
-### Error Handling
-- [ ] Network failures handled gracefully
-- [ ] Invalid input rejected properly
-- [ ] Auth errors show appropriate messages
-
-## Quick Debugging Guide
-
-### If Mock Data Appears:
-1. Check `frontend/.env.local` has `VITE_ENABLE_MOCK_API=false`
-2. Verify backend is running on port 8001
-3. Check browser console for API errors
-
-### If Items Don't Save:
-1. Check backend logs for errors
-2. Verify `content` field is sent in API calls
-3. Check if item has temporary ID (item_*)
-
-### If Styles Don't Persist:
-1. Verify backend models have style/formatting fields
-2. Check API payloads include style data
-3. Confirm Cosmos DB mock is saving fields
-
-## Command Reference
-
-### Backend
-```bash
-# Run tests
-pytest tests/test_integration.py -v
-
-# Check API docs
-open http://localhost:8001/docs
-
-# View logs
-tail -f backend.log
-```
-
-### Frontend
-```bash
-# Build for production
-npm run build
-
-# Type check
-npm run type-check
-
-# Lint
-npm run lint
-```
-
-## Git Status
-- Main branch has all current work
-- Last commit included style persistence fixes
-- No uncommitted changes at handoff
-
-## Contact Points for Next Session
-1. Start with this document for context
-2. Check test_item_creation.md for testing plan
-3. Run integration tests first to verify state
-4. Continue with remaining tasks in todo list
-
----
-
-**Ready for fresh context window!** This document contains everything needed to continue development in a new session.
+The main goal is to make single-item operations efficient without breaking persistence or LLM functionality.
