@@ -1,10 +1,8 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Plus, Mic, Search, Menu, ChevronRight, ChevronDown, ChevronLeft, LogOut } from 'lucide-react';
+import { Plus, Mic, Search, ChevronRight, ChevronDown, ChevronLeft } from 'lucide-react';
 import type { OutlineItem, SwipeState } from '@/types/outline';
 import VoiceModal from './VoiceModal';
 import { flattenHierarchy } from '@/utils/hierarchyUtils';
-import { authApi } from '@/services/api/apiClient';
-import { useNavigate } from 'react-router-dom';
 import { generateNewItemId } from '@/utils/idGenerator';
 import '../styles/outline.css';
 
@@ -48,7 +46,6 @@ const OutlineMobile: React.FC<OutlineMobileProps> = ({
   // Just use the items directly, same as desktop
   const [outline, setOutline] = useState<OutlineItem[]>(initialItems);
   const [isInitialized, setIsInitialized] = useState(false);
-  const [showMenu, setShowMenu] = useState(false);
   
   // Sync with parent when initialItems changes
   useEffect(() => {
@@ -75,16 +72,6 @@ const OutlineMobile: React.FC<OutlineMobileProps> = ({
     return () => clearTimeout(timer);
   }, []);
 
-  // Close menu when clicking outside
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (showMenu) {
-        setShowMenu(false);
-      }
-    };
-    document.addEventListener('click', handleClickOutside);
-    return () => document.removeEventListener('click', handleClickOutside);
-  }, [showMenu]);
 
   // Mobile component should NOT load its own data when used within OutlineView
   // OutlineView handles all data loading and passes it via initialItems
@@ -354,68 +341,10 @@ const OutlineMobile: React.FC<OutlineMobileProps> = ({
     }
   };
 
-  const handleLogout = async () => {
-    try {
-      await authApi.logout();
-      navigate('/login');
-    } catch (error) {
-      console.error('Logout failed:', error);
-    }
-  };
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Minimal Header */}
-      <div className="bg-white border-b border-gray-200 px-4 py-2">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center space-x-2 min-w-0 flex-1">
-            <button className="p-1 rounded hover:bg-gray-100 transition-colors">
-              <ChevronLeft className="w-5 h-5 text-gray-600" />
-            </button>
-            <h1 className="text-lg font-semibold text-gray-900 truncate">{title}</h1>
-          </div>
-          
-          <div className="flex items-center space-x-1 relative">
-            <button className="p-2 rounded-lg hover:bg-gray-100 transition-colors">
-              <Search className="w-5 h-5 text-gray-600" />
-            </button>
-            <button 
-              onClick={(e) => {
-                e.stopPropagation();
-                setShowMenu(!showMenu);
-              }}
-              className="p-2 rounded-lg hover:bg-gray-100 transition-colors"
-            >
-              <Menu className="w-5 h-5 text-gray-600" />
-            </button>
-            
-            {/* Dropdown Menu */}
-            {showMenu && (
-              <div 
-                className="absolute right-0 top-10 w-48 bg-white rounded-lg shadow-xl border border-gray-300"
-                style={{ zIndex: 9999 }}
-                onClick={(e) => e.stopPropagation()}
-              >
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    handleLogout();
-                  }}
-                  className="w-full px-4 py-3 text-left text-gray-700 hover:bg-gray-100 flex items-center space-x-2 rounded-t-lg"
-                >
-                  <LogOut className="w-4 h-4" />
-                  <span>Logout</span>
-                </button>
-                <div className="border-t border-gray-200">
-                  <button className="w-full px-4 py-3 text-left text-gray-700 hover:bg-gray-100 rounded-b-lg">
-                    Settings
-                  </button>
-                </div>
-              </div>
-            )}
-          </div>
-        </div>
-      </div>
+      {/* Removed duplicate header - using global header from Layout */}
 
 
       {/* Main Content */}

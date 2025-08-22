@@ -2,9 +2,10 @@ import React, { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { 
   Plus, Mic, Search, ChevronRight, ChevronDown, ChevronLeft, 
-  Folder, Settings, HelpCircle, MoreHorizontal, GripVertical, FileText,
-  Sparkles
+  Folder, MoreHorizontal, GripVertical, FileText,
+  Sparkles, LogOut
 } from 'lucide-react';
+import { useAuth } from '@/hooks/useAuth';
 import { generateNewItemId } from '@/utils/idGenerator';
 import {
   DndContext,
@@ -25,7 +26,6 @@ import {
   useSortable,
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
-import { useAuth } from '@/hooks/useAuth';
 import type { OutlineItem } from '@/types/outline';
 import VoiceModal from './VoiceModal';
 import { createBrainliftTemplate } from '@/templates/brainliftTemplate';
@@ -81,6 +81,7 @@ const OutlineDesktop: React.FC<OutlineDesktopProps> = ({
   const [selectedStyle, setSelectedStyle] = useState<'header' | 'code' | 'quote' | 'normal'>('normal');
   const [userOutlines, setUserOutlines] = useState<any[]>([]);
   const [currentOutlineId, setCurrentOutlineId] = useState<string | null>(outlineId || null);
+  const [showDropdown, setShowDropdown] = useState(false);
   
   // Sync outline with initialItems when they change (e.g., after LLM operations)
   useEffect(() => {
@@ -109,6 +110,18 @@ const OutlineDesktop: React.FC<OutlineDesktopProps> = ({
     await logout();
     navigate('/');
   };
+
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = () => {
+      if (showDropdown) {
+        setShowDropdown(false);
+      }
+    };
+    
+    document.addEventListener('click', handleClickOutside);
+    return () => document.removeEventListener('click', handleClickOutside);
+  }, [showDropdown]);
 
   // Helper to recalculate levels for all items
   const recalculateLevels = (items: OutlineItem[], level: number = 0): OutlineItem[] => {
@@ -1970,20 +1983,7 @@ const OutlineDesktop: React.FC<OutlineDesktopProps> = ({
 
   return (
     <div className="flex flex-col h-screen bg-gray-50">
-      {/* Top Navigation Bar */}
-      <header className="bg-white border-b border-gray-200 px-6 py-3 flex-shrink-0">
-        <div className="flex items-center justify-between">
-          <h1 className="text-xl font-semibold text-blue-600">BrainFlowy</h1>
-          <div className="flex items-center space-x-6">
-            <nav className="flex items-center space-x-6">
-              <a href="/outlines" className="text-gray-700 hover:text-gray-900">My Outlines</a>
-              <button onClick={handleLogout} className="text-gray-700 hover:text-gray-900">Logout</button>
-            </nav>
-          </div>
-        </div>
-      </header>
-      
-      {/* Main Content Area */}
+      {/* Main Content Area - removed duplicate header */}
       <div className="flex flex-1 overflow-hidden">
       {/* Sidebar */}
       <div className={`bg-white border-r border-gray-200 transition-all duration-300 ${
@@ -2094,21 +2094,6 @@ const OutlineDesktop: React.FC<OutlineDesktopProps> = ({
           )}
         </div>
 
-        {/* Sidebar Footer */}
-        {!sidebarCollapsed && (
-          <div className="absolute bottom-4 left-4 right-4">
-            <div className="space-y-1">
-              <button className="w-full flex items-center space-x-3 px-3 py-2 rounded-lg text-left text-gray-600 hover:bg-gray-100 transition-colors">
-                <Settings className="w-4 h-4" />
-                <span className="text-sm">Settings</span>
-              </button>
-              <button className="w-full flex items-center space-x-3 px-3 py-2 rounded-lg text-left text-gray-600 hover:bg-gray-100 transition-colors">
-                <HelpCircle className="w-4 h-4" />
-                <span className="text-sm">Help</span>
-              </button>
-            </div>
-          </div>
-        )}
       </div>
 
       {/* Main Content */}
@@ -2147,9 +2132,36 @@ const OutlineDesktop: React.FC<OutlineDesktopProps> = ({
                 <span>{showVoiceModal ? 'Stop Voice' : 'Voice Mode'}</span>
               </button>
               
-              <button className="p-2 rounded-lg bg-gray-100 hover:bg-gray-200 transition-colors">
-                <MoreHorizontal className="w-4 h-4 text-gray-600" />
-              </button>
+              <div className="relative">
+                <button 
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setShowDropdown(!showDropdown);
+                  }}
+                  className="p-2 rounded-lg bg-gray-100 hover:bg-gray-200 transition-colors"
+                >
+                  <MoreHorizontal className="w-4 h-4 text-gray-600" />
+                </button>
+                
+                {/* Dropdown Menu */}
+                {showDropdown && (
+                  <div 
+                    className="absolute right-0 top-10 w-48 bg-white rounded-lg shadow-xl border border-gray-200"
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleLogout();
+                      }}
+                      className="w-full px-4 py-3 text-left text-gray-700 hover:bg-gray-100 flex items-center space-x-2 rounded-lg"
+                    >
+                      <LogOut className="w-4 h-4" />
+                      <span>Logout</span>
+                    </button>
+                  </div>
+                )}
+              </div>
             </div>
           </div>
 
