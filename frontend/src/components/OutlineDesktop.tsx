@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { 
   Plus, Mic, Search, ChevronRight, ChevronDown, ChevronLeft, 
   Folder, MoreHorizontal, GripVertical, FileText,
-  Sparkles, LogOut
+  Sparkles, LogOut, X
 } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { generateNewItemId } from '@/utils/idGenerator';
@@ -156,12 +156,37 @@ const OutlineDesktop: React.FC<OutlineDesktopProps> = ({
     })));
   }
   
-  // Filter items based on search query
-  const filteredItems = searchQuery 
-    ? flatItems.filter(item => 
-        item.text.toLowerCase().includes(searchQuery.toLowerCase())
-      )
-    : flatItems;
+  // Filter items based on search query and include parent context
+  const getFilteredItemsWithContext = () => {
+    if (!searchQuery) return { items: flatItems, matchingIds: new Set<string>() };
+    
+    const matchingIds = new Set<string>();
+    const parentIds = new Set<string>();
+    
+    // Find all matching items and their parents
+    flatItems.forEach(item => {
+      if (item.text.toLowerCase().includes(searchQuery.toLowerCase())) {
+        matchingIds.add(item.id);
+        // Add all parent IDs up the chain
+        let currentItem = item;
+        while (currentItem.parentId) {
+          parentIds.add(currentItem.parentId);
+          currentItem = flatItems.find(i => i.id === currentItem.parentId) || currentItem;
+          if (currentItem === item) break; // Prevent infinite loop
+        }
+      }
+    });
+    
+    // Return items that match or are parents of matches
+    const items = flatItems.filter(item => 
+      matchingIds.has(item.id) || parentIds.has(item.id)
+    );
+    
+    return { items, matchingIds };
+  };
+  
+  const { items: filteredItems, matchingIds } = getFilteredItemsWithContext();
+  const searchResultCount = searchQuery ? matchingIds.size : 0;
   
   // Helper to highlight search terms in text
   const highlightSearchTerm = (text: string) => {
@@ -2169,8 +2194,22 @@ const OutlineDesktop: React.FC<OutlineDesktopProps> = ({
                   placeholder="Search outline..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="pl-9 pr-4 py-2 text-gray-900 bg-white border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className={`pl-9 ${searchQuery ? 'pr-20' : 'pr-4'} py-2 text-gray-900 bg-white border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent`}
                 />
+                {searchQuery && (
+                  <div className="absolute right-2 top-1/2 transform -translate-y-1/2 flex items-center space-x-1">
+                    <span className="text-xs text-gray-500">
+                      {searchResultCount} {searchResultCount === 1 ? 'result' : 'results'}
+                    </span>
+                    <button
+                      onClick={() => setSearchQuery('')}
+                      className="p-1 hover:bg-gray-100 rounded"
+                      title="Clear search"
+                    >
+                      <X className="w-3 h-3 text-gray-400" />
+                    </button>
+                  </div>
+                )}
               </div>
               
               <button 
@@ -2285,12 +2324,16 @@ const OutlineDesktop: React.FC<OutlineDesktopProps> = ({
           <div className="px-6 py-6">
             <div className="max-w-4xl outline-desktop-content">
             <div className="space-y-1">
-              {filteredItems.map((item) => (
+              {filteredItems.map((item) => {
+                const isMatch = searchQuery && matchingIds.has(item.id);
+                const isParentContext = searchQuery && !matchingIds.has(item.id);
+                
+                return (
                 <div
                   key={item.id}
                   className={`group rounded hover:bg-gray-50 transition-colors ${
                     selectedItems.has(item.id) ? 'bg-blue-50 border border-blue-200' : ''
-                  }`}
+                  } ${isMatch ? 'bg-yellow-50' : ''} ${isParentContext ? 'opacity-60' : ''}`}
                   style={{ paddingLeft: `${item.level * 24 + 8}px` }}
                 >
                   <div className="flex items-start space-x-2 py-1">
@@ -2395,7 +2438,8 @@ const OutlineDesktop: React.FC<OutlineDesktopProps> = ({
                     </div>
                   </div>
                 </div>
-              ))}
+                );
+              })}
             </div>
 
             <div className="mt-4 space-y-2">
