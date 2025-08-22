@@ -531,8 +531,10 @@ const OutlineDesktop: React.FC<OutlineDesktopProps> = ({
   const updateItemText = async (itemId: string, newText: string): Promise<void> => {
     // Use surgical update if available, otherwise fall back to old method
     if (onUpdateItem) {
-      // For new items (temporary IDs), we need to create them instead
-      if (itemId.match(/^item_\d{13}$/)) {
+      // For new items (temporary IDs have exactly 13 digits), we need to create them instead
+      // Backend IDs have format: item_XXXXXXXXXXXXXXXXX_XXX (more than 13 digits with suffix)
+      const isTemporaryId = itemId.match(/^item_\d{13}$/);
+      if (isTemporaryId) {
         // Find the item and its parent
         let foundItem: OutlineItem | null = null;
         let parentId: string | null = null;
@@ -821,8 +823,9 @@ const OutlineDesktop: React.FC<OutlineDesktopProps> = ({
         
         updateAndCreateNew();
         
-        // Handle backend sync for new items
-        if (itemId.startsWith('item_') && currentOutlineId) {
+        // Handle backend sync for new items (only for temporary IDs)
+        const isTemporaryId = itemId.match(/^item_\d{13}$/);
+        if (isTemporaryId && currentOutlineId) {
           try {
             const { outlinesApi } = await import('@/services/api/apiClient');
             const created = await outlinesApi.createItem(currentOutlineId, {
