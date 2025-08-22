@@ -562,21 +562,27 @@ const OutlineDesktop: React.FC<OutlineDesktopProps> = ({
             foundItem.formatting
           );
           
-          // Update local state to replace temporary ID with real ID
+          // Remove the temporary item from local state since onCreateItem adds the real one
           setOutline(prevOutline => {
-            const updateIds = (items: OutlineItem[]): OutlineItem[] => {
-              return items.map(item => {
+            const removeTemp = (items: OutlineItem[]): OutlineItem[] => {
+              return items.reduce((acc: OutlineItem[], item) => {
                 if (item.id === itemId) {
-                  return { ...item, id: newId, text: newText };
+                  // Skip the temporary item
+                  return acc;
                 }
                 if (item.children.length > 0) {
-                  return { ...item, children: updateIds(item.children) };
+                  // Process children recursively
+                  acc.push({ ...item, children: removeTemp(item.children) });
+                } else {
+                  acc.push(item);
                 }
-                return item;
-              });
+                return acc;
+              }, []);
             };
-            return updateIds(prevOutline);
+            return removeTemp(prevOutline);
           });
+          
+          console.log('Created item with real ID:', newId, 'and removed temp ID:', itemId);
         }
       } else {
         // Update existing item surgically
