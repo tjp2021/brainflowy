@@ -2,30 +2,11 @@ import React, { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { 
   Plus, Mic, Search, ChevronRight, ChevronDown, ChevronLeft, 
-  Folder, MoreHorizontal, GripVertical, FileText,
+  Folder, MoreHorizontal, FileText,
   Sparkles, LogOut, X
 } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { generateNewItemId } from '@/utils/idGenerator';
-import {
-  DndContext,
-  DragOverlay,
-  closestCenter,
-  KeyboardSensor,
-  PointerSensor,
-  useSensor,
-  useSensors,
-  type DragStartEvent,
-  type DragEndEvent,
-  type DragOverEvent,
-} from '@dnd-kit/core';
-import {
-  SortableContext,
-  sortableKeyboardCoordinates,
-  verticalListSortingStrategy,
-  useSortable,
-} from '@dnd-kit/sortable';
-import { CSS } from '@dnd-kit/utilities';
 import type { OutlineItem } from '@/types/outline';
 import VoiceModal from './VoiceModal';
 import { createBrainliftTemplate } from '@/templates/brainliftTemplate';

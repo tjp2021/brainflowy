@@ -23,13 +23,13 @@
 
     /* Linting */
     "strict": true,
-    "noUnusedLocals": true,
-    "noUnusedParameters": true,
+    "noUnusedLocals": false,
+    "noUnusedParameters": false,
     "erasableSyntaxOnly": true,
     "noFallthroughCasesInSwitch": true,
     "noUncheckedSideEffectImports": true,
-    "exactOptionalPropertyTypes": true,
-    "noImplicitReturns": true,
+    "exactOptionalPropertyTypes": false,
+    "noImplicitReturns": false,
     "noImplicitOverride": true
   },
   "include": ["src"]

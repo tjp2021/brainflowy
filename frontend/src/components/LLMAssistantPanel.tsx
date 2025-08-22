@@ -6,7 +6,7 @@ interface LLMAssistantPanelProps {
   isOpen: boolean;
   onClose: () => void;
   currentItem?: OutlineItem | null;
-  currentSection?: string;
+  currentSection?: string | undefined;
   initialPrompt?: string;
   onApplyAction: (action: LLMAction, response: LLMResponse) => void;
 }
@@ -24,7 +24,7 @@ export interface LLMResponse {
   items?: Array<{
     text: string;
     targetSection?: string;  // Section hint from LLM for placement
-    children?: Array<{ text: string }>;
+    children?: Array<{ text: string; children?: Array<{ text: string }> }>;
   }>;
   suggestions?: string[];
   citations?: Array<{
@@ -32,6 +32,7 @@ export interface LLMResponse {
     source: string;
     url?: string;
   }>;
+  children?: any[];  // For compatibility with existing code
 }
 
 interface ConversationEntry {

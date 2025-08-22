@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Plus, Mic, Search, ChevronRight, ChevronDown, ChevronLeft, Menu, LogOut, FileText, Sparkles, X } from 'lucide-react';
+import { Plus, Mic, Search, ChevronRight, ChevronDown, Menu, LogOut, FileText, Sparkles, X } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { useNavigate } from 'react-router-dom';
 import type { OutlineItem, SwipeState } from '@/types/outline';
@@ -126,11 +126,11 @@ const OutlineMobile: React.FC<OutlineMobileProps> = ({
     if (!llmCurrentItem) return;
 
     try {
-      if (action === 'apply' && onLLMEditItem) {
+      if (action.type === 'edit' && onLLMEditItem) {
         // Apply the LLM changes
         await onLLMEditItem(
           llmCurrentItem.id,
-          response.content,
+          response.content || '',
           response.children
         );
       }

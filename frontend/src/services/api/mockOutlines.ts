@@ -385,6 +385,31 @@ export const mockOutlineService = {
     mockItems.set(outlineId, items);
     
     // Build hierarchical response
+    const buildHierarchicalStructure = (flatItems: any[]) => {
+      const itemMap = new Map();
+      const rootItems: any[] = [];
+      
+      // First pass: create all items
+      flatItems.forEach(item => {
+        itemMap.set(item.id, { ...item, children: [] });
+      });
+      
+      // Second pass: build hierarchy
+      flatItems.forEach(item => {
+        const mappedItem = itemMap.get(item.id);
+        if (item.parentId) {
+          const parent = itemMap.get(item.parentId);
+          if (parent) {
+            parent.children.push(mappedItem);
+          }
+        } else {
+          rootItems.push(mappedItem);
+        }
+      });
+      
+      return rootItems;
+    };
+    
     const hierarchicalItems = buildHierarchicalStructure(items as any[]);
     
     return {
