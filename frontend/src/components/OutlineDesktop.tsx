@@ -85,6 +85,17 @@ const OutlineDesktop: React.FC<OutlineDesktopProps> = ({
   
   // Sync outline with initialItems when they change (e.g., after LLM operations)
   useEffect(() => {
+    console.log('=== OutlineDesktop useEffect triggered ===');
+    console.log('Current outline:', outline.map(i => ({ id: i.id, text: i.text })));
+    console.log('New initialItems:', initialItems.map(i => ({ id: i.id, text: i.text })));
+    
+    // Check for duplicates in initialItems
+    const ids = initialItems.map(i => i.id);
+    const duplicates = ids.filter((id, index) => ids.indexOf(id) !== index);
+    if (duplicates.length > 0) {
+      console.error('DUPLICATE IDS IN INITIAL ITEMS:', duplicates);
+    }
+    
     setOutline(initialItems);
   }, [initialItems]);
   
@@ -588,23 +599,12 @@ const OutlineDesktop: React.FC<OutlineDesktopProps> = ({
         }
       } else {
         // Update existing item surgically
+        console.log('Updating existing item:', itemId, 'with text:', newText);
         await onUpdateItem(itemId, { text: newText });
+        console.log('Update complete for:', itemId);
         
-        // Update local state optimistically
-        setOutline(prevOutline => {
-          const updateItems = (items: OutlineItem[]): OutlineItem[] => {
-            return items.map(item => {
-              if (item.id === itemId) {
-                return { ...item, text: newText };
-              }
-              if (item.children.length > 0) {
-                return { ...item, children: updateItems(item.children) };
-              }
-              return item;
-            });
-          };
-          return updateItems(prevOutline);
-        });
+        // DO NOT update local state - onUpdateItem already updates the state in OutlineView
+        // which will flow back through initialItems prop
       }
     } else {
       // Fallback to old method if surgical handlers not available
@@ -679,19 +679,8 @@ const OutlineDesktop: React.FC<OutlineDesktopProps> = ({
         // Use surgical delete if available
         if (onDeleteItem) {
           await onDeleteItem(itemId);
-          // Update local state to remove the item
-          setOutline(prevOutline => {
-            const removeItem = (items: OutlineItem[]): OutlineItem[] => {
-              return items.filter(item => {
-                if (item.id === itemId) return false;
-                if (item.children.length > 0) {
-                  item.children = removeItem(item.children);
-                }
-                return true;
-              });
-            };
-            return removeItem(prevOutline);
-          });
+          // DO NOT update local state - onDeleteItem already updates the state in OutlineView
+          console.log('Deleted item:', itemId);
         }
         return;
       }
@@ -734,33 +723,9 @@ const OutlineDesktop: React.FC<OutlineDesktopProps> = ({
           selectedStyle === 'header' ? { bold: true, size: 'large' as const } : undefined
         );
         
-        // Update local state to add the new item
-        const newItem: OutlineItem = {
-          id: newItemId,
-          text: '',
-          level: level,
-          expanded: false,
-          children: [],
-          style: selectedStyle,
-          formatting: selectedStyle === 'header' ? { bold: true, size: 'large' as const } : undefined
-        };
-        
-        setOutline(prevOutline => {
-          const insertAfter = (items: OutlineItem[]): OutlineItem[] => {
-            const result = [...items];
-            for (let i = 0; i < result.length; i++) {
-              if (result[i].id === itemId) {
-                result.splice(i + 1, 0, newItem);
-                return result;
-              }
-              if (result[i].children.length > 0) {
-                result[i].children = insertAfter(result[i].children);
-              }
-            }
-            return result;
-          };
-          return insertAfter(prevOutline);
-        });
+        // DO NOT update local state here - onCreateItem already updates the state in OutlineView
+        // which will flow back through initialItems prop
+        console.log('Created new item with ID:', newItemId, 'after item:', itemId);
         
         // Start editing the new item
         setTimeout(() => startEditing(newItemId), 50);
@@ -2376,19 +2341,8 @@ const OutlineDesktop: React.FC<OutlineDesktopProps> = ({
                               // Use surgical delete if available
                               if (onDeleteItem) {
                                 await onDeleteItem(item.id);
-                                // Update local state
-                                setOutline(prevOutline => {
-                                  const removeItem = (items: OutlineItem[]): OutlineItem[] => {
-                                    return items.filter(i => {
-                                      if (i.id === item.id) return false;
-                                      if (i.children.length > 0) {
-                                        i.children = removeItem(i.children);
-                                      }
-                                      return true;
-                                    });
-                                  };
-                                  return removeItem(prevOutline);
-                                });
+                                // DO NOT update local state - onDeleteItem already updates the state in OutlineView
+                                console.log('Deleted empty item on blur:', item.id);
                               } else {
                                 // Fallback to old method
                                 const removeEmptyItem = (items: OutlineItem[]): OutlineItem[] => {

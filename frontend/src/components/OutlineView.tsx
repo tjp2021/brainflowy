@@ -176,6 +176,10 @@ const OutlineView: React.FC<OutlineViewProps> = ({ outlineId }) => {
   ): Promise<void> => {
     if (!currentOutlineId) return;
     
+    console.log('=== OutlineView handleUpdateItem ===');
+    console.log('Updating item:', itemId, 'with:', updates);
+    console.log('Current items before update:', items.map(i => ({ id: i.id, text: i.text })));
+    
     setSaving(true);
     try {
       // 1. Update backend
@@ -190,6 +194,7 @@ const OutlineView: React.FC<OutlineViewProps> = ({ outlineId }) => {
         const updateSingle = (items: OutlineItem[]): OutlineItem[] => {
           return items.map(item => {
             if (item.id === itemId) {
+              console.log('Found item to update:', item.id);
               return { ...item, ...updates };
             }
             if (item.children) {
@@ -198,7 +203,9 @@ const OutlineView: React.FC<OutlineViewProps> = ({ outlineId }) => {
             return item;
           });
         };
-        return updateSingle(prevItems);
+        const result = updateSingle(prevItems);
+        console.log('Items after update:', result.map(i => ({ id: i.id, text: i.text })));
+        return result;
       });
     } finally {
       setSaving(false);
