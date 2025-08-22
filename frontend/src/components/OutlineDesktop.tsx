@@ -1545,7 +1545,7 @@ const OutlineDesktop: React.FC<OutlineDesktopProps> = ({
             const itemTextLower = item.text.toLowerCase();
             
             // Match section headers based on targetSection from LLM
-            if (targetSection === 'spov' && (itemTextLower.includes('spov') || itemTextLower.includes('strategic point'))) {
+            if (targetSection === 'spov' && (itemTextLower.includes('spov') || itemTextLower.includes('strategic point') || itemTextLower.includes('spiky pov'))) {
               return item.id;
             }
             if (targetSection === 'purpose' && itemTextLower.includes('purpose')) {
@@ -1748,7 +1748,7 @@ const OutlineDesktop: React.FC<OutlineDesktopProps> = ({
   
   const detectSectionFromItem = (item: OutlineItem): string | undefined => {
     const text = item.text.toLowerCase();
-    if (text.includes('spov')) return 'spov';
+    if (text.includes('spov') || text.includes('spiky pov') || text.includes('strategic point')) return 'spov';
     if (text.includes('purpose')) return 'purpose';
     if (text.includes('owner')) return 'owner';
     if (text.includes('scope')) return 'out_of_scope';

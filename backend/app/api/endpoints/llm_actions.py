@@ -119,7 +119,7 @@ def get_mock_response(action: LLMActionRequest) -> Dict[str, Any]:
     
     # Simple keyword matching for mock responses
     if action.type == "create":
-        if "spov" in prompt_lower or "retention" in prompt_lower or "churn" in prompt_lower:
+        if "spov" in prompt_lower or "spiky pov" in prompt_lower or "retention" in prompt_lower or "churn" in prompt_lower:
             return MOCK_RESPONSES["create_spov"]
         else:
             return {
@@ -216,7 +216,7 @@ def detect_outline_sections(outline: Dict) -> Dict[str, bool]:
     
     for item in items:
         content = item.get("content", "").lower()
-        if "spov" in content or "strategic point" in content:
+        if "spov" in content or "spiky pov" in content or "strategic point" in content:
             sections["spov"] = True
         elif "purpose" in content:
             sections["purpose"] = True
@@ -348,14 +348,14 @@ async def call_llm_api(action: LLMActionRequest, outline_context: Optional[Dict]
                       "synthesis" in prompt_lower or "understanding" in prompt_lower):
                     target_section = "dok2"
                     section_instructions = "Place this content under DOK Level 2 - Knowledge section."
-                elif "spov" in prompt_lower or "strategic point" in prompt_lower:
+                elif "spov" in prompt_lower or "spiky pov" in prompt_lower or "strategic point" in prompt_lower:
                     target_section = "spov"
                     section_instructions = "Place this content under the SPOV section."
                 elif "purpose" in prompt_lower:
                     target_section = "purpose"
                     section_instructions = "Place this content under the Purpose section."
             
-            if "spov" in prompt_lower or action.section == "spov":
+            if "spov" in prompt_lower or "spiky pov" in prompt_lower or action.section == "spov":
                 user_prompt = f"""Create a Strategic Point of View (SPOV) based on this request: {action.userPrompt}
                 
                 {section_instructions}

@@ -111,6 +111,11 @@ class AIVoiceService:
         try:
             prompt = f"""Convert the following text into a hierarchical outline structure. 
             Create main topics and subtopics based on the content.
+            
+            Special instructions:
+            - If the text mentions "SPOV", "Spiky POV", or "Strategic Point of View", make sure to preserve that exact phrasing in the content
+            - Recognize business/strategic terms and maintain their context
+            
             Return a JSON array where each item has 'content' (the text) and 'level' (0 for main topics, 1 for subtopics, etc).
             
             Text to structure:
@@ -153,6 +158,11 @@ class AIVoiceService:
         try:
             prompt = f"""Convert the following text into a hierarchical outline structure. 
             Create main topics and subtopics based on the content.
+            
+            Special instructions:
+            - If the text mentions "SPOV", "Spiky POV", or "Strategic Point of View", make sure to preserve that exact phrasing in the content
+            - Recognize business/strategic terms and maintain their context
+            
             Return a JSON array where each item has 'content' (the text) and 'level' (0 for main topics, 1 for subtopics, etc).
             
             Text to structure:
