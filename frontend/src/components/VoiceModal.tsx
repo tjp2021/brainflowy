@@ -3,6 +3,7 @@ import {
   Mic, X, Check, Edit3, Square, RotateCcw 
 } from 'lucide-react';
 import type { OutlineItem } from '@/types/outline';
+import { generateNewItemId } from '@/utils/idGenerator';
 
 interface VoiceModalProps {
   isOpen: boolean;
@@ -158,7 +159,7 @@ const VoiceModal: React.FC<VoiceModalProps> = ({ isOpen, onClose, onAcceptStruct
       
       // Convert to OutlineItem format
       const structuredItems: OutlineItem[] = structured.structured.map((item: any, index: number) => ({
-        id: `voice-${Date.now()}-${index}`,
+        id: generateNewItemId(),
         text: item.content,
         level: item.level,
         expanded: false,

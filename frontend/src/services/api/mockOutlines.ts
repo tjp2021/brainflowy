@@ -356,8 +356,8 @@ export const mockOutlineService = {
             order: op.position || 0,
             style: op.data?.style,
             formatting: op.data?.formatting,
-            createdAt: new Date(),
-            updatedAt: new Date()
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString()
           };
           items.push(newItem);
         } else if (op.type === 'UPDATE') {
@@ -366,10 +366,10 @@ export const mockOutlineService = {
             if (op.data?.text || op.data?.content) {
               item.content = op.data.text || op.data.content;
             }
-            if (op.data?.style !== undefined) item.style = op.data.style;
-            if (op.data?.formatting !== undefined) item.formatting = op.data.formatting;
+            if (op.data?.style !== undefined) (item as any).style = op.data.style;
+            if (op.data?.formatting !== undefined) (item as any).formatting = op.data.formatting;
             if (op.parentId !== undefined) item.parentId = op.parentId;
-            item.updatedAt = new Date();
+            item.updatedAt = new Date().toISOString();
           }
         } else if (op.type === 'DELETE') {
           const index = items.findIndex(i => i.id === op.id);
@@ -385,7 +385,7 @@ export const mockOutlineService = {
     mockItems.set(outlineId, items);
     
     // Build hierarchical response
-    const hierarchicalItems = buildHierarchicalStructure(items);
+    const hierarchicalItems = buildHierarchicalStructure(items as any[]);
     
     return {
       success: errors.length === 0,
@@ -422,7 +422,7 @@ export const mockOutlineService = {
         items.push(newItem);
         
         if (templateItem.children && templateItem.children.length > 0) {
-          newItem.children = createItemsRecursive(templateItem.children, newItem.id);
+          (newItem as any).children = createItemsRecursive(templateItem.children, newItem.id);
         }
         
         created.push(newItem);

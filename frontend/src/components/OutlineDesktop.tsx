@@ -5,6 +5,7 @@ import {
   Folder, Settings, HelpCircle, MoreHorizontal, GripVertical, FileText,
   Sparkles
 } from 'lucide-react';
+import { generateNewItemId } from '@/utils/idGenerator';
 import {
   DndContext,
   DragOverlay,
@@ -36,6 +37,7 @@ interface OutlineDesktopProps {
   title?: string;
   initialItems?: OutlineItem[];
   onItemsChange?: (items: OutlineItem[]) => void;
+  outlineId?: string | null;
   sidebarItems?: Array<{
     id: string;
     name: string;
@@ -47,7 +49,8 @@ interface OutlineDesktopProps {
 const OutlineDesktop: React.FC<OutlineDesktopProps> = ({ 
   title = 'Work Notes',
   initialItems = [],
-  onItemsChange
+  onItemsChange,
+  outlineId
 }) => {
   const navigate = useNavigate();
   const { logout } = useAuth();
@@ -59,7 +62,7 @@ const OutlineDesktop: React.FC<OutlineDesktopProps> = ({
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedStyle, setSelectedStyle] = useState<'header' | 'code' | 'quote' | 'normal'>('normal');
   const [userOutlines, setUserOutlines] = useState<any[]>([]);
-  const [currentOutlineId, setCurrentOutlineId] = useState<string | null>(null);
+  const [currentOutlineId, setCurrentOutlineId] = useState<string | null>(outlineId || null);
   
   // Sync currentOutlineId to localStorage whenever it changes
   useEffect(() => {
@@ -560,7 +563,7 @@ const OutlineDesktop: React.FC<OutlineDesktopProps> = ({
           
           // Now add the new item after updating the current one
           const newItem: OutlineItem = {
-            id: `item_${Date.now()}`,
+            id: generateNewItemId(),
             text: '',
             level: 0,
             expanded: false,
@@ -902,7 +905,7 @@ const OutlineDesktop: React.FC<OutlineDesktopProps> = ({
 
   const addNewItem = (style?: 'header' | 'code' | 'quote' | 'normal') => {
     const newItem: OutlineItem = {
-      id: `item_${Date.now()}`,
+      id: generateNewItemId(),
       text: '',
       level: 0,
       expanded: false,
@@ -957,7 +960,7 @@ const OutlineDesktop: React.FC<OutlineDesktopProps> = ({
               if (responseItem.children && responseItem.children.length > 0) {
                 updatedItem.children = responseItem.children.map((child: any, idx: number) => {
                   const createChild = (childData: any, level: number = item.level + 1): OutlineItem => ({
-                    id: `item_${Date.now()}_${idx}_${Math.random().toString(36).substr(2, 9)}`,
+                    id: generateNewItemId(),
                     text: childData.text,
                     level,
                     expanded: true,
@@ -1275,40 +1278,15 @@ const OutlineDesktop: React.FC<OutlineDesktopProps> = ({
     
     // Apply the template
     const templateItems = createBrainliftTemplate();
+    
+    // Just update the state and let onItemsChange handle the backend sync
     setOutline(templateItems);
     
-    // Save items directly using the API since we have the outline ID
-    try {
-      // First, delete all existing items from the backend
-      const deleteAllItems = async (items: OutlineItem[]) => {
-        for (const item of items) {
-          // Delete children first (recursively)
-          if (item.children && item.children.length > 0) {
-            await deleteAllItems(item.children);
-          }
-          // Only delete items that have been saved to backend (have proper IDs)
-          if (item.id && item.id.startsWith('item_')) {
-            try {
-              await outlinesApi.deleteItem(currentOutlineId, item.id);
-            } catch (error) {
-              console.error('Failed to delete item:', item.id, error);
-            }
-          }
-        }
-      };
-      
-      // Delete all existing items
-      if (outline.length > 0) {
-        await deleteAllItems(outline);
-      }
-      
-      // Now create the new template items
-      for (const item of templateItems) {
-        await createItemWithChildren(item, null, outlinesApi, currentOutlineId);
-      }
-      
-    } catch (error) {
-      console.error('Failed to save template items:', error);
+    // Call onItemsChange to trigger the sync (this will handle deletions and creations)
+    if (onItemsChange) {
+      setTimeout(() => {
+        onItemsChange(templateItems);
+      }, 0);
     }
   };
   
@@ -1494,7 +1472,7 @@ const OutlineDesktop: React.FC<OutlineDesktopProps> = ({
   const addNewItemAfter = (afterId: string) => {
     // Add a new item after the specified item at the same level
     const newItem: OutlineItem = {
-      id: `item_${Date.now()}`,
+      id: generateNewItemId(),
       text: '',
       level: 0,
       expanded: false,

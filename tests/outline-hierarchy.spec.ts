@@ -7,7 +7,7 @@ test.describe('Outline Hierarchy Persistence', () => {
 
   test('should persist complete nested hierarchy after logout/login', async ({ page }) => {
     // Step 1: Register and login
-    await page.goto('http://localhost:5174/register');
+    await page.goto('http://localhost:5173/register');
     await page.waitForLoadState('networkidle');
     
     // Fill registration form
@@ -17,7 +17,16 @@ test.describe('Outline Hierarchy Persistence', () => {
     
     // Submit registration
     await page.click('button[type="submit"]');
-    await page.waitForURL('http://localhost:5174/');
+    
+    // Wait for navigation after registration
+    await page.waitForURL('http://localhost:5173/**', { timeout: 10000 });
+    
+    // Navigate to main page if needed
+    const currentUrl = page.url();
+    if (!currentUrl.endsWith('/')) {
+      await page.goto('http://localhost:5173/');
+    }
+    
     console.log('✅ User registered and logged in');
 
     // Step 2: Create outline with nested structure
@@ -91,7 +100,16 @@ test.describe('Outline Hierarchy Persistence', () => {
     await page.fill('input[type="email"]', testEmail);
     await page.fill('input[type="password"]', testPassword);
     await page.click('button[type="submit"]');
-    await page.waitForURL('http://localhost:5174/');
+    
+    // Wait for navigation after login
+    await page.waitForURL('http://localhost:5173/**', { timeout: 10000 });
+    
+    // Navigate to main page if needed
+    const urlAfterLogin = page.url();
+    if (!urlAfterLogin.endsWith('/')) {
+      await page.goto('http://localhost:5173/');
+    }
+    
     console.log('✅ Logged back in');
     
     // Wait for outline to load
@@ -144,12 +162,20 @@ test.describe('Outline Hierarchy Persistence', () => {
     const testEmail2 = `test_tab_${timestamp2}@example.com`;
     
     // Register new user
-    await page.goto('http://localhost:5174/register');
+    await page.goto('http://localhost:5173/register');
     await page.fill('input[type="email"]', testEmail2);
     await page.fill('input[type="password"]', testPassword);
     await page.fill('input[name="displayName"], input[placeholder*="name" i]', 'Tab Test User');
     await page.click('button[type="submit"]');
-    await page.waitForURL('http://localhost:5174/');
+    
+    // Wait for navigation after registration
+    await page.waitForURL('http://localhost:5173/**', { timeout: 10000 });
+    
+    // Navigate to main page if needed  
+    const currentUrl = page.url();
+    if (!currentUrl.endsWith('/')) {
+      await page.goto('http://localhost:5173/');
+    }
     
     // Create items and test Tab indentation
     await page.keyboard.type('Item 1');

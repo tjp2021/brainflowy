@@ -8,7 +8,7 @@ test.describe('Hierarchy Persistence', () => {
     const testPassword = 'TestPass123!';
     
     // Step 1: Register and login
-    await page.goto('http://localhost:5174/register');
+    await page.goto('http://localhost:5173/register');
     await page.waitForLoadState('networkidle');
     
     // Fill registration form
@@ -19,8 +19,15 @@ test.describe('Hierarchy Persistence', () => {
     // Submit registration
     await page.click('button[type="submit"]');
     
-    // Wait for redirect to main page
-    await page.waitForURL('http://localhost:5174/', { timeout: 10000 });
+    // Wait for navigation after registration
+    await page.waitForURL('http://localhost:5173/**', { timeout: 10000 });
+    
+    // Navigate to main page if needed
+    const currentUrl = page.url();
+    if (!currentUrl.endsWith('/')) {
+      await page.goto('http://localhost:5173/');
+    }
+    
     await page.waitForTimeout(2000); // Let the page stabilize
     
     // Step 2: Create nested hierarchy
@@ -90,8 +97,15 @@ test.describe('Hierarchy Persistence', () => {
     await page.fill('input[type="password"]', testPassword);
     await page.click('button[type="submit"]');
     
-    // Wait for main page to load
-    await page.waitForURL('http://localhost:5174/', { timeout: 10000 });
+    // Wait for navigation after login
+    await page.waitForURL('http://localhost:5173/**', { timeout: 10000 });
+    
+    // Navigate to main page if needed
+    const urlAfterLogin = page.url();
+    if (!urlAfterLogin.endsWith('/')) {
+      await page.goto('http://localhost:5173/');
+    }
+    
     await page.waitForTimeout(3000); // Let the outline load
     
     // Step 6: Verify hierarchy is preserved AFTER login

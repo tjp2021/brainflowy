@@ -94,8 +94,7 @@ class CosmosDBClient:
         
         items = self.users_container.query_items(
             query=query,
-            parameters=parameters,
-            enable_cross_partition_query=True
+            parameters=parameters
         )
         
         async for item in items:

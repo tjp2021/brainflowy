@@ -3,6 +3,7 @@ import OutlineMobile from './OutlineMobile';
 import OutlineDesktop from './OutlineDesktop';
 import type { OutlineItem } from '@/types/outline';
 import { outlinesApi } from '@/services/api/apiClient';
+import { isNewItemId } from '@/utils/idGenerator';
 
 interface OutlineViewProps {
   outlineId?: string;
@@ -86,7 +87,7 @@ const OutlineView: React.FC<OutlineViewProps> = ({ outlineId }) => {
         const frontendItemsMap = new Map<string, OutlineItem>();
         const collectFrontendItems = (items: OutlineItem[], parentId: string | null = null) => {
           for (const item of items) {
-            const isNewItem = item.id.match(/^item_\d{13}$/) || item.id.startsWith('voice-');
+            const isNewItem = isNewItemId(item.id);
             if (!isNewItem) {
               frontendItemsMap.set(item.id, { ...item, parentId });
             }
@@ -142,7 +143,7 @@ const OutlineView: React.FC<OutlineViewProps> = ({ outlineId }) => {
           for (const item of items) {
             // Check if this is a new item (temporary IDs are exactly 13 digits after item_)
             // Backend IDs have additional suffixes like item_1755834646913665_366
-            const isNewItem = item.id.match(/^item_\d{13}$/) || item.id.startsWith('voice-');
+            const isNewItem = isNewItemId(item.id);
             if (isNewItem) {
               // Skip items without text or with default "New Item" text
               if (!item.text || item.text === 'New Item' || item.text.trim() === '') {

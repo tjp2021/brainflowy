@@ -16,21 +16,50 @@ export async function registerNewUser(page: Page, prefix: string = 'test') {
   
   // Submit registration
   await page.click('button[type="submit"]');
-  await page.waitForURL('http://localhost:5173/');
+  
+  // Wait for either the main page or a welcome screen
+  await page.waitForURL('http://localhost:5173/**', { timeout: 10000 });
+  
+  // If we're still on register, check for any errors
+  const currentUrl = page.url();
+  if (currentUrl.includes('/register')) {
+    // Check for error message
+    const errorElement = page.locator('text=/error/i, [class*="error"]').first();
+    if (await errorElement.isVisible({ timeout: 1000 })) {
+      const errorText = await errorElement.textContent();
+      throw new Error(`Registration failed: ${errorText}`);
+    }
+  }
+  
+  // Navigate to main page if needed
+  if (!currentUrl.endsWith('/')) {
+    await page.goto('http://localhost:5173/');
+  }
   
   // Wait for page to stabilize
-  await page.waitForTimeout(1000);
+  await page.waitForTimeout(2000);
   
   return { email: testEmail, password: testPassword };
 }
 
 export async function login(page: Page, email: string, password: string) {
   await page.goto('http://localhost:5173/login');
+  await page.waitForLoadState('networkidle');
+  
   await page.fill('input[type="email"]', email);
   await page.fill('input[type="password"]', password);
   await page.click('button[type="submit"]');
-  await page.waitForURL('http://localhost:5173/');
-  await page.waitForTimeout(1000);
+  
+  // Wait for navigation after login
+  await page.waitForURL('http://localhost:5173/**', { timeout: 10000 });
+  
+  // Navigate to main page if needed
+  const currentUrl = page.url();
+  if (!currentUrl.endsWith('/')) {
+    await page.goto('http://localhost:5173/');
+  }
+  
+  await page.waitForTimeout(2000);
 }
 
 export async function logout(page: Page) {

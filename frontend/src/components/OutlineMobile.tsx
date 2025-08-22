@@ -5,6 +5,7 @@ import VoiceModal from './VoiceModal';
 import { flattenHierarchy } from '@/utils/hierarchyUtils';
 import { authApi } from '@/services/api/apiClient';
 import { useNavigate } from 'react-router-dom';
+import { generateNewItemId } from '@/utils/idGenerator';
 import '../styles/outline.css';
 
 interface OutlineMobileProps {
@@ -48,7 +49,6 @@ const OutlineMobile: React.FC<OutlineMobileProps> = ({
   const [selectedStyle, setSelectedStyle] = useState<'header' | 'code' | 'quote' | 'normal'>('normal');
   const [lastTapTime, setLastTapTime] = useState<number>(0);
   const [lastTappedId, setLastTappedId] = useState<string | null>(null);
-  const [currentOutlineId, setCurrentOutlineId] = useState<string | null>(null);
   const textAreaRefs = useRef<{ [key: string]: HTMLTextAreaElement | null }>({});
 
   useEffect(() => {
@@ -219,7 +219,7 @@ const OutlineMobile: React.FC<OutlineMobileProps> = ({
     setEditingId(null);
   };
 
-  const updateItemText = async (itemId: string, newText: string) => {
+  const updateItemText = (itemId: string, newText: string) => {
     const updateItems = (items: OutlineItem[]): OutlineItem[] => {
       return items.map(item => {
         if (item.id === itemId) {
@@ -233,20 +233,11 @@ const OutlineMobile: React.FC<OutlineMobileProps> = ({
     };
     const updated = updateItems(outline);
     setOutline(updated);
+    // Let parent handle saving - just like desktop does
     onItemsChange?.(updated);
-    
-    // Save to backend if we have an outline ID and it's not a new item
-    if (currentOutlineId && !itemId.startsWith('item_')) {
-      try {
-        const { outlinesApi } = await import('@/services/api/apiClient');
-        await outlinesApi.updateItem(currentOutlineId, itemId, { content: newText });
-      } catch (error) {
-        console.error('Failed to save item:', error);
-      }
-    }
   };
 
-  const handleKeyDown = async (e: React.KeyboardEvent, itemId: string) => {
+  const handleKeyDown = (e: React.KeyboardEvent, itemId: string) => {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
       const textarea = textAreaRefs.current[itemId];
@@ -271,44 +262,8 @@ const OutlineMobile: React.FC<OutlineMobileProps> = ({
           setOutline(updated);
           onItemsChange?.(updated);
         } else {
-          // Save the text
-          await updateItemText(itemId, trimmedValue);
-          
-          // For new items (those with temporary IDs), create them in backend
-          if (itemId.startsWith('item_') && currentOutlineId) {
-            try {
-              const { outlinesApi } = await import('@/services/api/apiClient');
-              const item = outline.find(i => i.id === itemId) || 
-                         outline.flatMap(i => i.children).find(c => c.id === itemId);
-              
-              if (item) {
-                const created = await outlinesApi.createItem(currentOutlineId, {
-                  content: trimmedValue,
-                  parentId: item.parentId || null,
-                  style: item.style,
-                  formatting: item.formatting
-                } as any);
-                
-                // Update the local item with the backend ID
-                const updateId = (items: OutlineItem[]): OutlineItem[] => {
-                  return items.map(i => {
-                    if (i.id === itemId) {
-                      return { ...i, id: created.id };
-                    }
-                    if (i.children.length > 0) {
-                      return { ...i, children: updateId(i.children) };
-                    }
-                    return i;
-                  });
-                };
-                const updatedWithId = updateId(outline);
-                setOutline(updatedWithId);
-                onItemsChange?.(updatedWithId);
-              }
-            } catch (error) {
-              console.error('Failed to create item in backend:', error);
-            }
-          }
+          // Save the text - parent will handle backend save
+          updateItemText(itemId, trimmedValue);
         }
       }
       stopEditing();
@@ -324,47 +279,27 @@ const OutlineMobile: React.FC<OutlineMobileProps> = ({
     }
   };
 
-  const addNewItem = async (text: string = 'New item', style?: 'header' | 'code' | 'quote' | 'normal') => {
-    const tempId = `item_${Date.now()}_${Math.random()}`;
+  const addNewItem = (text: string = '', style?: 'header' | 'code' | 'quote' | 'normal') => {
+    // Match desktop's approach exactly
     const newItem: OutlineItem = {
-      id: tempId,
+      id: generateNewItemId(),
       text: text,
       level: 0,
       expanded: false,
       children: [],
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
       style: style || selectedStyle,
       formatting: (style || selectedStyle) === 'header' ? { bold: true, size: 'large' as const } : 
                  (style || selectedStyle) === 'quote' ? { italic: true, size: 'medium' as const } :
                  undefined
     };
     
-    // Add to local state immediately
     const updated = [...outline, newItem];
     setOutline(updated);
-    // Don't call onItemsChange here - it would trigger a full re-save
-    // We'll handle the save directly below
-    startEditing(tempId);
-    
-    // Save to backend if we have an outline ID
-    if (currentOutlineId) {
-      try {
-        const { outlinesApi } = await import('@/services/api/apiClient');
-        const createdItem = await outlinesApi.createItem(currentOutlineId, {
-          content: text,
-          parentId: null,
-          order: outline.length
-        });
-        
-        // Update the item with the real backend ID
-        const updatedWithBackendId = updated.map(item => 
-          item.id === tempId ? { ...item, id: createdItem.id } : item
-        );
-        setOutline(updatedWithBackendId);
-        // Don't call onItemsChange - we've already saved to backend
-      } catch (error) {
-        console.error('Failed to save item to backend:', error);
-      }
-    }
+    // Call onItemsChange to let parent handle saving - just like desktop
+    onItemsChange?.(updated);
+    startEditing(newItem.id);
   };
 
   const toggleItemStyle = (itemId: string, style: 'header' | 'code' | 'quote' | 'normal') => {
