@@ -56,6 +56,8 @@ const OutlineMobile: React.FC<OutlineMobileProps> = ({
   }, [initialItems, isInitialized]);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [showVoiceModal, setShowVoiceModal] = useState(false);
+  const [searchVisible, setSearchVisible] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
   const [swipeState, setSwipeState] = useState<SwipeState>({ id: null, direction: null, startX: 0 });
   const [showInstructions, setShowInstructions] = useState(true);
   const [longPressTimer, setLongPressTimer] = useState<NodeJS.Timeout | null>(null);
@@ -76,7 +78,14 @@ const OutlineMobile: React.FC<OutlineMobileProps> = ({
   // This effect is only for standalone use (which shouldn't happen in production)
 
   // Use unified flatten function for rendering
-  const flatItems = flattenHierarchy(outline);
+  const allFlatItems = flattenHierarchy(outline);
+  
+  // Filter items based on search query
+  const flatItems = searchQuery 
+    ? allFlatItems.filter(item => 
+        item.text.toLowerCase().includes(searchQuery.toLowerCase())
+      )
+    : allFlatItems;
   console.log('Mobile: Rendering', flatItems.length, 'flattened items from', outline.length, 'root items');
 
   const handleTouchStart = (e: React.TouchEvent, itemId: string) => {
@@ -341,12 +350,42 @@ const OutlineMobile: React.FC<OutlineMobileProps> = ({
 
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Removed duplicate header - using global header from Layout */}
+    <div className="h-screen flex flex-col bg-gray-50 overflow-hidden">
+      {/* Mobile Header with Menu */}
+      <div className="bg-white border-b border-gray-200 px-4 py-3 flex items-center justify-between">
+        <h1 className="text-lg font-semibold text-gray-900">{title}</h1>
+        <div className="flex items-center space-x-2">
+          <button 
+            onClick={() => setShowVoiceModal(true)}
+            className="p-2 rounded-lg text-gray-600 hover:bg-gray-100"
+          >
+            <Mic className="w-5 h-5" />
+          </button>
+          <button 
+            onClick={() => setSearchVisible(!searchVisible)}
+            className="p-2 rounded-lg text-gray-600 hover:bg-gray-100"
+          >
+            <Search className="w-5 h-5" />
+          </button>
+        </div>
+      </div>
 
+      {/* Search Bar (conditionally visible) */}
+      {searchVisible && (
+        <div className="bg-white border-b border-gray-200 px-4 py-2">
+          <input
+            type="text"
+            placeholder="Search outline..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="w-full px-3 py-2 text-gray-900 bg-gray-50 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+            autoFocus
+          />
+        </div>
+      )}
 
-      {/* Main Content */}
-      <div className="px-4 py-6 outline-mobile-container">
+      {/* Main Content - Scrollable */}
+      <div className="flex-1 overflow-y-auto px-4 py-4">
         <div className="space-y-1 outline-mobile-content">
           {flatItems.map((item) => (
             <div
@@ -488,6 +527,14 @@ const OutlineMobile: React.FC<OutlineMobileProps> = ({
           </div>
         </div>
       </div>
+
+      {/* Floating Action Button */}
+      <button
+        onClick={() => addNewItem()}
+        className="fixed bottom-6 right-6 w-14 h-14 bg-blue-600 text-white rounded-full shadow-lg hover:bg-blue-700 flex items-center justify-center z-10"
+      >
+        <Plus className="w-6 h-6" />
+      </button>
 
       {/* Voice Modal */}
       <VoiceModal 
