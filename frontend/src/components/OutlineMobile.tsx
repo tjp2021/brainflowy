@@ -35,8 +35,6 @@ const OutlineMobile: React.FC<OutlineMobileProps> = ({
   onLLMEditItem,
   onApplyTemplate
 }) => {
-  const navigate = useNavigate();
-  
   // Debug: Check if mobile is receiving items with children
   console.log('Mobile: Received', initialItems.length, 'items');
   initialItems.forEach(item => {
