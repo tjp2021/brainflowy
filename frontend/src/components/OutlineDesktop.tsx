@@ -96,6 +96,8 @@ const OutlineDesktop: React.FC<OutlineDesktopProps> = ({
     }
   }, [currentOutlineId]);
   const [outlineTitle, setOutlineTitle] = useState(title);
+  const [isEditingTitle, setIsEditingTitle] = useState(false);
+  const [tempTitle, setTempTitle] = useState(title);
   const [isLoadingOutlines, setIsLoadingOutlines] = useState(false);
   const [showNewOutlineDialog, setShowNewOutlineDialog] = useState(false);
   const [newOutlineName, setNewOutlineName] = useState('');
@@ -364,6 +366,30 @@ const OutlineDesktop: React.FC<OutlineDesktopProps> = ({
     };
   }, [outline, selectedItems, onItemsChange]);
 
+  const handleSaveTitle = async () => {
+    if (!tempTitle.trim() || tempTitle === outlineTitle) {
+      setIsEditingTitle(false);
+      setTempTitle(outlineTitle);
+      return;
+    }
+
+    try {
+      const { outlinesApi } = await import('@/services/api/apiClient');
+      await outlinesApi.updateOutline(currentOutlineId, { title: tempTitle.trim() });
+      setOutlineTitle(tempTitle.trim());
+      setIsEditingTitle(false);
+      
+      // Update the title in the sidebar list as well
+      setUserOutlines(userOutlines.map(o => 
+        o.id === currentOutlineId ? { ...o, title: tempTitle.trim() } : o
+      ));
+    } catch (error) {
+      console.error('Failed to update outline title:', error);
+      setTempTitle(outlineTitle);
+      setIsEditingTitle(false);
+    }
+  };
+
   const selectOutline = async (outlineId: string) => {
     try {
       const { outlinesApi } = await import('@/services/api/apiClient');
@@ -372,6 +398,7 @@ const OutlineDesktop: React.FC<OutlineDesktopProps> = ({
       
       setCurrentOutlineId(outlineId);
       setOutlineTitle(outline.title);
+      setTempTitle(outline.title);
       // Convert backend format to frontend format recursively with level calculation
       const convertItems = (items: any[], level: number = 0): OutlineItem[] => {
         return items.map((item: any) => ({
@@ -2100,7 +2127,35 @@ const OutlineDesktop: React.FC<OutlineDesktopProps> = ({
         <div className="bg-white border-b border-gray-200 px-6 py-3 flex-shrink-0">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-4">
-              <h1 className="text-xl font-semibold text-gray-900">{outlineTitle}</h1>
+              {isEditingTitle ? (
+                <input
+                  type="text"
+                  value={tempTitle}
+                  onChange={(e) => setTempTitle(e.target.value)}
+                  onBlur={handleSaveTitle}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      handleSaveTitle();
+                    } else if (e.key === 'Escape') {
+                      setIsEditingTitle(false);
+                      setTempTitle(outlineTitle);
+                    }
+                  }}
+                  className="text-xl font-semibold text-gray-900 bg-transparent border-b-2 border-blue-500 focus:outline-none px-1"
+                  autoFocus
+                />
+              ) : (
+                <h1 
+                  className="text-xl font-semibold text-gray-900 cursor-pointer hover:text-blue-600 transition-colors"
+                  onClick={() => {
+                    setIsEditingTitle(true);
+                    setTempTitle(outlineTitle);
+                  }}
+                  title="Click to edit title"
+                >
+                  {outlineTitle}
+                </h1>
+              )}
               <div className="text-sm text-gray-500">
                 <span>Last edited 2 hours ago</span>
               </div>
