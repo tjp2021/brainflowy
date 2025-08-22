@@ -12,12 +12,30 @@ interface OutlineMobileProps {
   title?: string;
   initialItems?: OutlineItem[];
   onItemsChange?: (items: OutlineItem[]) => void;
+  // Surgical operations
+  onCreateItem?: (parentId: string | null, text: string, position?: number, style?: OutlineItem['style'], formatting?: OutlineItem['formatting']) => Promise<string>;
+  onUpdateItem?: (itemId: string, updates: Partial<OutlineItem>) => Promise<void>;
+  onDeleteItem?: (itemId: string) => Promise<void>;
+  onMoveItem?: (itemId: string, newParentId: string | null, position: number) => Promise<void>;
+  // LLM operations
+  onLLMCreateItems?: (parentId: string | null, items: any[], position?: number) => Promise<void>;
+  onLLMEditItem?: (itemId: string, newText: string, newChildren?: any[]) => Promise<void>;
+  onApplyTemplate?: (items: OutlineItem[]) => Promise<void>;
 }
 
 const OutlineMobile: React.FC<OutlineMobileProps> = ({ 
   title = 'Work Notes',
   initialItems = [],
-  onItemsChange 
+  onItemsChange,
+  // Surgical operations
+  onCreateItem,
+  onUpdateItem,
+  onDeleteItem,
+  onMoveItem,
+  // LLM operations
+  onLLMCreateItems,
+  onLLMEditItem,
+  onApplyTemplate
 }) => {
   const navigate = useNavigate();
   

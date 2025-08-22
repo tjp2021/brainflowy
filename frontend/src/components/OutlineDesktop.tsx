@@ -44,13 +44,31 @@ interface OutlineDesktopProps {
     icon: React.ElementType;
     active: boolean;
   }>;
+  // Surgical operations
+  onCreateItem?: (parentId: string | null, text: string, position?: number, style?: OutlineItem['style'], formatting?: OutlineItem['formatting']) => Promise<string>;
+  onUpdateItem?: (itemId: string, updates: Partial<OutlineItem>) => Promise<void>;
+  onDeleteItem?: (itemId: string) => Promise<void>;
+  onMoveItem?: (itemId: string, newParentId: string | null, position: number) => Promise<void>;
+  // LLM operations
+  onLLMCreateItems?: (parentId: string | null, items: any[], position?: number) => Promise<void>;
+  onLLMEditItem?: (itemId: string, newText: string, newChildren?: any[]) => Promise<void>;
+  onApplyTemplate?: (items: OutlineItem[]) => Promise<void>;
 }
 
 const OutlineDesktop: React.FC<OutlineDesktopProps> = ({ 
   title = 'Work Notes',
   initialItems = [],
   onItemsChange,
-  outlineId
+  outlineId,
+  // Surgical operations
+  onCreateItem,
+  onUpdateItem,
+  onDeleteItem,
+  onMoveItem,
+  // LLM operations
+  onLLMCreateItems,
+  onLLMEditItem,
+  onApplyTemplate
 }) => {
   const navigate = useNavigate();
   const { logout } = useAuth();
@@ -63,6 +81,11 @@ const OutlineDesktop: React.FC<OutlineDesktopProps> = ({
   const [selectedStyle, setSelectedStyle] = useState<'header' | 'code' | 'quote' | 'normal'>('normal');
   const [userOutlines, setUserOutlines] = useState<any[]>([]);
   const [currentOutlineId, setCurrentOutlineId] = useState<string | null>(outlineId || null);
+  
+  // Sync outline with initialItems when they change (e.g., after LLM operations)
+  useEffect(() => {
+    setOutline(initialItems);
+  }, [initialItems]);
   
   // Sync currentOutlineId to localStorage whenever it changes
   useEffect(() => {
@@ -273,24 +296,50 @@ const OutlineDesktop: React.FC<OutlineDesktopProps> = ({
           e.preventDefault();
           // Confirm deletion
           if (window.confirm(`Delete ${selectedItems.size} selected item(s)?`)) {
-            const deleteSelectedItems = (items: OutlineItem[]): OutlineItem[] => {
-              return items.filter(item => {
-                // Keep item if not selected
-                if (!selectedItems.has(item.id)) {
-                  // But check children
-                  if (item.children && item.children.length > 0) {
-                    item.children = deleteSelectedItems(item.children);
-                  }
-                  return true;
-                }
-                return false; // Remove selected items
+            // Use surgical delete if available
+            if (onDeleteItem) {
+              // Delete each selected item surgically
+              Promise.all(Array.from(selectedItems).map(itemId => 
+                onDeleteItem(itemId)
+              )).then(() => {
+                // Update local state to remove deleted items
+                const deleteSelectedItems = (items: OutlineItem[]): OutlineItem[] => {
+                  return items.filter(item => {
+                    if (!selectedItems.has(item.id)) {
+                      if (item.children && item.children.length > 0) {
+                        item.children = deleteSelectedItems(item.children);
+                      }
+                      return true;
+                    }
+                    return false;
+                  });
+                };
+                
+                const updated = deleteSelectedItems(outline);
+                setOutline(updated);
+                setSelectedItems(new Set());
               });
-            };
-            
-            const updated = deleteSelectedItems(outline);
-            setOutline(updated);
-            setTimeout(() => onItemsChange?.(updated), 0);
-            setSelectedItems(new Set()); // Clear selection after deletion
+            } else {
+              // Fallback to old method
+              const deleteSelectedItems = (items: OutlineItem[]): OutlineItem[] => {
+                return items.filter(item => {
+                  // Keep item if not selected
+                  if (!selectedItems.has(item.id)) {
+                    // But check children
+                    if (item.children && item.children.length > 0) {
+                      item.children = deleteSelectedItems(item.children);
+                    }
+                    return true;
+                  }
+                  return false; // Remove selected items
+                });
+              };
+              
+              const updated = deleteSelectedItems(outline);
+              setOutline(updated);
+              // REMOVED: onItemsChange - using surgical delete above
+              setSelectedItems(new Set()); // Clear selection after deletion
+            }
           }
         }
       }
@@ -357,7 +406,29 @@ const OutlineDesktop: React.FC<OutlineDesktopProps> = ({
     }
   };
 
-  const toggleExpanded = (itemId: string) => {
+  const toggleExpanded = async (itemId: string) => {
+    // Find the item's current expanded state
+    let currentExpanded = false;
+    const findItem = (items: OutlineItem[]): boolean => {
+      for (const item of items) {
+        if (item.id === itemId) {
+          currentExpanded = item.expanded;
+          return true;
+        }
+        if (item.children && findItem(item.children)) {
+          return true;
+        }
+      }
+      return false;
+    };
+    findItem(outline);
+    
+    // Use surgical update if available
+    if (onUpdateItem) {
+      await onUpdateItem(itemId, { expanded: !currentExpanded });
+    }
+    
+    // Always update local state for immediate UI response
     const updateItems = (items: OutlineItem[]): OutlineItem[] => {
       return items.map(item => {
         if (item.id === itemId) {
@@ -369,9 +440,7 @@ const OutlineDesktop: React.FC<OutlineDesktopProps> = ({
         return item;
       });
     };
-    const updated = updateItems(outline);
-    setOutline(updated);
-    setTimeout(() => onItemsChange?.(updated), 0);
+    setOutline(updateItems(outline));
   };
 
   const startEditing = (itemId: string) => {
@@ -394,94 +463,102 @@ const OutlineDesktop: React.FC<OutlineDesktopProps> = ({
     setEditingId(null);
   };
 
-  const updateItemText = (itemId: string, newText: string): Promise<void> => {
-    return new Promise((resolve) => {
-      setOutline(prevOutline => {
-        const updateItems = (items: OutlineItem[]): OutlineItem[] => {
-          return items.map(item => {
+  const updateItemText = async (itemId: string, newText: string): Promise<void> => {
+    // Use surgical update if available, otherwise fall back to old method
+    if (onUpdateItem) {
+      // For new items (temporary IDs), we need to create them instead
+      if (itemId.match(/^item_\d{13}$/)) {
+        // Find the item and its parent
+        let foundItem: OutlineItem | null = null;
+        let parentId: string | null = null;
+        
+        const findItemAndParent = (items: OutlineItem[], parent: string | null = null): void => {
+          for (const item of items) {
             if (item.id === itemId) {
-              console.log(`Updating item ${itemId} text to: "${newText}"`);
-              return { ...item, text: newText, updatedAt: new Date().toISOString() };
+              foundItem = item;
+              parentId = parent;
+              return;
             }
             if (item.children.length > 0) {
-              return { ...item, children: updateItems(item.children) };
+              findItemAndParent(item.children, item.id);
             }
-            return item;
-          });
+          }
         };
-        const updated = updateItems(prevOutline);
         
-        // Defer onItemsChange to avoid updating parent during render
-        setTimeout(() => {
-          onItemsChange?.(updated);
-          resolve();
-        }, 0);
+        findItemAndParent(outline);
         
-        return updated;
-      });
-    }).then(async () => {
-      // Save to backend if we have an outline ID
-      if (currentOutlineId) {
-        try {
-          const { outlinesApi } = await import('@/services/api/apiClient');
+        if (foundItem && newText.trim() && onCreateItem) {
+          // Create the item and get the real ID
+          const newId = await onCreateItem(
+            parentId, 
+            newText, 
+            undefined,
+            foundItem.style || 'normal',
+            foundItem.formatting
+          );
           
-          // Check if this is a new item (temporary ID)
-          if (itemId.match(/^item_\d{13}$/)) {
-            // Create new item in backend
-            // Find the item and its parent
-            let foundItem: OutlineItem | null = null;
-            let parentId: string | null = null;
-            
-            const findItemAndParent = (items: OutlineItem[], parent: string | null = null): void => {
-              for (const item of items) {
+          // Update local state to replace temporary ID with real ID
+          setOutline(prevOutline => {
+            const updateIds = (items: OutlineItem[]): OutlineItem[] => {
+              return items.map(item => {
                 if (item.id === itemId) {
-                  foundItem = item;
-                  parentId = parent;
-                  return;
+                  return { ...item, id: newId, text: newText };
                 }
                 if (item.children.length > 0) {
-                  findItemAndParent(item.children, item.id);
+                  return { ...item, children: updateIds(item.children) };
                 }
-              }
+                return item;
+              });
             };
-            
-            findItemAndParent(outline);
-            
-            if (foundItem && newText.trim()) {
-              const response = await outlinesApi.createItem(currentOutlineId, {
-                content: newText,
-                parentId: parentId,
-                style: foundItem.style || 'normal',
-                formatting: foundItem.formatting
-              });
-              console.log('New item created in backend with parentId:', parentId, response);
-              
-              // Update the temporary ID with the real ID from backend
-              setOutline(prevOutline => {
-                const updateIds = (items: OutlineItem[]): OutlineItem[] => {
-                  return items.map(i => {
-                    if (i.id === itemId) {
-                      return { ...i, id: response.id };
-                    }
-                    if (i.children.length > 0) {
-                      return { ...i, children: updateIds(i.children) };
-                    }
-                    return i;
-                  });
-                };
-                return updateIds(prevOutline);
-              });
-            }
-          } else {
-            // Update existing item
-            const response = await outlinesApi.updateItem(currentOutlineId, itemId, { content: newText });
-            console.log('Item updated in backend:', response);
-          }
-        } catch (error) {
-          console.error('Failed to save item:', error);
+            return updateIds(prevOutline);
+          });
         }
+      } else {
+        // Update existing item surgically
+        await onUpdateItem(itemId, { text: newText });
+        
+        // Update local state optimistically
+        setOutline(prevOutline => {
+          const updateItems = (items: OutlineItem[]): OutlineItem[] => {
+            return items.map(item => {
+              if (item.id === itemId) {
+                return { ...item, text: newText };
+              }
+              if (item.children.length > 0) {
+                return { ...item, children: updateItems(item.children) };
+              }
+              return item;
+            });
+          };
+          return updateItems(prevOutline);
+        });
       }
-    });
+    } else {
+      // Fallback to old method if surgical handlers not available
+      return new Promise((resolve) => {
+        setOutline(prevOutline => {
+          const updateItems = (items: OutlineItem[]): OutlineItem[] => {
+            return items.map(item => {
+              if (item.id === itemId) {
+                return { ...item, text: newText, updatedAt: new Date().toISOString() };
+              }
+              if (item.children.length > 0) {
+                return { ...item, children: updateItems(item.children) };
+              }
+              return item;
+            });
+          };
+          const updated = updateItems(prevOutline);
+          
+          // REMOVED: onItemsChange - prefer surgical updates
+          setTimeout(() => {
+            resolve();
+          }, 0);
+          
+          return updated;
+        });
+      });
+    }
   };
 
   const indentItem = (itemId: string) => {
@@ -507,7 +584,7 @@ const OutlineDesktop: React.FC<OutlineDesktopProps> = ({
     // Recalculate all levels to ensure consistency
     updated = recalculateLevels(updated);
     setOutline(updated);
-    onItemsChange?.(updated);
+    // REMOVED: onItemsChange - now using surgical onMoveItem in Tab handler
   };
 
   const outdentItem = (itemId: string) => {
@@ -525,116 +602,189 @@ const OutlineDesktop: React.FC<OutlineDesktopProps> = ({
       // If the text is empty, remove the item
       if (!trimmedValue || trimmedValue === '') {
         setEditingId(null);
-        // Remove the empty item
-        const removeEmptyItem = (items: OutlineItem[]): OutlineItem[] => {
-          return items.filter(item => {
-            if (item.id === itemId) {
-              return false; // Remove this item
-            }
-            if (item.children.length > 0) {
-              item.children = removeEmptyItem(item.children);
-            }
-            return true;
+        
+        // Use surgical delete if available
+        if (onDeleteItem) {
+          await onDeleteItem(itemId);
+          // Update local state to remove the item
+          setOutline(prevOutline => {
+            const removeItem = (items: OutlineItem[]): OutlineItem[] => {
+              return items.filter(item => {
+                if (item.id === itemId) return false;
+                if (item.children.length > 0) {
+                  item.children = removeItem(item.children);
+                }
+                return true;
+              });
+            };
+            return removeItem(prevOutline);
           });
-        };
-        const updated = removeEmptyItem(outline);
-        setOutline(updated);
-        setTimeout(() => onItemsChange?.(updated), 0);
+        }
         return;
       }
       
-      // Update the item text directly in state before creating a new item
-      // This ensures the text is saved synchronously
-      const updateAndCreateNew = () => {
-        setOutline(prevOutline => {
-          const updateItems = (items: OutlineItem[]): OutlineItem[] => {
-            return items.map(item => {
-              if (item.id === itemId) {
-                console.log(`Saving item ${itemId} with text: "${trimmedValue}" to outline ${currentOutlineId}`);
-                return { ...item, text: trimmedValue, updatedAt: new Date().toISOString() };
-              }
-              if (item.children.length > 0) {
-                return { ...item, children: updateItems(item.children) };
-              }
-              return item;
-            });
-          };
-          const updated = updateItems(prevOutline);
-          
-          // Now add the new item after updating the current one
-          const newItem: OutlineItem = {
-            id: generateNewItemId(),
-            text: '',
-            level: 0,
-            expanded: false,
-            children: [],
-            createdAt: new Date().toISOString(),
-            updatedAt: new Date().toISOString(),
-            style: selectedStyle,
-            formatting: selectedStyle === 'header' ? { bold: true, size: 'large' as const } : undefined
-          };
-          
-          const insertAfter = (items: OutlineItem[]): OutlineItem[] => {
-            for (let i = 0; i < items.length; i++) {
-              if (items[i].id === itemId) {
-                newItem.level = items[i].level;
-                items.splice(i + 1, 0, newItem);
-                // Set the new item to be edited after a short delay
-                setTimeout(() => startEditing(newItem.id), 50);
-                return items;
-              }
-              if (items[i].children.length > 0) {
-                items[i].children = insertAfter(items[i].children);
+      // USE SURGICAL OPERATIONS for creating new item
+      if (onUpdateItem && onCreateItem) {
+        // First, update the current item's text surgically
+        await updateItemText(itemId, trimmedValue);
+        
+        // Find where to insert the new item
+        let parentId: string | null = null;
+        let position = 0;
+        let level = 0;
+        
+        const findItemPosition = (items: OutlineItem[], parent: string | null = null): boolean => {
+          for (let i = 0; i < items.length; i++) {
+            if (items[i].id === itemId) {
+              parentId = parent;
+              position = i + 1;
+              level = items[i].level;
+              return true;
+            }
+            if (items[i].children.length > 0) {
+              if (findItemPosition(items[i].children, items[i].id)) {
+                return true;
               }
             }
-            return items;
+          }
+          return false;
+        };
+        
+        findItemPosition(outline);
+        
+        // Create the new item surgically
+        const newItemId = await onCreateItem(
+          parentId,
+          '', // Empty text for new item
+          position,
+          selectedStyle,
+          selectedStyle === 'header' ? { bold: true, size: 'large' as const } : undefined
+        );
+        
+        // Update local state to add the new item
+        const newItem: OutlineItem = {
+          id: newItemId,
+          text: '',
+          level: level,
+          expanded: false,
+          children: [],
+          style: selectedStyle,
+          formatting: selectedStyle === 'header' ? { bold: true, size: 'large' as const } : undefined
+        };
+        
+        setOutline(prevOutline => {
+          const insertAfter = (items: OutlineItem[]): OutlineItem[] => {
+            const result = [...items];
+            for (let i = 0; i < result.length; i++) {
+              if (result[i].id === itemId) {
+                result.splice(i + 1, 0, newItem);
+                return result;
+              }
+              if (result[i].children.length > 0) {
+                result[i].children = insertAfter(result[i].children);
+              }
+            }
+            return result;
           };
-          
-          const finalUpdated = insertAfter(updated);
-          onItemsChange?.(finalUpdated);
-          return finalUpdated;
+          return insertAfter(prevOutline);
         });
         
-        // Stop editing the current item
-        setEditingId(null);
-      };
-      
-      updateAndCreateNew();
-      
-      // Handle backend sync for new items
-      if (itemId.startsWith('item_') && currentOutlineId) {
-        try {
-          const { outlinesApi } = await import('@/services/api/apiClient');
-          const created = await outlinesApi.createItem(currentOutlineId, {
-            content: trimmedValue,
-            parentId: null,
-            style: selectedStyle,
-            formatting: selectedStyle === 'header' ? { bold: true, size: 'large' } : undefined
-          } as any);
-          
-          // Update the local item with the backend ID
+        // Start editing the new item
+        setTimeout(() => startEditing(newItemId), 50);
+        
+      } else {
+        // FALLBACK: Old implementation if surgical handlers not available
+        const updateAndCreateNew = () => {
           setOutline(prevOutline => {
-            const updateId = (items: OutlineItem[]): OutlineItem[] => {
-              return items.map(i => {
-                if (i.id === itemId) {
-                  return { 
-                    ...i, 
-                    id: created.id,
-                    text: created.content,
-                    createdAt: created.createdAt,
-                    updatedAt: created.updatedAt
-                  };
+            const updateItems = (items: OutlineItem[]): OutlineItem[] => {
+              return items.map(item => {
+                if (item.id === itemId) {
+                  console.log(`Saving item ${itemId} with text: "${trimmedValue}" to outline ${currentOutlineId}`);
+                  return { ...item, text: trimmedValue, updatedAt: new Date().toISOString() };
                 }
-                if (i.children.length > 0) {
-                  return { ...i, children: updateId(i.children) };
+                if (item.children.length > 0) {
+                  return { ...item, children: updateItems(item.children) };
                 }
-                return i;
+                return item;
               });
             };
-            return updateId(prevOutline);
+            const updated = updateItems(prevOutline);
+            
+            // Now add the new item after updating the current one
+            const newItem: OutlineItem = {
+              id: generateNewItemId(),
+              text: '',
+              level: 0,
+              expanded: false,
+              children: [],
+              createdAt: new Date().toISOString(),
+              updatedAt: new Date().toISOString(),
+              style: selectedStyle,
+              formatting: selectedStyle === 'header' ? { bold: true, size: 'large' as const } : undefined
+            };
+            
+            const insertAfter = (items: OutlineItem[]): OutlineItem[] => {
+              for (let i = 0; i < items.length; i++) {
+                if (items[i].id === itemId) {
+                  newItem.level = items[i].level;
+                  items.splice(i + 1, 0, newItem);
+                  // Set the new item to be edited after a short delay
+                  setTimeout(() => startEditing(newItem.id), 50);
+                  return items;
+                }
+                if (items[i].children.length > 0) {
+                  items[i].children = insertAfter(items[i].children);
+                }
+              }
+              return items;
+            };
+            
+            const finalUpdated = insertAfter(updated);
+            // Removed onItemsChange call - should use surgical operations
+            return finalUpdated;
           });
-        } catch (error) {
-          console.error('Failed to create item in backend:', error);
+        
+          // Stop editing the current item
+          setEditingId(null);
+        };
+        
+        updateAndCreateNew();
+        
+        // Handle backend sync for new items
+        if (itemId.startsWith('item_') && currentOutlineId) {
+          try {
+            const { outlinesApi } = await import('@/services/api/apiClient');
+            const created = await outlinesApi.createItem(currentOutlineId, {
+              content: trimmedValue,
+              parentId: null,
+              style: selectedStyle,
+              formatting: selectedStyle === 'header' ? { bold: true, size: 'large' } : undefined
+            } as any);
+            
+            // Update the local item with the backend ID
+            setOutline(prevOutline => {
+              const updateId = (items: OutlineItem[]): OutlineItem[] => {
+                return items.map(i => {
+                  if (i.id === itemId) {
+                    return { 
+                      ...i, 
+                      id: created.id,
+                      text: created.content,
+                      createdAt: created.createdAt,
+                      updatedAt: created.updatedAt
+                    };
+                  }
+                  if (i.children.length > 0) {
+                    return { ...i, children: updateId(i.children) };
+                  }
+                  return i;
+                });
+              };
+              return updateId(prevOutline);
+            });
+          } catch (error) {
+            console.error('Failed to create item in backend:', error);
+          }
         }
       }
       return;
@@ -646,10 +796,26 @@ const OutlineDesktop: React.FC<OutlineDesktopProps> = ({
       const trimmedValue = textarea.value.trim();
       
       if (trimmedValue && trimmedValue !== '') {
-        // Save the text before exiting
+        // Save the text before exiting using surgical update
         await updateItemText(itemId, trimmedValue);
+      } else if (onDeleteItem) {
+        // Use surgical delete for empty item
+        await onDeleteItem(itemId);
+        // Update local state
+        setOutline(prevOutline => {
+          const removeItem = (items: OutlineItem[]): OutlineItem[] => {
+            return items.filter(item => {
+              if (item.id === itemId) return false;
+              if (item.children.length > 0) {
+                item.children = removeItem(item.children);
+              }
+              return true;
+            });
+          };
+          return removeItem(prevOutline);
+        });
       } else {
-        // Remove empty item
+        // Fallback to old method
         const removeEmptyItem = (items: OutlineItem[]): OutlineItem[] => {
           return items.filter(item => {
             if (item.id === itemId) {
@@ -663,7 +829,7 @@ const OutlineDesktop: React.FC<OutlineDesktopProps> = ({
         };
         const updated = removeEmptyItem(outline);
         setOutline(updated);
-        setTimeout(() => onItemsChange?.(updated), 0);
+        // REMOVED: onItemsChange - prefer surgical delete
       }
       
       stopEditing();
@@ -674,91 +840,121 @@ const OutlineDesktop: React.FC<OutlineDesktopProps> = ({
     if (e.key === 'Tab' && !e.shiftKey) {
       e.preventDefault();
       
-      // Find the item and its previous sibling
-      let targetItem: OutlineItem | null = null;
-      let previousItem: OutlineItem | null = null;
-      let parentOfTarget: OutlineItem | null = null;
-      
-      const findItemAndPrevious = (items: OutlineItem[], parent: OutlineItem | null = null): boolean => {
-        for (let i = 0; i < items.length; i++) {
-          if (items[i].id === itemId) {
-            targetItem = items[i];
-            parentOfTarget = parent;
-            // Get the previous sibling at the same level
-            if (i > 0) {
-              previousItem = items[i - 1];
+      // Use surgical move if available
+      if (onMoveItem) {
+        // Find the previous sibling to make it the new parent
+        let previousItemId: string | null = null;
+        
+        const findPreviousSibling = (items: OutlineItem[]): boolean => {
+          for (let i = 0; i < items.length; i++) {
+            if (items[i].id === itemId && i > 0) {
+              previousItemId = items[i - 1].id;
+              return true;
             }
-            return true;
-          }
-          // Search in children
-          if (items[i].children && items[i].children.length > 0) {
-            if (findItemAndPrevious(items[i].children, items[i])) {
+            if (items[i].children && findPreviousSibling(items[i].children)) {
               return true;
             }
           }
+          return false;
+        };
+        
+        findPreviousSibling(outline);
+        
+        if (previousItemId) {
+          // Move item to be a child of the previous sibling
+          await onMoveItem(itemId, previousItemId, 0);
+          
+          // Update local state
+          indentItem(itemId);
         }
-        return false;
-      };
-      
-      findItemAndPrevious(outline);
-      
-      if (targetItem && previousItem) {
-        // Remove target from its current position
-        const removeFromParent = (items: OutlineItem[]): OutlineItem[] => {
-          return items.filter(item => {
-            if (item.id === itemId) {
-              return false;
-            }
-            if (item.children && item.children.length > 0) {
-              item.children = removeFromParent(item.children);
-            }
-            return true;
-          });
-        };
+      } else {
+        // Fallback to old method
+        // Find the item and its previous sibling
+        let targetItem: OutlineItem | null = null;
+        let previousItem: OutlineItem | null = null;
+        let parentOfTarget: OutlineItem | null = null;
         
-        // Add target as child of previous item
-        const addAsChild = (items: OutlineItem[]): OutlineItem[] => {
-          return items.map(item => {
-            if (item.id === previousItem!.id) {
-              if (!item.children) item.children = [];
-              targetItem!.level = item.level + 1;
-              targetItem!.parentId = item.id;
-              item.children.push(targetItem!);
-              item.expanded = true;
-            } else if (item.children && item.children.length > 0) {
-              item.children = addAsChild(item.children);
-            }
-            return item;
-          });
-        };
-        
-        let updated = removeFromParent([...outline]);
-        updated = addAsChild(updated);
-        // Recalculate all levels to ensure consistency
-        updated = recalculateLevels(updated);
-        setOutline(updated);
-        setTimeout(() => onItemsChange?.(updated), 0);
-        
-        // Save the indent change to backend
-        if (currentOutlineId && previousItem) {
-          const saveIndent = async () => {
-            try {
-              const { outlinesApi } = await import('@/services/api/apiClient');
-              // If item already exists in backend (not a newly created item), update its parentId
-              // New items have format: item_1234567890123 (13 digits)
-              // Backend items have format: item_1234567890123456_789 (more digits with suffix)
-              const isNewItem = itemId.match(/^item_\d{13}$/);
-              if (!isNewItem) {
-                await outlinesApi.updateItem(currentOutlineId, itemId, { 
-                  parentId: previousItem.id 
-                });
-                console.log('Indented item saved with new parentId:', previousItem.id);
+        const findItemAndPrevious = (items: OutlineItem[], parent: OutlineItem | null = null): boolean => {
+          for (let i = 0; i < items.length; i++) {
+            if (items[i].id === itemId) {
+              targetItem = items[i];
+              parentOfTarget = parent;
+              // Get the previous sibling at the same level
+              if (i > 0) {
+                previousItem = items[i - 1];
               }
-            } catch (error) {
-              console.error('Failed to save indent:', error);
+              return true;
             }
+            // Search in children
+            if (items[i].children && items[i].children.length > 0) {
+              if (findItemAndPrevious(items[i].children, items[i])) {
+                return true;
+              }
+            }
+          }
+          return false;
+        };
+        
+        findItemAndPrevious(outline);
+        
+        if (targetItem && previousItem) {
+          // Remove target from its current position
+          const removeFromParent = (items: OutlineItem[]): OutlineItem[] => {
+            return items.filter(item => {
+              if (item.id === itemId) {
+                return false;
+              }
+              if (item.children && item.children.length > 0) {
+                item.children = removeFromParent(item.children);
+              }
+              return true;
+            });
           };
-          saveIndent();
+          
+          // Add target as child of previous item
+          const addAsChild = (items: OutlineItem[]): OutlineItem[] => {
+            return items.map(item => {
+              if (item.id === previousItem!.id) {
+                if (!item.children) item.children = [];
+                targetItem!.level = item.level + 1;
+                targetItem!.parentId = item.id;
+                item.children.push(targetItem!);
+                item.expanded = true;
+              } else if (item.children && item.children.length > 0) {
+                item.children = addAsChild(item.children);
+              }
+              return item;
+            });
+          };
+          
+          let updated = removeFromParent([...outline]);
+          updated = addAsChild(updated);
+          // Recalculate all levels to ensure consistency
+          updated = recalculateLevels(updated);
+          setOutline(updated);
+          // REMOVED: onItemsChange - prefer surgical move
+          
+          // Save the indent change to backend
+          if (currentOutlineId && previousItem) {
+            const saveIndent = async () => {
+              try {
+                const { outlinesApi } = await import('@/services/api/apiClient');
+                // If item already exists in backend (not a newly created item), update its parentId
+                // New items have format: item_1234567890123 (13 digits)
+                // Backend items have format: item_1234567890123456_789 (more digits with suffix)
+                const isNewItem = itemId.match(/^item_\d{13}$/);
+                if (!isNewItem) {
+                  await outlinesApi.updateItem(currentOutlineId, itemId, { 
+                    parentId: previousItem.id 
+                  });
+                  console.log('Indented item saved with new parentId:', previousItem.id);
+                }
+              } catch (error) {
+                console.error('Failed to save indent:', error);
+              }
+            };
+            saveIndent();
+          }
         }
       }
       return;
@@ -767,52 +963,133 @@ const OutlineDesktop: React.FC<OutlineDesktopProps> = ({
     // Handle Shift+Tab for outdentation
     if (e.key === 'Tab' && e.shiftKey) {
       e.preventDefault();
-      // Outdent the current item (move it up one level)
-      const outdentItem = (items: OutlineItem[], targetId: string, parent: OutlineItem | null = null): OutlineItem[] => {
-        for (let i = 0; i < items.length; i++) {
-          if (items[i].id === targetId && parent) {
-            // This is the item to outdent, and it has a parent
-            return items; // Can't outdent top-level items
-          }
-          
-          if (items[i].children.length > 0) {
-            for (let j = 0; j < items[i].children.length; j++) {
-              if (items[i].children[j].id === targetId) {
-                // Found the item in children - move it out
-                const [removed] = items[i].children.splice(j, 1);
-                removed.level = items[i].level;
-                removed.parentId = items[i].parentId;
-                // Insert after parent
-                const parentIndex = items.indexOf(items[i]);
-                items.splice(parentIndex + 1, 0, removed);
-                return items;
+      
+      // Use surgical move if available
+      if (onMoveItem) {
+        // Find the parent's parent to outdent to
+        let currentParentId: string | null = null;
+        let grandParentId: string | null = null;
+        let positionAfterParent = 0;
+        
+        const findParents = (items: OutlineItem[], parent: string | null = null): boolean => {
+          for (let i = 0; i < items.length; i++) {
+            if (items[i].id === itemId) {
+              currentParentId = parent;
+              return true;
+            }
+            if (items[i].children) {
+              if (findParents(items[i].children, items[i].id)) {
+                // If we found it in children, this item is the parent
+                if (parent === null) {
+                  // Parent is at root level
+                  grandParentId = null;
+                  positionAfterParent = i + 1;
+                } else {
+                  // Need to find grandparent
+                  const findGrandParent = (searchItems: OutlineItem[]): boolean => {
+                    for (let j = 0; j < searchItems.length; j++) {
+                      if (searchItems[j].id === parent) {
+                        grandParentId = null; // Parent is at root
+                        positionAfterParent = j + 1;
+                        return true;
+                      }
+                      if (searchItems[j].children) {
+                        for (let k = 0; k < searchItems[j].children.length; k++) {
+                          if (searchItems[j].children[k].id === parent) {
+                            grandParentId = searchItems[j].id;
+                            positionAfterParent = k + 1;
+                            return true;
+                          }
+                        }
+                      }
+                    }
+                    return false;
+                  };
+                  findGrandParent(outline);
+                }
+                return true;
               }
             }
-            items[i].children = outdentItem(items[i].children, targetId, items[i]);
           }
+          return false;
+        };
+        
+        findParents(outline);
+        
+        if (currentParentId) {
+          // Can outdent - move to grandparent level
+          await onMoveItem(itemId, grandParentId, positionAfterParent);
+          
+          // Update local state
+          outdentItem(itemId);
         }
-        return items;
-      };
-      let updated = outdentItem([...outline], itemId);
-      // Recalculate all levels to ensure consistency
-      updated = recalculateLevels(updated);
-      setOutline(updated);
-      setTimeout(() => onItemsChange?.(updated), 0);
+      } else {
+        // Fallback to old method
+        const outdentItem = (items: OutlineItem[], targetId: string, parent: OutlineItem | null = null): OutlineItem[] => {
+          for (let i = 0; i < items.length; i++) {
+            if (items[i].id === targetId && parent) {
+              // This is the item to outdent, and it has a parent
+              return items; // Can't outdent top-level items
+            }
+            
+            if (items[i].children.length > 0) {
+              for (let j = 0; j < items[i].children.length; j++) {
+                if (items[i].children[j].id === targetId) {
+                  // Found the item in children - move it out
+                  const [removed] = items[i].children.splice(j, 1);
+                  removed.level = items[i].level;
+                  removed.parentId = items[i].parentId;
+                  // Insert after parent
+                  const parentIndex = items.indexOf(items[i]);
+                  items.splice(parentIndex + 1, 0, removed);
+                  return items;
+                }
+              }
+              items[i].children = outdentItem(items[i].children, targetId, items[i]);
+            }
+          }
+          return items;
+        };
+        let updated = outdentItem([...outline], itemId);
+        // Recalculate all levels to ensure consistency
+        updated = recalculateLevels(updated);
+        setOutline(updated);
+        // REMOVED: onItemsChange - prefer surgical move
+      }
       return;
     }
     
     // Handle Cmd/Ctrl+B for bold/header style
     if ((e.metaKey || e.ctrlKey) && e.key === 'b') {
       e.preventDefault();
+      
+      // Find current style
+      let currentStyle: OutlineItem['style'] = 'normal';
+      const findItemStyle = (items: OutlineItem[]): boolean => {
+        for (const item of items) {
+          if (item.id === itemId) {
+            currentStyle = item.style || 'normal';
+            return true;
+          }
+          if (item.children && findItemStyle(item.children)) return true;
+        }
+        return false;
+      };
+      findItemStyle(outline);
+      
+      const newStyle = currentStyle === 'header' ? 'normal' : 'header';
+      const newFormatting = newStyle === 'header' ? { bold: true, size: 'large' as const } : undefined;
+      
+      // Use surgical update if available
+      if (onUpdateItem) {
+        await onUpdateItem(itemId, { style: newStyle, formatting: newFormatting });
+      }
+      
+      // Update local state
       const updateStyle = (items: OutlineItem[]): OutlineItem[] => {
         return items.map(item => {
           if (item.id === itemId) {
-            const newStyle = item.style === 'header' ? 'normal' : 'header';
-            return { 
-              ...item, 
-              style: newStyle,
-              formatting: newStyle === 'header' ? { bold: true, size: 'large' as const } : undefined
-            };
+            return { ...item, style: newStyle, formatting: newFormatting };
           }
           if (item.children.length > 0) {
             return { ...item, children: updateStyle(item.children) };
@@ -820,27 +1097,44 @@ const OutlineDesktop: React.FC<OutlineDesktopProps> = ({
           return item;
         });
       };
-      const updated = updateStyle(outline);
-      setOutline(updated);
-      setTimeout(() => onItemsChange?.(updated), 0);
+      setOutline(updateStyle(outline));
       
       // Also update selectedStyle for this editing session
-      setSelectedStyle(prevStyle => prevStyle === 'header' ? 'normal' : 'header');
+      setSelectedStyle(newStyle);
       return;
     }
     
     // Handle Cmd/Ctrl+I for italic/quote style
     if ((e.metaKey || e.ctrlKey) && e.key === 'i') {
       e.preventDefault();
+      
+      // Find current style
+      let currentStyle: OutlineItem['style'] = 'normal';
+      const findItemStyle = (items: OutlineItem[]): boolean => {
+        for (const item of items) {
+          if (item.id === itemId) {
+            currentStyle = item.style || 'normal';
+            return true;
+          }
+          if (item.children && findItemStyle(item.children)) return true;
+        }
+        return false;
+      };
+      findItemStyle(outline);
+      
+      const newStyle = currentStyle === 'quote' ? 'normal' : 'quote';
+      const newFormatting = newStyle === 'quote' ? { italic: true } : undefined;
+      
+      // Use surgical update if available
+      if (onUpdateItem) {
+        await onUpdateItem(itemId, { style: newStyle, formatting: newFormatting });
+      }
+      
+      // Update local state
       const updateStyle = (items: OutlineItem[]): OutlineItem[] => {
         return items.map(item => {
           if (item.id === itemId) {
-            const newStyle = item.style === 'quote' ? 'normal' : 'quote';
-            return { 
-              ...item, 
-              style: newStyle,
-              formatting: newStyle === 'quote' ? { italic: true } : undefined
-            };
+            return { ...item, style: newStyle, formatting: newFormatting };
           }
           if (item.children.length > 0) {
             return { ...item, children: updateStyle(item.children) };
@@ -848,27 +1142,44 @@ const OutlineDesktop: React.FC<OutlineDesktopProps> = ({
           return item;
         });
       };
-      const updated = updateStyle(outline);
-      setOutline(updated);
-      setTimeout(() => onItemsChange?.(updated), 0);
+      setOutline(updateStyle(outline));
       
       // Also update selectedStyle for this editing session
-      setSelectedStyle(prevStyle => prevStyle === 'quote' ? 'normal' : 'quote');
+      setSelectedStyle(newStyle);
       return;
     }
     
     // Handle Cmd/Ctrl+E for code style
     if ((e.metaKey || e.ctrlKey) && e.key === 'e') {
       e.preventDefault();
+      
+      // Find current style
+      let currentStyle: OutlineItem['style'] = 'normal';
+      const findItemStyle = (items: OutlineItem[]): boolean => {
+        for (const item of items) {
+          if (item.id === itemId) {
+            currentStyle = item.style || 'normal';
+            return true;
+          }
+          if (item.children && findItemStyle(item.children)) return true;
+        }
+        return false;
+      };
+      findItemStyle(outline);
+      
+      const newStyle = currentStyle === 'code' ? 'normal' : 'code';
+      const newFormatting = newStyle === 'code' ? { monospace: true } : undefined;
+      
+      // Use surgical update if available
+      if (onUpdateItem) {
+        await onUpdateItem(itemId, { style: newStyle, formatting: newFormatting });
+      }
+      
+      // Update local state
       const updateStyle = (items: OutlineItem[]): OutlineItem[] => {
         return items.map(item => {
           if (item.id === itemId) {
-            const newStyle = item.style === 'code' ? 'normal' : 'code';
-            return { 
-              ...item, 
-              style: newStyle,
-              formatting: newStyle === 'code' ? { monospace: true } : undefined
-            };
+            return { ...item, style: newStyle, formatting: newFormatting };
           }
           if (item.children.length > 0) {
             return { ...item, children: updateStyle(item.children) };
@@ -876,12 +1187,10 @@ const OutlineDesktop: React.FC<OutlineDesktopProps> = ({
           return item;
         });
       };
-      const updated = updateStyle(outline);
-      setOutline(updated);
-      setTimeout(() => onItemsChange?.(updated), 0);
+      setOutline(updateStyle(outline));
       
       // Also update selectedStyle for this editing session
-      setSelectedStyle(prevStyle => prevStyle === 'code' ? 'normal' : 'code');
+      setSelectedStyle(newStyle);
       return;
     }
   };
@@ -919,11 +1228,160 @@ const OutlineDesktop: React.FC<OutlineDesktopProps> = ({
     };
     const updated = [...outline, newItem];
     setOutline(updated);
-    setTimeout(() => onItemsChange?.(updated), 0);
+    // Removed onItemsChange call - should use surgical operations
     startEditing(newItem.id);
   };
 
+  // Helper function to determine parent ID from section
+  const determineParentFromSection = (section?: string, targetSection?: string): string | null => {
+    const sectionToCheck = targetSection || section;
+    if (!sectionToCheck) return null;
+    
+    // Find the most specific matching section (deepest in the hierarchy)
+    let bestMatch: { id: string; depth: number } | null = null;
+    
+    const findSectionParent = (items: OutlineItem[], depth: number = 0): void => {
+      for (const item of items) {
+        const itemTextLower = item.text.toLowerCase();
+        const sectionLower = sectionToCheck.toLowerCase();
+        
+        let isMatch = false;
+        
+        // Check for DOK levels (DOK1, DOK2, DOK3, DOK4, etc.)
+        if (sectionLower.includes('dok') || sectionLower.includes('depth of knowledge')) {
+          // Extract the level number if present
+          const levelMatch = sectionLower.match(/dok\s*(?:level\s*)?(\d+)|depth of knowledge\s*(?:level\s*)?(\d+)/);
+          if (levelMatch) {
+            const level = levelMatch[1] || levelMatch[2];
+            if (itemTextLower.includes(`dok${level}`) || 
+                itemTextLower.includes(`dok ${level}`) || 
+                itemTextLower.includes(`dok level ${level}`) ||
+                itemTextLower.includes(`depth of knowledge ${level}`) ||
+                itemTextLower.includes(`dok-${level}`) ||
+                itemTextLower.includes(`depth of knowledge level ${level}`)) {
+              isMatch = true;
+            }
+          }
+          // Also handle simple format like "dok3"
+          else if (sectionLower.match(/^dok\d+$/)) {
+            const level = sectionLower.replace('dok', '');
+            if (itemTextLower.includes(`dok${level}`) || 
+                itemTextLower.includes(`dok ${level}`) || 
+                itemTextLower.includes(`dok level ${level}`) ||
+                itemTextLower.includes(`depth of knowledge ${level}`)) {
+              isMatch = true;
+            }
+          }
+          // Generic DOK match if no specific level
+          else if (itemTextLower.includes('dok') || itemTextLower.includes('depth of knowledge')) {
+            isMatch = true;
+          }
+        }
+        
+        // For "out of scope" - prioritize exact match
+        if (sectionLower.includes('out') && sectionLower.includes('scope') && 
+            itemTextLower.includes('out') && itemTextLower.includes('scope')) {
+          isMatch = true;
+        }
+        // Check for exact or partial section name match
+        else if (itemTextLower.includes(sectionLower)) {
+          isMatch = true;
+        }
+        // Specific section aliases
+        else if (sectionToCheck === 'spov' && (itemTextLower.includes('spov') || itemTextLower.includes('strategic point') || itemTextLower.includes('spiky pov'))) {
+          isMatch = true;
+        }
+        else if (sectionToCheck === 'purpose' && itemTextLower.includes('purpose')) {
+          isMatch = true;
+        }
+        else if (sectionToCheck === 'owner' && itemTextLower.includes('owner')) {
+          isMatch = true;
+        }
+        else if (sectionToCheck === 'scope' && itemTextLower.includes('scope') && !itemTextLower.includes('out')) {
+          isMatch = true;
+        }
+        else if ((sectionToCheck === 'initiative_overview' || sectionToCheck === 'overview') && itemTextLower.includes('overview')) {
+          isMatch = true;
+        }
+        else if (sectionLower.includes('context') && itemTextLower.includes('context')) {
+          isMatch = true;
+        }
+        else if (sectionLower.includes('insight') && itemTextLower.includes('insight')) {
+          isMatch = true;
+        }
+        
+        // If we found a match, update bestMatch if this is deeper
+        if (isMatch) {
+          if (!bestMatch || depth > bestMatch.depth) {
+            bestMatch = { id: item.id, depth };
+          }
+        }
+        
+        // Check children recursively
+        if (item.children && item.children.length > 0) {
+          findSectionParent(item.children, depth + 1);
+        }
+      }
+    };
+    
+    findSectionParent(outline, 0);
+    return bestMatch ? bestMatch.id : null;
+  };
+
   const handleLLMAction = async (action: LLMAction, response: LLMResponse) => {
+    // Use surgical handlers if available
+    if (onLLMEditItem && onLLMCreateItems) {
+      if (action.type === 'edit' && action.targetId) {
+        // EDIT existing item using surgical handler
+        if (response.content && !response.items) {
+          // Simple text edit - no structural changes
+          await onLLMEditItem(action.targetId, response.content);
+        } else if (response.items && response.items.length > 0) {
+          // Structural edit - item with new children
+          await onLLMEditItem(
+            action.targetId,
+            response.items[0].text,
+            response.items[0].children
+          );
+        }
+        
+        // Update local state to reflect changes
+        if (response.content) {
+          setOutline(prevOutline => {
+            const updateItem = (items: OutlineItem[]): OutlineItem[] => {
+              return items.map(item => {
+                if (item.id === action.targetId) {
+                  return { ...item, text: response.content! };
+                }
+                if (item.children) {
+                  return { ...item, children: updateItem(item.children) };
+                }
+                return item;
+              });
+            };
+            return updateItem(prevOutline);
+          });
+        }
+        
+      } else if (action.type === 'create' && response.items) {
+        // CREATE new items using surgical handler
+        const parentId = action.parentId || determineParentFromSection(action.section, response.items[0]?.targetSection);
+        await onLLMCreateItems(parentId, response.items);
+        
+      } else if (action.type === 'research') {
+        // RESEARCH - might create or edit based on findings
+        if (response.content && action.targetId) {
+          await onLLMEditItem(action.targetId, response.content);
+        } else if (response.items) {
+          const parentId = action.parentId || null;
+          await onLLMCreateItems(parentId, response.items);
+        }
+      }
+      
+      return; // Exit early when using surgical handlers
+    }
+    
+    // ========= FALLBACK: Old implementation if surgical handlers not available =========
     
     if (action.type === 'edit' && action.targetId) {
       // Edit existing item - handle both simple content and structured items
@@ -1279,14 +1737,18 @@ const OutlineDesktop: React.FC<OutlineDesktopProps> = ({
     // Apply the template
     const templateItems = createBrainliftTemplate();
     
-    // Just update the state and let onItemsChange handle the backend sync
-    setOutline(templateItems);
-    
-    // Call onItemsChange to trigger the sync (this will handle deletions and creations)
-    if (onItemsChange) {
-      setTimeout(() => {
-        onItemsChange(templateItems);
-      }, 0);
+    // Use surgical template application if available
+    if (onApplyTemplate) {
+      await onApplyTemplate(templateItems);
+      setOutline(templateItems);
+    } else {
+      // Fallback: Just update the state and let onItemsChange handle the backend sync
+      setOutline(templateItems);
+      if (onItemsChange) {
+        setTimeout(() => {
+          onItemsChange(templateItems);
+        }, 0);
+      }
     }
   };
   
@@ -1316,27 +1778,30 @@ const OutlineDesktop: React.FC<OutlineDesktopProps> = ({
   };
 
   const toggleItemStyle = async (itemId: string, style: 'header' | 'code' | 'quote' | 'normal') => {
-    const updateItems = (items: OutlineItem[]): OutlineItem[] => {
-      return items.map(item => {
-        if (item.id === itemId) {
-          return { 
-            ...item, 
-            style: style,
-            formatting: style === 'header' ? { bold: true, size: 'large' as const } : 
-                       style === 'code' ? { size: 'medium' as const } :
-                       style === 'quote' ? { italic: true, size: 'medium' as const } :
-                       undefined
-          };
-        }
-        if (item.children.length > 0) {
-          return { ...item, children: updateItems(item.children) };
-        }
-        return item;
-      });
-    };
-    const updated = updateItems(outline);
-    setOutline(updated);
-    setTimeout(() => onItemsChange?.(updated), 0);
+    const formatting = style === 'header' ? { bold: true, size: 'large' as const } : 
+                      style === 'code' ? { size: 'medium' as const } :
+                      style === 'quote' ? { italic: true, size: 'medium' as const } :
+                      undefined;
+    
+    // Use surgical update if available
+    if (onUpdateItem) {
+      await onUpdateItem(itemId, { style, formatting });
+      // Update local state
+      const updateItems = (items: OutlineItem[]): OutlineItem[] => {
+        return items.map(item => {
+          if (item.id === itemId) {
+            return { ...item, style, formatting };
+          }
+          if (item.children.length > 0) {
+            return { ...item, children: updateItems(item.children) };
+          }
+          return item;
+        });
+      };
+      setOutline(updateItems(outline));
+    } else {
+      // Fallback removed - must use surgical operations
+    }
     
     // Save style change to backend if item exists there
     if (currentOutlineId && !itemId.startsWith('item_')) {
@@ -1354,7 +1819,7 @@ const OutlineDesktop: React.FC<OutlineDesktopProps> = ({
           return null;
         };
         
-        const item = findItem(updated);
+        const item = findItem(outline);
         if (item && item.text) {
           await outlinesApi.updateItem(currentOutlineId, itemId, { 
             content: item.text,
@@ -1452,20 +1917,20 @@ const OutlineDesktop: React.FC<OutlineDesktopProps> = ({
         if (savedItems.length > 0) {
           const updated = [...outline, ...savedItems];
           setOutline(updated);
-          setTimeout(() => onItemsChange?.(updated), 0);
+          // Removed onItemsChange - should use handleApplyTemplate
         }
       } catch (error) {
         console.error('Failed to save voice structure:', error);
         // Fallback: just update locally if backend fails
         const updated = [...outline, ...items];
         setOutline(updated);
-        setTimeout(() => onItemsChange?.(updated), 0);
+        // Removed onItemsChange - should use handleApplyTemplate
       }
     } else {
       // No outline ID, just update locally
       const updated = [...outline, ...items];
       setOutline(updated);
-      setTimeout(() => onItemsChange?.(updated), 0);
+      // Removed onItemsChange - should use handleApplyTemplate
     }
   };
 
@@ -1499,7 +1964,7 @@ const OutlineDesktop: React.FC<OutlineDesktopProps> = ({
 
     const updated = insertAfter([...outline]);
     setOutline(updated);
-    setTimeout(() => onItemsChange?.(updated), 0);
+    // Removed onItemsChange - should use handleCreateItem
     setTimeout(() => startEditing(newItem.id), 0);
   };
 
@@ -1785,29 +2250,47 @@ const OutlineDesktop: React.FC<OutlineDesktopProps> = ({
                             textAreaRefs.current[item.id] = el;
                           }}
                           defaultValue={item.text}
-                          onBlur={(e) => {
+                          onBlur={async (e) => {
                             const value = e.target.value.trim();
                             console.log('onBlur - value:', value, 'item.text:', item.text, 'item.id:', item.id);
                             // If the field is empty or still "New item", remove the item
                             if (!value || value === 'New item') {
-                              // Remove the empty item
-                              const removeEmptyItem = (items: OutlineItem[]): OutlineItem[] => {
-                                return items.filter(i => {
-                                  if (i.id === item.id) {
-                                    return false;
-                                  }
-                                  if (i.children.length > 0) {
-                                    i.children = removeEmptyItem(i.children);
-                                  }
-                                  return true;
+                              // Use surgical delete if available
+                              if (onDeleteItem) {
+                                await onDeleteItem(item.id);
+                                // Update local state
+                                setOutline(prevOutline => {
+                                  const removeItem = (items: OutlineItem[]): OutlineItem[] => {
+                                    return items.filter(i => {
+                                      if (i.id === item.id) return false;
+                                      if (i.children.length > 0) {
+                                        i.children = removeItem(i.children);
+                                      }
+                                      return true;
+                                    });
+                                  };
+                                  return removeItem(prevOutline);
                                 });
-                              };
-                              const updated = removeEmptyItem(outline);
-                              setOutline(updated);
-                              setTimeout(() => onItemsChange?.(updated), 0);
+                              } else {
+                                // Fallback to old method
+                                const removeEmptyItem = (items: OutlineItem[]): OutlineItem[] => {
+                                  return items.filter(i => {
+                                    if (i.id === item.id) {
+                                      return false;
+                                    }
+                                    if (i.children.length > 0) {
+                                      i.children = removeEmptyItem(i.children);
+                                    }
+                                    return true;
+                                  });
+                                };
+                                const updated = removeEmptyItem(outline);
+                                setOutline(updated);
+                                // Removed onItemsChange - should use handleDeleteItem
+                              }
                             } else if (value !== item.text) {
-                              // Update the text if it changed
-                              updateItemText(item.id, value);
+                              // Update the text if it changed - this already uses surgical update
+                              await updateItemText(item.id, value);
                             }
                             stopEditing();
                           }}

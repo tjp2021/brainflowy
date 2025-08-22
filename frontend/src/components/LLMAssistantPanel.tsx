@@ -305,12 +305,32 @@ export const LLMAssistantPanel: React.FC<LLMAssistantPanelProps> = ({
     };
   };
 
-  // Section detection is now handled by the backend with full context
+  // Section detection - extract section from user's prompt
   const detectSection = (prompt: string): string | undefined => {
-    // Only detect if explicitly mentioned in a clear way
     const lower = prompt.toLowerCase();
-    if (lower.startsWith('add to spov') || lower.startsWith('create spov')) return 'spov';
-    if (lower.startsWith('add to purpose')) return 'purpose';
+    
+    // Check for DOK levels first (most specific)
+    const dokMatch = lower.match(/\b(?:dok|depth of knowledge)\s*(?:level\s*)?(\d+)\b/);
+    if (dokMatch) {
+      return `dok${dokMatch[1]}`;
+    }
+    
+    // Check for "out of scope" specifically (more specific than just "scope")
+    if (lower.includes('out') && lower.includes('scope')) {
+      return 'out_of_scope';
+    }
+    
+    // Check for specific sections mentioned anywhere in the prompt
+    // Order matters - check more specific patterns first
+    if (lower.includes('spov') || lower.includes('spiky pov') || lower.includes('strategic point')) return 'spov';
+    if (lower.includes('expert') || lower.includes('council')) return 'expert_council';
+    if (lower.includes('insight')) return 'insight';
+    if (lower.includes('context')) return 'context';
+    if (lower.includes('overview')) return 'overview';
+    if (lower.includes('purpose')) return 'purpose';
+    if (lower.includes('owner')) return 'owner';
+    if (lower.includes('scope')) return 'scope';
+    
     // Otherwise let backend decide based on full context
     return undefined;
   };

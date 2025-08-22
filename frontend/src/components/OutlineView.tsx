@@ -55,8 +55,30 @@ const OutlineView: React.FC<OutlineViewProps> = ({ outlineId }) => {
               }));
             };
             
+            // Deduplicate items to prevent duplicate key warnings
+            const deduplicateItems = (items: OutlineItem[]): OutlineItem[] => {
+              const seen = new Set<string>();
+              const deduplicated: OutlineItem[] = [];
+              
+              for (const item of items) {
+                if (!seen.has(item.id)) {
+                  seen.add(item.id);
+                  // Also deduplicate children recursively
+                  if (item.children && item.children.length > 0) {
+                    item.children = deduplicateItems(item.children);
+                  }
+                  deduplicated.push(item);
+                } else {
+                  console.warn(`Duplicate item ID detected on load and removed: ${item.id}`);
+                }
+              }
+              
+              return deduplicated;
+            };
+            
             const hierarchicalItems = mapHierarchicalItems(backendItems);
-            setItems(hierarchicalItems);
+            const deduplicatedItems = deduplicateItems(hierarchicalItems);
+            setItems(deduplicatedItems);
           }
         }
       } catch (error) {
@@ -69,6 +91,509 @@ const OutlineView: React.FC<OutlineViewProps> = ({ outlineId }) => {
     loadOutlineData();
   }, []);
 
+  // ============================================================================
+  // SURGICAL UPDATE HANDLERS - New efficient approach
+  // ============================================================================
+  
+  /**
+   * Create a single item surgically
+   * @returns The ID of the created item
+   */
+  const handleCreateItem = async (
+    parentId: string | null, 
+    text: string, 
+    position?: number,
+    style?: OutlineItem['style'],
+    formatting?: OutlineItem['formatting']
+  ): Promise<string> => {
+    if (!currentOutlineId) throw new Error('No outline ID');
+    
+    setSaving(true);
+    try {
+      // 1. Create on backend - get real ID
+      const newItem = await outlinesApi.createItem(currentOutlineId, {
+        content: text,
+        parentId,
+        order: position,
+        style,
+        formatting
+      } as any);
+      
+      // 2. Surgical state update - insert only new item
+      setItems(prevItems => {
+        const updated = [...prevItems];
+        
+        if (!parentId) {
+          // Root level - insert at position
+          const itemWithHierarchy: OutlineItem = {
+            ...newItem,
+            text: newItem.content || text,
+            level: 0,
+            expanded: true,
+            children: []
+          };
+          updated.splice(position ?? updated.length, 0, itemWithHierarchy);
+        } else {
+          // Find parent and add to children
+          const insertIntoParent = (items: OutlineItem[]): boolean => {
+            for (const item of items) {
+              if (item.id === parentId) {
+                if (!item.children) item.children = [];
+                const childItem: OutlineItem = {
+                  ...newItem,
+                  text: newItem.content || text,
+                  level: item.level + 1,
+                  expanded: true,
+                  children: []
+                };
+                item.children.splice(position ?? item.children.length, 0, childItem);
+                return true;
+              }
+              if (item.children && insertIntoParent(item.children)) {
+                return true;
+              }
+            }
+            return false;
+          };
+          insertIntoParent(updated);
+        }
+        
+        return updated;
+      });
+      
+      return newItem.id;
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  /**
+   * Update a single item surgically
+   */
+  const handleUpdateItem = async (
+    itemId: string, 
+    updates: Partial<OutlineItem>
+  ): Promise<void> => {
+    if (!currentOutlineId) return;
+    
+    setSaving(true);
+    try {
+      // 1. Update backend
+      await outlinesApi.updateItem(currentOutlineId, itemId, {
+        content: updates.text,
+        style: updates.style,
+        formatting: updates.formatting
+      } as any);
+      
+      // 2. Surgical state update - modify only target item
+      setItems(prevItems => {
+        const updateSingle = (items: OutlineItem[]): OutlineItem[] => {
+          return items.map(item => {
+            if (item.id === itemId) {
+              return { ...item, ...updates };
+            }
+            if (item.children) {
+              return { ...item, children: updateSingle(item.children) };
+            }
+            return item;
+          });
+        };
+        return updateSingle(prevItems);
+      });
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  /**
+   * Delete a single item surgically
+   */
+  const handleDeleteItem = async (itemId: string): Promise<void> => {
+    if (!currentOutlineId) return;
+    
+    setSaving(true);
+    try {
+      // 1. Delete from backend (deletes children too)
+      await outlinesApi.deleteItem(currentOutlineId, itemId);
+      
+      // 2. Surgical state update - remove only target item
+      setItems(prevItems => {
+        const removeSingle = (items: OutlineItem[]): OutlineItem[] => {
+          return items
+            .filter(item => item.id !== itemId)
+            .map(item => ({
+              ...item,
+              children: item.children ? removeSingle(item.children) : []
+            }));
+        };
+        return removeSingle(prevItems);
+      });
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  /**
+   * Move an item to a new position surgically
+   */
+  const handleMoveItem = async (
+    itemId: string,
+    newParentId: string | null,
+    position: number
+  ): Promise<void> => {
+    if (!currentOutlineId) return;
+    
+    setSaving(true);
+    try {
+      // 1. Update on backend
+      await outlinesApi.updateItem(currentOutlineId, itemId, {
+        parentId: newParentId,
+        order: position
+      } as any);
+      
+      // 2. Surgical state update - move the item
+      setItems(prevItems => {
+        let movedItem: OutlineItem | null = null;
+        
+        // First, find and remove the item
+        const removeAndCapture = (items: OutlineItem[]): OutlineItem[] => {
+          return items
+            .filter(item => {
+              if (item.id === itemId) {
+                movedItem = item;
+                return false;
+              }
+              return true;
+            })
+            .map(item => ({
+              ...item,
+              children: item.children ? removeAndCapture(item.children) : []
+            }));
+        };
+        
+        const itemsWithoutMoved = removeAndCapture([...prevItems]);
+        
+        if (!movedItem) return prevItems;
+        
+        // Then, insert it at the new position
+        if (!newParentId) {
+          // Moving to root level
+          movedItem.level = 0;
+          movedItem.parentId = null;
+          itemsWithoutMoved.splice(position, 0, movedItem);
+        } else {
+          // Moving to be a child of another item
+          const insertIntoNewParent = (items: OutlineItem[]): boolean => {
+            for (const item of items) {
+              if (item.id === newParentId) {
+                if (!item.children) item.children = [];
+                movedItem!.level = item.level + 1;
+                movedItem!.parentId = newParentId;
+                // Update all child levels recursively
+                const updateChildLevels = (children: OutlineItem[], baseLevel: number) => {
+                  children.forEach(child => {
+                    child.level = baseLevel + 1;
+                    if (child.children) {
+                      updateChildLevels(child.children, child.level);
+                    }
+                  });
+                };
+                if (movedItem!.children) {
+                  updateChildLevels(movedItem!.children, movedItem!.level);
+                }
+                item.children.splice(position, 0, movedItem!);
+                return true;
+              }
+              if (item.children && insertIntoNewParent(item.children)) {
+                return true;
+              }
+            }
+            return false;
+          };
+          insertIntoNewParent(itemsWithoutMoved);
+        }
+        
+        return itemsWithoutMoved;
+      });
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  // ============================================================================
+  // LLM-SPECIFIC OPERATIONS - For AI-generated content
+  // ============================================================================
+  
+  /**
+   * Create multiple items from LLM with hierarchy
+   */
+  const handleLLMCreateItems = async (
+    parentId: string | null,
+    llmItems: Array<{ text: string; style?: OutlineItem['style']; formatting?: OutlineItem['formatting']; children?: any[] }>,
+    position?: number
+  ): Promise<void> => {
+    if (!currentOutlineId) return;
+    
+    setSaving(true);
+    try {
+      // Recursive function to create items with children
+      const createWithChildren = async (
+        items: any[],
+        parentId: string | null,
+        parentLevel: number = 0
+      ): Promise<OutlineItem[]> => {
+        const created: OutlineItem[] = [];
+        
+        for (const item of items) {
+          // Create the item on backend
+          const newItem = await outlinesApi.createItem(currentOutlineId, {
+            content: item.text,
+            parentId,
+            style: item.style,
+            formatting: item.formatting
+          } as any);
+          
+          // Create the OutlineItem with proper hierarchy
+          const outlineItem: OutlineItem = {
+            ...newItem,
+            text: newItem.content || item.text,
+            level: parentLevel,
+            expanded: true,
+            children: []
+          };
+          
+          // If it has children, create them recursively
+          if (item.children && item.children.length > 0) {
+            outlineItem.children = await createWithChildren(
+              item.children, 
+              newItem.id,
+              parentLevel + 1
+            );
+          }
+          
+          created.push(outlineItem);
+        }
+        
+        return created;
+      };
+      
+      // Determine parent level for proper hierarchy
+      let parentLevel = 0;
+      if (parentId) {
+        // Find parent's level
+        const findParentLevel = (items: OutlineItem[]): number => {
+          for (const item of items) {
+            if (item.id === parentId) {
+              return item.level + 1;
+            }
+            if (item.children) {
+              const found = findParentLevel(item.children);
+              if (found !== -1) return found;
+            }
+          }
+          return -1;
+        };
+        parentLevel = findParentLevel(items);
+        if (parentLevel === -1) parentLevel = 0;
+      }
+      
+      // Create all items
+      const createdItems = await createWithChildren(llmItems, parentId, parentLevel);
+      
+      // Deduplicate items by ID to prevent duplicate key warnings
+      const deduplicateItems = (items: OutlineItem[]): OutlineItem[] => {
+        const seen = new Set<string>();
+        const deduplicated: OutlineItem[] = [];
+        
+        for (const item of items) {
+          if (!seen.has(item.id)) {
+            seen.add(item.id);
+            // Also deduplicate children recursively
+            if (item.children && item.children.length > 0) {
+              item.children = deduplicateItems(item.children);
+            }
+            deduplicated.push(item);
+          } else {
+            console.warn(`Duplicate item ID detected and removed: ${item.id}`);
+          }
+        }
+        
+        return deduplicated;
+      };
+      
+      // Single state update with deduplicated new items
+      setItems(prevItems => {
+        const updated = [...prevItems];
+        const deduplicatedNewItems = deduplicateItems(createdItems);
+        
+        if (!parentId) {
+          // Insert at root
+          updated.splice(position ?? updated.length, 0, ...deduplicatedNewItems);
+        } else {
+          // Find parent and add children
+          const insertIntoParent = (items: OutlineItem[]): boolean => {
+            for (const item of items) {
+              if (item.id === parentId) {
+                if (!item.children) item.children = [];
+                item.children.splice(position ?? item.children.length, 0, ...deduplicatedNewItems);
+                return true;
+              }
+              if (item.children && insertIntoParent(item.children)) {
+                return true;
+              }
+            }
+            return false;
+          };
+          insertIntoParent(updated);
+        }
+        
+        // Deduplicate the entire tree to ensure no duplicates exist
+        return deduplicateItems(updated);
+      });
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  /**
+   * Edit an item from LLM, potentially replacing its children
+   */
+  const handleLLMEditItem = async (
+    itemId: string,
+    newText: string,
+    newChildren?: Array<{ text: string; style?: OutlineItem['style']; formatting?: OutlineItem['formatting']; children?: any[] }>
+  ): Promise<void> => {
+    if (!currentOutlineId) return;
+    
+    setSaving(true);
+    try {
+      // 1. Update the main item text
+      await outlinesApi.updateItem(currentOutlineId, itemId, { 
+        content: newText 
+      } as any);
+      
+      // 2. Handle children if LLM provided new structure
+      let createdChildren: OutlineItem[] = [];
+      
+      if (newChildren && newChildren.length > 0) {
+        // Find current item to get its level and existing children
+        let currentItem: OutlineItem | undefined;
+        let itemLevel = 0;
+        
+        const findItem = (items: OutlineItem[]): boolean => {
+          for (const item of items) {
+            if (item.id === itemId) {
+              currentItem = item;
+              itemLevel = item.level;
+              return true;
+            }
+            if (item.children && findItem(item.children)) {
+              return true;
+            }
+          }
+          return false;
+        };
+        findItem(items);
+        
+        // Delete existing children if any
+        if (currentItem?.children && currentItem.children.length > 0) {
+          await Promise.all(
+            currentItem.children.map(child =>
+              outlinesApi.deleteItem(currentOutlineId, child.id)
+            )
+          );
+        }
+        
+        // Create new children structure
+        const createChildren = async (
+          items: any[],
+          parentId: string,
+          parentLevel: number
+        ): Promise<OutlineItem[]> => {
+          const created: OutlineItem[] = [];
+          
+          for (const item of items) {
+            const newItem = await outlinesApi.createItem(currentOutlineId, {
+              content: item.text,
+              parentId,
+              style: item.style,
+              formatting: item.formatting
+            } as any);
+            
+            const outlineItem: OutlineItem = {
+              ...newItem,
+              text: newItem.content || item.text,
+              level: parentLevel + 1,
+              expanded: true,
+              children: []
+            };
+            
+            if (item.children && item.children.length > 0) {
+              outlineItem.children = await createChildren(
+                item.children, 
+                newItem.id,
+                parentLevel + 1
+              );
+            }
+            
+            created.push(outlineItem);
+          }
+          
+          return created;
+        };
+        
+        createdChildren = await createChildren(newChildren, itemId, itemLevel);
+      }
+      
+      // 3. Single state update with all changes
+      setItems(prevItems => {
+        const updateWithChildren = (items: OutlineItem[]): OutlineItem[] => {
+          return items.map(item => {
+            if (item.id === itemId) {
+              return {
+                ...item,
+                text: newText,
+                children: createdChildren.length > 0 ? createdChildren : item.children
+              };
+            }
+            if (item.children) {
+              return { ...item, children: updateWithChildren(item.children) };
+            }
+            return item;
+          });
+        };
+        return updateWithChildren(prevItems);
+      });
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  /**
+   * Apply a template (replace all items)
+   */
+  const handleApplyTemplate = async (templateItems: OutlineItem[]): Promise<void> => {
+    if (!currentOutlineId) return;
+    
+    setSaving(true);
+    try {
+      // Use the template API endpoint
+      await outlinesApi.createFromTemplate(currentOutlineId, {
+        items: templateItems,
+        clearExisting: true
+      });
+      
+      // Update state with new items
+      setItems(templateItems);
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  // ============================================================================
+  // OLD INEFFICIENT HANDLER - To be removed after migration
+  // ============================================================================
+  
   const handleItemsChange = async (updatedItems: OutlineItem[]) => {
     
     // Use setTimeout to avoid setState during render warning
@@ -209,6 +734,15 @@ const OutlineView: React.FC<OutlineViewProps> = ({ outlineId }) => {
           title={title}
           initialItems={items} 
           onItemsChange={handleItemsChange}
+          // Surgical operations
+          onCreateItem={handleCreateItem}
+          onUpdateItem={handleUpdateItem}
+          onDeleteItem={handleDeleteItem}
+          onMoveItem={handleMoveItem}
+          // LLM operations
+          onLLMCreateItems={handleLLMCreateItems}
+          onLLMEditItem={handleLLMEditItem}
+          onApplyTemplate={handleApplyTemplate}
         />
       ) : (
         <OutlineDesktop 
@@ -216,6 +750,15 @@ const OutlineView: React.FC<OutlineViewProps> = ({ outlineId }) => {
           initialItems={items} 
           onItemsChange={handleItemsChange}
           outlineId={currentOutlineId}
+          // Surgical operations
+          onCreateItem={handleCreateItem}
+          onUpdateItem={handleUpdateItem}
+          onDeleteItem={handleDeleteItem}
+          onMoveItem={handleMoveItem}
+          // LLM operations
+          onLLMCreateItems={handleLLMCreateItems}
+          onLLMEditItem={handleLLMEditItem}
+          onApplyTemplate={handleApplyTemplate}
         />
       )}
     </>
