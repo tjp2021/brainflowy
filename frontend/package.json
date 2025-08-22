@@ -26,7 +26,7 @@
     "@types/node": "^20.12.12",
     "@types/react": "^18.2.0",
     "@types/react-dom": "^18.2.0",
-    "@vitejs/plugin-react": "^4.3.0",
+    "@vitejs/plugin-react": "^5.0.1",
     "autoprefixer": "^10.4.19",
     "eslint": "^8.57.0",
     "jiti": "^1.21.7",
