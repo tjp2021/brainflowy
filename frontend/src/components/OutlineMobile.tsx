@@ -1,7 +1,11 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Plus, Mic, Search, ChevronRight, ChevronDown, ChevronLeft } from 'lucide-react';
+import { Plus, Mic, Search, ChevronRight, ChevronDown, ChevronLeft, Menu, LogOut, FileText, Sparkles, X } from 'lucide-react';
+import { useAuth } from '@/hooks/useAuth';
+import { useNavigate } from 'react-router-dom';
 import type { OutlineItem, SwipeState } from '@/types/outline';
 import VoiceModal from './VoiceModal';
+import LLMAssistantPanel, { type LLMAction, type LLMResponse } from './LLMAssistantPanel';
+import { outlinesApi } from '@/services/api/apiClient';
 import { flattenHierarchy } from '@/utils/hierarchyUtils';
 import { generateNewItemId } from '@/utils/idGenerator';
 import '../styles/outline.css';
@@ -10,6 +14,7 @@ interface OutlineMobileProps {
   title?: string;
   initialItems?: OutlineItem[];
   onItemsChange?: (items: OutlineItem[]) => void;
+  outlineId?: string | null;
   // Surgical operations
   onCreateItem?: (parentId: string | null, text: string, position?: number, style?: OutlineItem['style'], formatting?: OutlineItem['formatting']) => Promise<string>;
   onUpdateItem?: (itemId: string, updates: Partial<OutlineItem>) => Promise<void>;
@@ -25,6 +30,7 @@ const OutlineMobile: React.FC<OutlineMobileProps> = ({
   title = 'Work Notes',
   initialItems = [],
   onItemsChange,
+  outlineId,
   // Surgical operations
   onCreateItem,
   onUpdateItem,
@@ -35,6 +41,8 @@ const OutlineMobile: React.FC<OutlineMobileProps> = ({
   onLLMEditItem,
   onApplyTemplate
 }) => {
+  const { logout, user } = useAuth();
+  const navigate = useNavigate();
   // Debug: Check if mobile is receiving items with children
   console.log('Mobile: Received', initialItems.length, 'items');
   initialItems.forEach(item => {
@@ -65,12 +73,76 @@ const OutlineMobile: React.FC<OutlineMobileProps> = ({
   const [lastTapTime, setLastTapTime] = useState<number>(0);
   const [lastTappedId, setLastTappedId] = useState<string | null>(null);
   const textAreaRefs = useRef<{ [key: string]: HTMLTextAreaElement | null }>({});
+  
+  // New state for menu, outlines, and LLM assistant
+  const [showMenu, setShowMenu] = useState(false);
+  const [userOutlines, setUserOutlines] = useState<any[]>([]);
+  const [currentOutlineId, setCurrentOutlineId] = useState<string | null>(outlineId || null);
+  const [showLLMAssistant, setShowLLMAssistant] = useState(false);
+  const [llmCurrentItem, setLLMCurrentItem] = useState<OutlineItem | null>(null);
+  const [llmCurrentSection, setLLMCurrentSection] = useState<OutlineItem[] | undefined>(undefined);
+  const [llmInitialPrompt, setLLMInitialPrompt] = useState<string>('');
 
   useEffect(() => {
     // Hide instructions after 5 seconds
     const timer = setTimeout(() => setShowInstructions(false), 5000);
     return () => clearTimeout(timer);
   }, []);
+
+  // Load user's outlines on mount
+  useEffect(() => {
+    const loadUserOutlines = async () => {
+      if (!user?.id) return;
+      
+      try {
+        const response = await outlinesApi.getOutlines(user.id);
+        setUserOutlines(response);
+      } catch (error) {
+        console.error('Failed to load outlines:', error);
+      }
+    };
+    
+    loadUserOutlines();
+  }, [user]);
+
+  // Handle logout
+  const handleLogout = async () => {
+    await logout();
+    navigate('/');
+  };
+
+  // Handle outline selection
+  const selectOutline = async (outlineId: string) => {
+    setCurrentOutlineId(outlineId);
+    setShowMenu(false);
+    // The parent component should handle reloading the outline data
+    if (window.location.pathname !== `/outline/${outlineId}`) {
+      navigate(`/outline/${outlineId}`);
+    }
+  };
+
+  // Handle LLM actions
+  const handleLLMAction = async (action: LLMAction, response: LLMResponse) => {
+    if (!llmCurrentItem) return;
+
+    try {
+      if (action === 'apply' && onLLMEditItem) {
+        // Apply the LLM changes
+        await onLLMEditItem(
+          llmCurrentItem.id,
+          response.content,
+          response.children
+        );
+      }
+      
+      setShowLLMAssistant(false);
+      setLLMCurrentItem(null);
+      setLLMCurrentSection(undefined);
+      setLLMInitialPrompt('');
+    } catch (error) {
+      console.error('Failed to apply LLM action:', error);
+    }
+  };
 
 
   // Mobile component should NOT load its own data when used within OutlineView
@@ -353,8 +425,29 @@ const OutlineMobile: React.FC<OutlineMobileProps> = ({
     <div className="h-screen flex flex-col bg-gray-50 overflow-hidden">
       {/* Mobile Header with Menu */}
       <div className="bg-white border-b border-gray-200 px-4 py-3 flex items-center justify-between">
-        <h1 className="text-lg font-semibold text-gray-900">{title}</h1>
         <div className="flex items-center space-x-2">
+          <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg flex items-center justify-center">
+            <div className="w-4 h-4 bg-white rounded-sm"></div>
+          </div>
+          <button 
+            onClick={() => setShowMenu(!showMenu)}
+            className="p-2 rounded-lg text-gray-600 hover:bg-gray-100"
+          >
+            <Menu className="w-5 h-5" />
+          </button>
+          <h1 className="text-base font-medium text-gray-700 truncate flex-1">{title}</h1>
+        </div>
+        <div className="flex items-center space-x-2">
+          <button 
+            onClick={() => {
+              // Open LLM assistant with current outline context
+              setLLMCurrentSection(outline);
+              setShowLLMAssistant(true);
+            }}
+            className="p-2 rounded-lg text-gray-600 hover:bg-gray-100"
+          >
+            <Sparkles className="w-5 h-5" />
+          </button>
           <button 
             onClick={() => setShowVoiceModal(true)}
             className="p-2 rounded-lg text-gray-600 hover:bg-gray-100"
@@ -384,8 +477,8 @@ const OutlineMobile: React.FC<OutlineMobileProps> = ({
         </div>
       )}
 
-      {/* Main Content - Scrollable */}
-      <div className="flex-1 overflow-y-auto px-4 py-4">
+      {/* Main Content - Scrollable with padding for bottom bar */}
+      <div className="flex-1 overflow-y-auto px-4 py-4 pb-20">
         <div className="space-y-1 outline-mobile-content">
           {flatItems.map((item) => (
             <div
@@ -474,13 +567,13 @@ const OutlineMobile: React.FC<OutlineMobileProps> = ({
       </div>
 
       {/* Bottom Action Bar */}
-      <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 px-4 py-3">
+      <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 px-4 py-3 safe-area-inset-bottom">
         <div className="flex items-center justify-between">
           {/* Style Selector */}
-          <div className="flex items-center space-x-1">
+          <div className="flex items-center space-x-1 flex-1 overflow-x-auto">
             <button 
               onClick={() => setSelectedStyle('normal')}
-              className={`px-3 py-1.5 rounded text-sm ${
+              className={`px-2 py-1 rounded text-xs ${
                 selectedStyle === 'normal' ? 'bg-blue-100 text-blue-700' : 'text-gray-600'
               }`}
             >
@@ -488,7 +581,7 @@ const OutlineMobile: React.FC<OutlineMobileProps> = ({
             </button>
             <button 
               onClick={() => setSelectedStyle('header')}
-              className={`px-3 py-1.5 rounded text-sm font-bold ${
+              className={`px-2 py-1 rounded text-xs font-bold ${
                 selectedStyle === 'header' ? 'bg-blue-100 text-blue-700' : 'text-gray-600'
               }`}
             >
@@ -496,7 +589,7 @@ const OutlineMobile: React.FC<OutlineMobileProps> = ({
             </button>
             <button 
               onClick={() => setSelectedStyle('code')}
-              className={`px-3 py-1.5 rounded text-sm font-mono ${
+              className={`px-2 py-1 rounded text-xs font-mono ${
                 selectedStyle === 'code' ? 'bg-blue-100 text-blue-700' : 'text-gray-600'
               }`}
             >
@@ -504,7 +597,7 @@ const OutlineMobile: React.FC<OutlineMobileProps> = ({
             </button>
             <button 
               onClick={() => setSelectedStyle('quote')}
-              className={`px-3 py-1.5 rounded text-sm italic ${
+              className={`px-2 py-1 rounded text-xs italic ${
                 selectedStyle === 'quote' ? 'bg-blue-100 text-blue-700' : 'text-gray-600'
               }`}
             >
@@ -512,29 +605,15 @@ const OutlineMobile: React.FC<OutlineMobileProps> = ({
             </button>
           </div>
           
-          {/* Action Buttons */}
-          <div className="flex items-center space-x-4">
-            <button 
-              onClick={() => setShowVoiceModal(true)}
-              className="p-2 rounded-xl text-gray-600 hover:text-gray-900 hover:bg-gray-100 transition-all"
-            >
-              <Mic className="w-6 h-6" />
-            </button>
-            
-            <button className="p-2 rounded-xl text-gray-600 hover:text-gray-900 hover:bg-gray-100 transition-all">
-              <Search className="w-6 h-6" />
-            </button>
-          </div>
+          {/* Add New Item Button */}
+          <button 
+            onClick={() => addNewItem()}
+            className="ml-2 p-2 bg-blue-600 text-white rounded-full hover:bg-blue-700 transition-all"
+          >
+            <Plus className="w-5 h-5" />
+          </button>
         </div>
       </div>
-
-      {/* Floating Action Button */}
-      <button
-        onClick={() => addNewItem()}
-        className="fixed bottom-6 right-6 w-14 h-14 bg-blue-600 text-white rounded-full shadow-lg hover:bg-blue-700 flex items-center justify-center z-10"
-      >
-        <Plus className="w-6 h-6" />
-      </button>
 
       {/* Voice Modal */}
       <VoiceModal 
@@ -554,6 +633,88 @@ const OutlineMobile: React.FC<OutlineMobileProps> = ({
           </div>
         </div>
       )}
+
+      {/* Slide-out Menu */}
+      {showMenu && (
+        <>
+          {/* Backdrop */}
+          <div 
+            className="fixed inset-0 bg-black bg-opacity-50 z-40"
+            onClick={() => setShowMenu(false)}
+          />
+          
+          {/* Menu Panel */}
+          <div className="fixed left-0 top-0 bottom-0 w-80 bg-white shadow-xl z-50 flex flex-col">
+            {/* Menu Header */}
+            <div className="bg-gray-50 border-b border-gray-200 px-4 py-4 flex items-center justify-between">
+              <h2 className="text-lg font-semibold text-gray-900">My Outlines</h2>
+              <button 
+                onClick={() => setShowMenu(false)}
+                className="p-2 rounded-lg text-gray-600 hover:bg-gray-100"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            
+            {/* Outlines List */}
+            <div className="flex-1 overflow-y-auto">
+              {userOutlines.length > 0 ? (
+                <div className="py-2">
+                  {userOutlines.map((outline) => (
+                    <button
+                      key={outline.id}
+                      onClick={() => selectOutline(outline.id)}
+                      className={`w-full flex items-center space-x-3 px-4 py-3 text-left transition-colors ${
+                        currentOutlineId === outline.id
+                          ? 'bg-blue-50 text-blue-700 border-l-4 border-blue-600'
+                          : 'hover:bg-gray-50 text-gray-700'
+                      }`}
+                    >
+                      <FileText className="w-5 h-5 flex-shrink-0" />
+                      <div className="flex-1 min-w-0">
+                        <div className="font-medium truncate">{outline.title}</div>
+                        <div className="text-sm text-gray-500">
+                          {new Date(outline.updatedAt).toLocaleDateString()}
+                        </div>
+                      </div>
+                    </button>
+                  ))}
+                </div>
+              ) : (
+                <div className="px-4 py-8 text-center text-gray-500">
+                  No outlines yet
+                </div>
+              )}
+            </div>
+            
+            {/* Menu Footer with Logout */}
+            <div className="border-t border-gray-200 p-4">
+              <button
+                onClick={handleLogout}
+                className="w-full flex items-center justify-center space-x-2 px-4 py-2 bg-red-50 text-red-700 rounded-lg hover:bg-red-100 transition-colors"
+              >
+                <LogOut className="w-5 h-5" />
+                <span>Logout</span>
+              </button>
+            </div>
+          </div>
+        </>
+      )}
+
+      {/* LLM Assistant Panel */}
+      <LLMAssistantPanel
+        isOpen={showLLMAssistant}
+        onClose={() => {
+          setShowLLMAssistant(false);
+          setLLMCurrentItem(null);
+          setLLMCurrentSection(undefined);
+          setLLMInitialPrompt('');
+        }}
+        currentItem={llmCurrentItem}
+        currentSection={llmCurrentSection}
+        initialPrompt={llmInitialPrompt}
+        onApplyAction={handleLLMAction}
+      />
     </div>
   );
 };
