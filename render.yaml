@@ -3,5 +3,5 @@ services:
     name: brainflowy-backend
     env: python
     buildCommand: "pip install -r requirements.txt"
-    startCommand: "./start.sh"
+    startCommand: "cd backend && gunicorn app.main:app --bind 0.0.0.0:$PORT --worker-class uvicorn.workers.UvicornWorker"
     # Add environment variables in Render.com dashboard after deployment
