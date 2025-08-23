@@ -1339,31 +1339,51 @@ const OutlineDesktop: React.FC<OutlineDesktopProps> = ({
         else if (itemTextLower.includes(sectionLower)) {
           isMatch = true;
         }
-        // Specific section aliases - check for SPOV DOK 4 (Brainlift template)
+        // Enhanced section aliases - comprehensive pattern matching
         else if (sectionToCheck === 'spov' && 
-                (itemTextLower.includes('spov dok 4') || 
-                 itemTextLower.includes('spov') || 
+                (itemTextLower.includes('spov') || 
+                 itemTextLower.includes('spiky pov') ||
                  itemTextLower.includes('strategic point') || 
-                 itemTextLower.includes('spiky pov'))) {
+                 itemTextLower.includes('spov dok 4') ||
+                 itemTextLower.includes('dok 4') ||
+                 itemTextLower.includes('dok4'))) {
           isMatch = true;
+          console.log(`🔧 SPOV section match found: "${item.text}"`);
         }
         else if (sectionToCheck === 'purpose' && itemTextLower.includes('purpose')) {
           isMatch = true;
+          console.log(`🔧 Purpose section match found: "${item.text}"`);
         }
         else if (sectionToCheck === 'owner' && itemTextLower.includes('owner')) {
           isMatch = true;
+          console.log(`🔧 Owner section match found: "${item.text}"`);
         }
         else if (sectionToCheck === 'scope' && itemTextLower.includes('scope') && !itemTextLower.includes('out')) {
           isMatch = true;
+          console.log(`🔧 Scope section match found: "${item.text}"`);
         }
         else if ((sectionToCheck === 'initiative_overview' || sectionToCheck === 'overview') && itemTextLower.includes('overview')) {
           isMatch = true;
+          console.log(`🔧 Overview section match found: "${item.text}"`);
         }
         else if (sectionLower.includes('context') && itemTextLower.includes('context')) {
           isMatch = true;
+          console.log(`🔧 Context section match found: "${item.text}"`);
         }
-        else if (sectionLower.includes('insight') && itemTextLower.includes('insight')) {
+        else if ((sectionLower.includes('insight') || sectionToCheck === 'insights') && 
+                 (itemTextLower.includes('insight') || itemTextLower.includes('dok 3') || itemTextLower.includes('dok3'))) {
           isMatch = true;
+          console.log(`🔧 Insights section match found: "${item.text}"`);
+        }
+        else if ((sectionLower.includes('evidence') || sectionLower.includes('fact') || sectionToCheck === 'evidence') && 
+                 (itemTextLower.includes('evidence') || itemTextLower.includes('fact') || itemTextLower.includes('dok 1') || itemTextLower.includes('dok1'))) {
+          isMatch = true;
+          console.log(`🔧 Evidence section match found: "${item.text}"`);
+        }
+        else if ((sectionLower.includes('knowledge') || sectionToCheck === 'knowledge') && 
+                 (itemTextLower.includes('knowledge') || itemTextLower.includes('dok 2') || itemTextLower.includes('dok2'))) {
+          isMatch = true;
+          console.log(`🔧 Knowledge section match found: "${item.text}"`);
         }
         
         // If we found a match, update bestMatch if this is deeper
