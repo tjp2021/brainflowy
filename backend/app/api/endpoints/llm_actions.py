@@ -42,73 +42,8 @@ class LLMActionResponse(BaseModel):
 # Update forward references
 LLMItem.model_rebuild()
 
-# Mock responses for development
-# In production, these would be replaced with actual LLM API calls
-MOCK_RESPONSES = {
-    "create_spov": {
-        "items": [
-            {
-                "text": "AI-Driven Customer Retention Strategy",
-                "children": [
-                    {
-                        "text": "Description:",
-                        "children": [
-                            {"text": "Implement predictive analytics to identify at-risk customers 30 days before churn"}
-                        ]
-                    },
-                    {
-                        "text": "Evidence:",
-                        "children": [
-                            {"text": "Companies using predictive churn models see 20-25% reduction in attrition"},
-                            {"text": "Early intervention increases retention success rate by 3x"},
-                            {"text": "Average ROI of $5 for every $1 spent on retention"}
-                        ]
-                    },
-                    {
-                        "text": "Implementation Levers:",
-                        "children": [
-                            {"text": "Deploy ML model on 24 months of customer behavior data"},
-                            {"text": "Create automated intervention workflows"},
-                            {"text": "Establish real-time alerting system"}
-                        ]
-                    }
-                ]
-            }
-        ],
-        "suggestions": [
-            "Would you like to add specific metrics for measuring success?",
-            "Should we include a timeline for implementation?",
-            "Do you want to add risk factors to consider?"
-        ]
-    },
-    "edit_purpose": {
-        "content": "To determine whether to maintain our current per-seat pricing model or transition to usage-based pricing by Q2 2024, based on competitive analysis and customer feedback from our enterprise segment",
-        "suggestions": [
-            "Add specific decision criteria",
-            "Include key stakeholders who need to approve",
-            "Define what success looks like"
-        ]
-    },
-    "research_market": {
-        "content": "Based on current market analysis:",
-        "citations": [
-            {
-                "text": "61% of SaaS companies have adopted or are transitioning to usage-based pricing",
-                "source": "OpenView Partners State of SaaS Pricing 2024",
-                "url": "https://example.com/report"
-            },
-            {
-                "text": "Enterprise buyers show 2.3x preference for predictable per-seat costs",
-                "source": "Gartner SaaS Buying Behavior Survey",
-                "url": "https://example.com/gartner"
-            }
-        ],
-        "suggestions": [
-            "Would you like me to research competitor pricing models?",
-            "Should I analyze your current customer usage patterns?"
-        ]
-    }
-}
+# Mock responses removed - using real OpenAI API only
+MOCK_RESPONSES = {}
 
 def get_mock_response(action: LLMActionRequest) -> Dict[str, Any]:
     """
@@ -250,16 +185,12 @@ async def call_llm_api(action: LLMActionRequest, outline_context: Optional[Dict]
     openai_key = settings.OPENAI_API_KEY
     
     if not openai_key:
-        # No API key configured, use mock responses
-        print("⚠️ No OpenAI API key found, using mock responses")
-        print(f"Mock response will be generated for action type: {action.type}")
-        mock_result = get_mock_response(action)
-        print(f"Mock result keys: {list(mock_result.keys())}")
-        if "items" in mock_result:
-            print(f"Mock items count: {len(mock_result['items'])}")
-            if mock_result['items']:
-                print(f"First item text: {mock_result['items'][0].get('text', 'No text')[:50]}")
-        return mock_result
+        # No API key configured, return error
+        print("❌ No OpenAI API key found")
+        raise HTTPException(
+            status_code=500,
+            detail="OpenAI API key not configured. Please set OPENAI_API_KEY environment variable."
+        )
     
     try:
         # Initialize OpenAI client
@@ -452,7 +383,7 @@ async def call_llm_api(action: LLMActionRequest, outline_context: Optional[Dict]
             }}"""
         
         else:
-            return get_mock_response(action)
+            raise HTTPException(status_code=500, detail="LLM processing failed - no mock fallback")
         
         # Call OpenAI API
         try:
@@ -502,14 +433,14 @@ async def call_llm_api(action: LLMActionRequest, outline_context: Optional[Dict]
                     }
                 else:
                     print(f"Unable to salvage response, using mock")
-                    return get_mock_response(action)
+                    raise HTTPException(status_code=500, detail="LLM processing failed - no mock fallback")
             
             return result
         except json.JSONDecodeError as e:
             print(f"Failed to parse LLM response as JSON: {e}")
             print(f"Response was: {response_text}")
             # Fall back to mock response if parsing fails
-            return get_mock_response(action)
+            raise HTTPException(status_code=500, detail="LLM processing failed - no mock fallback")
             
     except Exception as e:
         import logging
@@ -517,9 +448,9 @@ async def call_llm_api(action: LLMActionRequest, outline_context: Optional[Dict]
         logger.error(f"❌ Error calling OpenAI API: {str(e)}")
         logger.error(f"❌ Full error details: {repr(e)}")
         print(f"Error calling OpenAI API: {str(e)}")
-        # Fall back to mock response on error
-        logger.info("📝 Falling back to mock response")
-        return get_mock_response(action)
+        # No fallback to mock - raise error
+        logger.error("❌ LLM processing failed")
+        raise HTTPException(status_code=500, detail=f"LLM processing failed: {str(e)}")
 
 @router.post("", response_model=LLMActionResponse)
 async def process_llm_action(
@@ -564,7 +495,7 @@ async def process_llm_action(
         except Exception as llm_error:
             print(f"❌ LLM API call failed: {str(llm_error)}")
             # Always return a valid response with mock data
-            result = get_mock_response(request)
+            raise HTTPException(status_code=500, detail="LLM processing failed - no mock fallback")
         
         print(f"✅ LLM Action completed, result keys: {list(result.keys()) if isinstance(result, dict) else 'not a dict'}")
         if outline_context:
@@ -574,7 +505,7 @@ async def process_llm_action(
         # Ensure we always return a valid response
         if not result:
             print("⚠️ Empty result, using mock response")
-            result = get_mock_response(request)
+            raise HTTPException(status_code=500, detail="LLM processing failed - no mock fallback")
         
         return LLMActionResponse(
             action=request,
