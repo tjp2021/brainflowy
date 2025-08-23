@@ -17,7 +17,7 @@ azure-cosmos==4.5.1
 # Testing only
 pytest==7.4.0
 pytest-asyncio==0.21.1
-httpx==0.24.1
+httpx==0.28.1
 
 # Required for test fixtures
 email-validator==2.0.0
