@@ -257,26 +257,59 @@ async def call_llm_api(action: LLMActionRequest, outline_context: Optional[Dict]
             
             print(f"Creating content with target_section: {target_section}")
             
-            # Universal structured content creation with specific guidance
-            user_prompt = f"""Create structured business content for: {action.userPrompt}
-
-You must create a hierarchical structure with main points and supporting sub-points. 
-
-Return exactly this JSON format:
-{{
-  "items": [{{
-    "text": "Main headline that summarizes the topic",
-    "targetSection": "{target_section}",
-    "children": [
-      {{"text": "First key point", "children": [{{"text": "Supporting detail for first point"}}, {{"text": "Additional evidence for first point"}}]}},
-      {{"text": "Second key point", "children": [{{"text": "Supporting detail for second point"}}, {{"text": "Additional evidence for second point"}}]}},
-      {{"text": "Third key point", "children": [{{"text": "Supporting detail for third point"}}, {{"text": "Additional evidence for third point"}}]}}
-    ]
-  }}],
-  "suggestions": ["What specific aspect would you like me to expand on?", "Would you like me to add more supporting evidence?"]
-}}
-
-Always include 3 main points with 2 sub-points each. Make content specific and actionable."""
+            # Restore the working structured prompt format
+            if "spov" in prompt_lower or "spiky pov" in prompt_lower or action.section == "spov":
+                user_prompt = f"""Create a Strategic Point of View (SPOV) based on this request: {action.userPrompt}
+                
+                Respond with this EXACT JSON structure:
+                {{
+                    "items": [{{
+                        "text": "[SPOV Title]",
+                        "targetSection": "{target_section}",
+                        "children": [
+                            {{
+                                "text": "Description:",
+                                "children": [{{"text": "[One clear sentence describing the strategic view]"}}]
+                            }},
+                            {{
+                                "text": "Evidence:",
+                                "children": [
+                                    {{"text": "[Specific data point or statistic 1]"}},
+                                    {{"text": "[Specific data point or statistic 2]"}},
+                                    {{"text": "[Specific data point or statistic 3]"}}
+                                ]
+                            }},
+                            {{
+                                "text": "Implementation Levers:",
+                                "children": [
+                                    {{"text": "[Concrete action 1]"}},
+                                    {{"text": "[Concrete action 2]"}},
+                                    {{"text": "[Concrete action 3]"}}
+                                ]
+                            }}
+                        ]
+                    }}],
+                    "suggestions": [
+                        "[Follow-up question 1]",
+                        "[Follow-up question 2]"
+                    ]
+                }}"""
+            else:
+                user_prompt = f"""Create structured content for this request: {action.userPrompt}
+                
+                Respond with this JSON structure:
+                {{
+                    "items": [{{
+                        "text": "[Main content title]",
+                        "targetSection": "{target_section}",
+                        "children": [
+                            {{"text": "[Key point 1]", "children": [{{"text": "[Detail 1.1]"}}, {{"text": "[Detail 1.2]"}}]}},
+                            {{"text": "[Key point 2]", "children": [{{"text": "[Detail 2.1]"}}, {{"text": "[Detail 2.2]"}}]}},
+                            {{"text": "[Key point 3]", "children": [{{"text": "[Detail 3.1]"}}, {{"text": "[Detail 3.2]"}}]}}
+                        ]
+                    }}],
+                    "suggestions": ["[Follow-up question]", "[Additional suggestion]"]
+                }}"""
         
         elif action.type == "edit":
             current_text = action.currentContent or "No content provided"
