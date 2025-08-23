@@ -2,6 +2,6 @@ services:
   - type: web
     name: brainflowy-backend
     env: python
-    buildCommand: "cd backend && pip install -r requirements-deploy.txt"
-    startCommand: "cd backend && uvicorn app.main:app --host 0.0.0.0 --port $PORT"
+    buildCommand: "pip install -r requirements.txt"
+    startCommand: "./start.sh"
     # Add environment variables in Render.com dashboard after deployment
