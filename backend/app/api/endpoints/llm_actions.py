@@ -242,8 +242,9 @@ async def call_llm_api(action: LLMActionRequest, outline_context: Optional[Dict]
     Call the actual LLM API (OpenAI, Anthropic, etc.)
     This is where you'd integrate with real AI services.
     """
-    # Check for API keys
-    openai_key = os.getenv("OPENAI_API_KEY")
+    # Check for API keys - use settings instead of os.getenv
+    from app.core.config import settings
+    openai_key = settings.OPENAI_API_KEY
     
     if not openai_key:
         # No API key configured, use mock responses
