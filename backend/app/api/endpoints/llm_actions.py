@@ -247,9 +247,23 @@ async def call_llm_api(action: LLMActionRequest, outline_context: Optional[Dict]
             # Determine target section from prompt or action
             prompt_lower = action.userPrompt.lower()
             
-            # Simple section detection
-            if "spov" in prompt_lower or "spiky pov" in prompt_lower or action.section == "spov":
+            # Enhanced section detection with comprehensive patterns
+            if "spov" in prompt_lower or "spiky pov" in prompt_lower or "strategic point" in prompt_lower or action.section == "spov":
                 target_section = "spov"
+            elif "insight" in prompt_lower or "insights" in prompt_lower or "dok 3" in prompt_lower or "dok3" in prompt_lower or action.section == "insights":
+                target_section = "insights"  
+            elif "evidence" in prompt_lower or "fact" in prompt_lower or "data" in prompt_lower or "dok 1" in prompt_lower or "dok1" in prompt_lower or action.section == "evidence":
+                target_section = "evidence"
+            elif "knowledge" in prompt_lower or "dok 2" in prompt_lower or "dok2" in prompt_lower or action.section == "knowledge":
+                target_section = "knowledge"
+            elif "purpose" in prompt_lower or action.section == "purpose":
+                target_section = "purpose"
+            elif "owner" in prompt_lower or action.section == "owner":
+                target_section = "owner"
+            elif "scope" in prompt_lower or action.section == "scope":
+                target_section = "scope"
+            elif "overview" in prompt_lower or action.section == "overview":
+                target_section = "overview"
             elif action.section:
                 target_section = action.section
             else:
