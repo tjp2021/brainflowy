@@ -18,7 +18,7 @@ aiohttp==3.9.1
 
 # AI Services
 openai==1.51.0
-anthropic==0.39.0
+anthropic==0.64.0
 
 # Development & Testing (optional for production)
 pytest==8.0.0
