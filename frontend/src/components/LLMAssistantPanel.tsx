@@ -355,11 +355,14 @@ export const LLMAssistantPanel: React.FC<LLMAssistantPanelProps> = ({
     textareaRef.current?.focus();
   };
 
-  const handleApplyPending = () => {
-    if (pendingAction) {
+  const [isApplying, setIsApplying] = useState(false);
+  
+  const handleApplyPending = async () => {
+    if (pendingAction && !isApplying) {
+      setIsApplying(true);
       try {
         // Apply the action using the existing persistence logic
-        onApplyAction(pendingAction.action, pendingAction.response);
+        await onApplyAction(pendingAction.action, pendingAction.response);
         // Clear the pending action
         setPendingAction(null);
         // Clear the prompt for next interaction
@@ -375,6 +378,8 @@ export const LLMAssistantPanel: React.FC<LLMAssistantPanelProps> = ({
       } catch (error) {
         console.error('Failed to apply action:', error);
         setError('Failed to apply changes. Please try again.');
+      } finally {
+        setIsApplying(false);
       }
     }
   };
@@ -590,9 +595,14 @@ export const LLMAssistantPanel: React.FC<LLMAssistantPanelProps> = ({
           <div className="flex gap-2">
             <button
               onClick={handleApplyPending}
-              className="flex-1 px-3 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors text-sm font-medium"
+              disabled={isApplying}
+              className={`flex-1 px-3 py-2 text-white rounded-lg transition-colors text-sm font-medium ${
+                isApplying 
+                  ? 'bg-gray-400 cursor-not-allowed' 
+                  : 'bg-green-600 hover:bg-green-700'
+              }`}
             >
-              Apply to Outline
+              {isApplying ? 'Applying...' : 'Apply to Outline'}
             </button>
             <button
               onClick={handleRejectPending}

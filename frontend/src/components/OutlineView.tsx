@@ -343,6 +343,28 @@ const OutlineView: React.FC<OutlineViewProps> = ({ outlineId }) => {
     
     setSaving(true);
     try {
+      // Check for duplicate content before creating
+      const isDuplicateContent = (text: string, parentId: string | null): boolean => {
+        const normalizedText = text.toLowerCase().trim();
+        
+        const checkItems = (items: OutlineItem[], currentParentId: string | null = null): boolean => {
+          for (const item of items) {
+            // Check if same parent and similar content
+            if (currentParentId === parentId && 
+                item.text.toLowerCase().trim() === normalizedText) {
+              return true;
+            }
+            // Check children recursively
+            if (item.children && checkItems(item.children, item.id)) {
+              return true;
+            }
+          }
+          return false;
+        };
+        
+        return checkItems(items, null);
+      };
+      
       // Recursive function to create items with children
       const createWithChildren = async (
         items: any[],
@@ -352,6 +374,12 @@ const OutlineView: React.FC<OutlineViewProps> = ({ outlineId }) => {
         const created: OutlineItem[] = [];
         
         for (const item of items) {
+          // Skip if duplicate content already exists in same location
+          if (isDuplicateContent(item.text, parentId)) {
+            console.warn(`Skipping duplicate content: "${item.text}" under parent ${parentId}`);
+            continue;
+          }
+          
           // Create the item on backend
           const newItem = await outlinesApi.createItem(currentOutlineId, {
             content: item.text,
