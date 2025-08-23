@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Test LLM Flow</title>
+</head>
+<body>
+    <h1>Test LLM Flow</h1>
+    <button onclick="testLLMFlow()">Test LLM Create SPOV</button>
+    <pre id="output"></pre>
+
+    <script>
+    async function testLLMFlow() {
+        const output = document.getElementById('output');
+        output.textContent = 'Testing...\n';
+        
+        try {
+            // Step 1: Call public LLM endpoint
+            output.textContent += '1. Calling public LLM endpoint...\n';
+            const response = await fetch('http://localhost:8001/api/v1/public/llm-action', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    type: 'create',
+                    userPrompt: 'Create a SPOV about the importance of mobile-first design',
+                    section: 'spov'
+                })
+            });
+            
+            const data = await response.json();
+            output.textContent += '2. Response received:\n' + JSON.stringify(data, null, 2) + '\n\n';
+            
+            // Check if items have targetSection
+            if (data.result && data.result.items && data.result.items[0]) {
+                const targetSection = data.result.items[0].targetSection;
+                output.textContent += `3. Target section: ${targetSection}\n`;
+                
+                if (targetSection === 'spov') {
+                    output.textContent += '✅ SUCCESS: Items correctly targeted to SPOV section!\n';
+                } else {
+                    output.textContent += `❌ ERROR: Items targeted to wrong section: ${targetSection}\n`;
+                }
+            } else {
+                output.textContent += '❌ ERROR: No items in response\n';
+            }
+            
+        } catch (error) {
+            output.textContent += '❌ ERROR: ' + error.message + '\n';
+        }
+    }
+    </script>
+</body>
+</html>

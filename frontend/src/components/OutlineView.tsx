@@ -102,9 +102,23 @@ const OutlineView: React.FC<OutlineViewProps> = ({ outlineId }) => {
             const deduplicatedItems = deduplicateItems(hierarchicalItems);
             setItems(deduplicatedItems);
           }
+        } else {
+          // No user authenticated - load Brainlift template locally for demo
+          console.log('No user authenticated, loading Brainlift template locally');
+          const { brainliftTemplate } = await import('@/templates/brainliftTemplate');
+          setItems(brainliftTemplate);
+          setTitle('Brainlift Template');
         }
       } catch (error) {
         console.error('Failed to load outline:', error);
+        // Fallback to Brainlift template on error
+        try {
+          const { brainliftTemplate } = await import('@/templates/brainliftTemplate');
+          setItems(brainliftTemplate);
+          setTitle('Brainlift Template');
+        } catch (templateError) {
+          console.error('Failed to load template:', templateError);
+        }
       } finally {
         setLoading(false);
       }
@@ -366,8 +380,81 @@ const OutlineView: React.FC<OutlineViewProps> = ({ outlineId }) => {
     console.log('llmItems:', llmItems);
     console.log('currentOutlineId:', currentOutlineId);
     
+    // If no outline ID (unauthenticated), work with local state only
     if (!currentOutlineId) {
-      console.error('No currentOutlineId, cannot create items');
+      console.log('No currentOutlineId, working with local state only');
+      
+      // Generate IDs for new items
+      const generateId = () => `local-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+      
+      // Create the items with local IDs
+      const createLocalItems = (items: any[], parentId: string | null, level: number = 0): OutlineItem[] => {
+        return items.map((item, index) => {
+          const newId = generateId();
+          const newItem: OutlineItem = {
+            id: newId,
+            text: item.text,
+            level,
+            parentId,
+            expanded: true,
+            style: item.style || 'normal',
+            formatting: item.formatting,
+            children: item.children ? createLocalItems(item.children, newId, level + 1) : []
+          };
+          return newItem;
+        });
+      };
+      
+      // Calculate correct level based on parent
+      let parentLevel = 0;
+      if (parentId) {
+        const findParentLevel = (items: OutlineItem[]): number => {
+          for (const item of items) {
+            if (item.id === parentId) {
+              return item.level;
+            }
+            if (item.children && item.children.length > 0) {
+              const found = findParentLevel(item.children);
+              if (found >= 0) return found;
+            }
+          }
+          return 0;
+        };
+        parentLevel = findParentLevel(items);
+      }
+      
+      const newItems = createLocalItems(llmItems, parentId, parentLevel + (parentId ? 1 : 0));
+      
+      // Add to local state
+      setItems(prevItems => {
+        if (!parentId) {
+          // Add to root level
+          return [...prevItems, ...newItems];
+        } else {
+          // Add as children of parent
+          const addToParent = (items: OutlineItem[]): OutlineItem[] => {
+            return items.map(item => {
+              if (item.id === parentId) {
+                return {
+                  ...item,
+                  children: [...(item.children || []), ...newItems],
+                  expanded: true
+                };
+              }
+              if (item.children && item.children.length > 0) {
+                return {
+                  ...item,
+                  children: addToParent(item.children)
+                };
+              }
+              return item;
+            });
+          };
+          return addToParent(prevItems);
+        }
+      });
+      
+      console.log('Added items to local state');
       return;
     }
     

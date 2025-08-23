@@ -1314,8 +1314,12 @@ const OutlineDesktop: React.FC<OutlineDesktopProps> = ({
         else if (itemTextLower.includes(sectionLower)) {
           isMatch = true;
         }
-        // Specific section aliases
-        else if (sectionToCheck === 'spov' && (itemTextLower.includes('spov') || itemTextLower.includes('strategic point') || itemTextLower.includes('spiky pov'))) {
+        // Specific section aliases - check for SPOV DOK 4 (Brainlift template)
+        else if (sectionToCheck === 'spov' && 
+                (itemTextLower.includes('spov dok 4') || 
+                 itemTextLower.includes('spov') || 
+                 itemTextLower.includes('strategic point') || 
+                 itemTextLower.includes('spiky pov'))) {
           isMatch = true;
         }
         else if (sectionToCheck === 'purpose' && itemTextLower.includes('purpose')) {
@@ -1413,8 +1417,19 @@ const OutlineDesktop: React.FC<OutlineDesktopProps> = ({
         console.log('Response items:', response.items);
         console.log('Current outline state:', outline);
         console.log('Current outline length:', outline.length);
+        
+        // Log outline sections for debugging
+        const sections = outline.map(item => ({ id: item.id, text: item.text }));
+        console.log('Available sections in outline:', sections);
+        
         const parentId = action.parentId || determineParentFromSection(action.section, response.items[0]?.targetSection);
         console.log('Determined parentId:', parentId, 'from section:', action.section, 'targetSection:', response.items[0]?.targetSection);
+        
+        if (!onLLMCreateItems) {
+          console.error('onLLMCreateItems handler is not defined!');
+          return;
+        }
+        
         console.log('Calling onLLMCreateItems with parentId:', parentId, 'and items:', response.items);
         await onLLMCreateItems(parentId, response.items);
         console.log('onLLMCreateItems completed');

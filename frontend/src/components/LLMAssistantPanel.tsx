@@ -388,13 +388,22 @@ export const LLMAssistantPanel: React.FC<LLMAssistantPanelProps> = ({
   const [isApplying, setIsApplying] = useState(false);
   
   const handleApplyPending = async () => {
-    console.log('handleApplyPending called, pendingAction:', pendingAction);
+    console.log('=== handleApplyPending START ===');
+    console.log('pendingAction:', pendingAction);
+    console.log('pendingAction.response.items:', pendingAction?.response?.items);
+    
     if (pendingAction && !isApplying) {
       setIsApplying(true);
-      console.log('Applying action:', pendingAction.action, 'with response:', pendingAction.response);
+      console.log('Applying action type:', pendingAction.action.type);
+      console.log('Response has items?', !!pendingAction.response.items);
+      console.log('Items length:', pendingAction.response.items?.length);
+      
       try {
         // Apply the action using the existing persistence logic
+        console.log('Calling onApplyAction...');
         await onApplyAction(pendingAction.action, pendingAction.response);
+        console.log('onApplyAction completed successfully');
+        
         // Clear the pending action
         setPendingAction(null);
         // Clear the prompt for next interaction
