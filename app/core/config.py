@@ -26,20 +26,7 @@ class Settings(BaseSettings):
     ALGORITHM: str = "HS256"
     
     # CORS
-    CORS_ORIGINS: List[str] = [
-        "http://localhost:3000",
-        "http://localhost:5173",
-        "http://localhost:5174",
-        "http://localhost:5175",
-        "http://localhost:5176",
-        "http://localhost:5177",
-        "http://127.0.0.1:3000",
-        "http://127.0.0.1:5173",
-        "http://127.0.0.1:5176",
-        "https://ambitious-smoke-041792910.1.azurestaticapps.net",
-        "https://ambitious-smoke-041792910-preview.centralus.1.azurestaticapps.net",
-        "https://ambitious-smoke-041792910.azurestaticapps.net",
-    ]
+    CORS_ORIGINS: List[str] = ["*"]  # Allow all origins temporarily for testing
     
     # Azure Cosmos DB
     COSMOS_ENDPOINT: str = Field(default="https://localhost:8081")  # Emulator default
