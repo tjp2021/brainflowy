@@ -468,8 +468,13 @@ async def call_llm_api(action: LLMActionRequest, outline_context: Optional[Dict]
             return get_mock_response(action)
             
     except Exception as e:
+        import logging
+        logger = logging.getLogger(__name__)
+        logger.error(f"❌ Error calling OpenAI API: {str(e)}")
+        logger.error(f"❌ Full error details: {repr(e)}")
         print(f"Error calling OpenAI API: {str(e)}")
         # Fall back to mock response on error
+        logger.info("📝 Falling back to mock response")
         return get_mock_response(action)
 
 @router.post("", response_model=LLMActionResponse)
@@ -505,12 +510,14 @@ async def process_llm_action(
             print(f"Could not load outline context: {e}")
             # Continue without context if loading fails
         
+        # Log the action for analytics/debugging
+        print(f"🤖 LLM Action Request: {request.type} for outline {outline_id}")
+        print(f"📝 Prompt: {request.userPrompt[:100]}...")
+        
         # Call LLM API with outline context
         result = await call_llm_api(request, outline_context)
         
-        # Log the action for analytics/debugging
-        print(f"LLM Action: {request.type} for outline {outline_id}")
-        print(f"Prompt: {request.userPrompt[:100]}...")
+        print(f"✅ LLM Action completed, result keys: {list(result.keys()) if isinstance(result, dict) else 'not a dict'}")
         if outline_context:
             sections = detect_outline_sections(outline_context)
             print(f"Detected sections: {[k for k, v in sections.items() if v]}")
