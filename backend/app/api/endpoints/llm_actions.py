@@ -337,18 +337,44 @@ async def call_llm_api(action: LLMActionRequest, outline_context: Optional[Dict]
                     ]
                 }}"""
             else:
-                user_prompt = f"""Create content for this request: {action.userPrompt}
+                # General content creation - always create structured bullets
+                user_prompt = f"""Create well-structured content for this request: {action.userPrompt}
                 
                 {section_instructions}
+                
+                IMPORTANT: Create a hierarchical structure with main points and sub-points.
+                Each main point should have 2-4 sub-bullets with specific details.
                 
                 Respond with this JSON structure:
                 {{
                     "items": [{{
-                        "text": "[Main content]",
-                        "targetSection": "{target_section or 'general'}",
-                        "children": []
+                        "text": "[Main topic or title]",
+                        "targetSection": "{target_section if target_section else 'general'}",
+                        "children": [
+                            {{
+                                "text": "[Main bullet point 1]",
+                                "children": [
+                                    {{"text": "[Specific detail or sub-point 1.1]"}},
+                                    {{"text": "[Specific detail or sub-point 1.2]"}}
+                                ]
+                            }},
+                            {{
+                                "text": "[Main bullet point 2]",
+                                "children": [
+                                    {{"text": "[Specific detail or sub-point 2.1]"}},
+                                    {{"text": "[Specific detail or sub-point 2.2]"}}
+                                ]
+                            }},
+                            {{
+                                "text": "[Main bullet point 3]",
+                                "children": [
+                                    {{"text": "[Specific detail or sub-point 3.1]"}},
+                                    {{"text": "[Specific detail or sub-point 3.2]"}}
+                                ]
+                            }}
+                        ]
                     }}],
-                    "suggestions": ["[Follow-up question]"]
+                    "suggestions": ["[Follow-up question 1]", "[Follow-up question 2]"]
                 }}"""
         
         elif action.type == "edit":
