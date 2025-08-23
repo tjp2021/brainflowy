@@ -36,15 +36,48 @@ const OutlineView: React.FC<OutlineViewProps> = ({ outlineId }) => {
         const user = await authApi.getCurrentUser();
         
         if (user) {
-          // Helper functions for processing items
-          const mapHierarchicalItems = (items: any[], level: number = 0): OutlineItem[] => {
-            return items.map(item => ({
-              ...item,
-              text: item.content || item.text || '',
-              level: level,
-              expanded: true,
-              children: item.children ? mapHierarchicalItems(item.children, level + 1) : []
-            }));
+          // Helper function to reconstruct hierarchy from flat parentId structure
+          const buildHierarchyFromParentIds = (flatItems: any[]): OutlineItem[] => {
+            // Create a map of all items by ID
+            const itemsMap = new Map<string, OutlineItem>();
+            const rootItems: OutlineItem[] = [];
+            
+            // First pass: create OutlineItem objects
+            for (const item of flatItems) {
+              const outlineItem: OutlineItem = {
+                ...item,
+                text: item.content || item.text || '',
+                level: 0, // Will be recalculated
+                expanded: true,
+                children: []
+              };
+              itemsMap.set(item.id, outlineItem);
+            }
+            
+            // Second pass: build parent-child relationships and calculate levels
+            for (const item of flatItems) {
+              const outlineItem = itemsMap.get(item.id)!;
+              
+              if (item.parentId && itemsMap.has(item.parentId)) {
+                // This item has a parent - add to parent's children
+                const parentItem = itemsMap.get(item.parentId)!;
+                parentItem.children.push(outlineItem);
+                outlineItem.level = parentItem.level + 1;
+              } else {
+                // This is a root item
+                rootItems.push(outlineItem);
+                outlineItem.level = 0;
+              }
+            }
+            
+            console.log(`🔧 buildHierarchyFromParentIds: ${flatItems.length} flat items -> ${rootItems.length} root items`);
+            console.log(`🔧 Hierarchy structure:`, rootItems.map(item => ({
+              text: item.text,
+              level: item.level,
+              children: item.children.length
+            })));
+            
+            return rootItems;
           };
           
           const deduplicateItems = (items: OutlineItem[]): OutlineItem[] => {
@@ -90,7 +123,7 @@ const OutlineView: React.FC<OutlineViewProps> = ({ outlineId }) => {
             }
             
             const backendItems = await outlinesApi.getOutlineItems(newOutline.id);
-            const hierarchicalItems = mapHierarchicalItems(backendItems);
+            const hierarchicalItems = buildHierarchyFromParentIds(backendItems);
             const deduplicatedItems = deduplicateItems(hierarchicalItems);
             setItems(deduplicatedItems);
           } else {
@@ -98,7 +131,7 @@ const OutlineView: React.FC<OutlineViewProps> = ({ outlineId }) => {
             setCurrentOutlineId(outlines[0].id);
             const backendItems = await outlinesApi.getOutlineItems(outlines[0].id);
             
-            const hierarchicalItems = mapHierarchicalItems(backendItems);
+            const hierarchicalItems = buildHierarchyFromParentIds(backendItems);
             const deduplicatedItems = deduplicateItems(hierarchicalItems);
             setItems(deduplicatedItems);
           }
