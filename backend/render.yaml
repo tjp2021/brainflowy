@@ -1,0 +1,7 @@
+services:
+  - type: web
+    name: brainflowy-backend
+    runtime: python
+    buildCommand: "pip install -r requirements-deploy.txt"
+    startCommand: "uvicorn app.main:app --host 0.0.0.0 --port $PORT"
+    # Add environment variables in Render.com dashboard after deployment
