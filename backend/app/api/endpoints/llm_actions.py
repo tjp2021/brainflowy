@@ -445,7 +445,7 @@ async def call_llm_api(action: LLMActionRequest, outline_context: Optional[Dict]
         
         # Call OpenAI API
         response = client.chat.completions.create(
-            model="gpt-4-turbo-preview",  # Using GPT-4 for better structured output
+            model="gpt-4o-mini",  # Using GPT-4o-mini - more accessible and cost-effective
             messages=[
                 {"role": "system", "content": system_prompt},
                 {"role": "user", "content": user_prompt}
