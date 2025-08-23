@@ -225,31 +225,11 @@ async def call_llm_api(action: LLMActionRequest, outline_context: Optional[Dict]
                 if existing_sections["dok1"]:
                     sections_list.append("DOK Level 1 - Evidence/Facts")
                 
-                system_prompt = f"""You are an AI assistant helping users create and edit business documents called Brainlifts. 
-                You must respond in valid JSON format. Be concise and professional.
+                system_prompt = f"""You create business document content in JSON format. Be concise and professional.
                 
-                Current outline structure:
-                {outline_structure}
+                Available sections: {', '.join(sections_list)}
                 
-                Existing sections in this outline:
-                {', '.join(sections_list)}
-                
-                Section guidelines:
-                - SPOV: Strategic insights and recommendations
-                - Purpose: The main goal or decision to be made
-                - Expert Council: Subject matter experts and advisors
-                - DOK Level 3 - Insights: Strategic analysis and insights
-                - DOK Level 2 - Knowledge: Synthesized knowledge and patterns
-                - DOK Level 1 - Evidence/Facts: Data, facts, and citations
-                
-                When creating content, analyze the user's request to determine the appropriate section:
-                - If they mention experts, advisors, or need expertise → Expert Council
-                - If they mention data, facts, evidence, or citations → DOK Level 1
-                - If they mention insights, analysis, or strategy → DOK Level 3
-                - If they mention knowledge, patterns, or synthesis → DOK Level 2
-                - If they mention strategic points or recommendations → SPOV
-                
-                IMPORTANT: Create content under the appropriate existing section based on the content type."""
+                Create structured content with main points and sub-bullets."""
             else:
                 # Empty outline or no clear structure
                 system_prompt = """You are an AI assistant helping users create and edit business documents called Brainlifts. 
@@ -264,118 +244,35 @@ async def call_llm_api(action: LLMActionRequest, outline_context: Optional[Dict]
             You must respond in valid JSON format. Be concise and professional."""
         
         if action.type == "create":
-            # Analyze the prompt to determine target section
+            # Determine target section from prompt or action
             prompt_lower = action.userPrompt.lower()
             
-            # Determine the appropriate section and parent
-            target_section = None
-            section_instructions = ""
-            
-            if outline_context and existing_sections:
-                # Check for section-specific keywords
-                if ("expert" in prompt_lower or "advisor" in prompt_lower or 
-                    "council" in prompt_lower or "sme" in prompt_lower):
-                    target_section = "expert_council"
-                    section_instructions = "Place this content under the Expert Council section."
-                elif ("data" in prompt_lower or "fact" in prompt_lower or 
-                      "evidence" in prompt_lower or "citation" in prompt_lower or
-                      "statistic" in prompt_lower or "research" in prompt_lower):
-                    target_section = "dok1"
-                    section_instructions = "Place this content under DOK Level 1 - Evidence/Facts section."
-                elif ("insight" in prompt_lower or "analysis" in prompt_lower or
-                      "strategy" in prompt_lower or "implication" in prompt_lower):
-                    target_section = "dok3"
-                    section_instructions = "Place this content under DOK Level 3 - Insights section."
-                elif ("knowledge" in prompt_lower or "pattern" in prompt_lower or
-                      "synthesis" in prompt_lower or "understanding" in prompt_lower):
-                    target_section = "dok2"
-                    section_instructions = "Place this content under DOK Level 2 - Knowledge section."
-                elif "spov" in prompt_lower or "spiky pov" in prompt_lower or "strategic point" in prompt_lower:
-                    target_section = "spov"
-                    section_instructions = "Place this content under the SPOV section."
-                elif "purpose" in prompt_lower:
-                    target_section = "purpose"
-                    section_instructions = "Place this content under the Purpose section."
-            
+            # Simple section detection
             if "spov" in prompt_lower or "spiky pov" in prompt_lower or action.section == "spov":
-                print(f"Creating SPOV with target_section: {target_section}, section_instructions: {section_instructions}")
-                user_prompt = f"""Create a Strategic Point of View (SPOV) based on this request: {action.userPrompt}
-                
-                {section_instructions}
-                
-                Respond with this EXACT JSON structure:
-                {{
-                    "items": [{{
-                        "text": "[SPOV Title]",
-                        "targetSection": "{target_section or 'spov'}",
-                        "children": [
-                            {{
-                                "text": "Description:",
-                                "children": [{{"text": "[One clear sentence describing the strategic view]"}}]
-                            }},
-                            {{
-                                "text": "Evidence:",
-                                "children": [
-                                    {{"text": "[Specific data point or statistic 1]"}},
-                                    {{"text": "[Specific data point or statistic 2]"}},
-                                    {{"text": "[Specific data point or statistic 3]"}}
-                                ]
-                            }},
-                            {{
-                                "text": "Implementation Levers:",
-                                "children": [
-                                    {{"text": "[Concrete action 1]"}},
-                                    {{"text": "[Concrete action 2]"}},
-                                    {{"text": "[Concrete action 3]"}}
-                                ]
-                            }}
-                        ]
-                    }}],
-                    "suggestions": [
-                        "[Follow-up question 1]",
-                        "[Follow-up question 2]"
-                    ]
-                }}"""
+                target_section = "spov"
+            elif action.section:
+                target_section = action.section
             else:
-                # General content creation - always create structured bullets
-                user_prompt = f"""Create well-structured content for this request: {action.userPrompt}
-                
-                {section_instructions}
-                
-                IMPORTANT: Create a hierarchical structure with main points and sub-points.
-                Each main point should have 2-4 sub-bullets with specific details.
-                
-                Respond with this JSON structure:
-                {{
-                    "items": [{{
-                        "text": "[Main topic or title]",
-                        "targetSection": "{target_section if target_section else 'general'}",
-                        "children": [
-                            {{
-                                "text": "[Main bullet point 1]",
-                                "children": [
-                                    {{"text": "[Specific detail or sub-point 1.1]"}},
-                                    {{"text": "[Specific detail or sub-point 1.2]"}}
-                                ]
-                            }},
-                            {{
-                                "text": "[Main bullet point 2]",
-                                "children": [
-                                    {{"text": "[Specific detail or sub-point 2.1]"}},
-                                    {{"text": "[Specific detail or sub-point 2.2]"}}
-                                ]
-                            }},
-                            {{
-                                "text": "[Main bullet point 3]",
-                                "children": [
-                                    {{"text": "[Specific detail or sub-point 3.1]"}},
-                                    {{"text": "[Specific detail or sub-point 3.2]"}}
-                                ]
-                            }}
-                        ]
-                    }}],
-                    "suggestions": ["[Follow-up question 1]", "[Follow-up question 2]"]
-                }}"""
+                target_section = "general"
+            
+            print(f"Creating content with target_section: {target_section}")
+            
+            # Universal structured content creation - same format for ALL sections
+            user_prompt = f"""Create content for: {action.userPrompt}
+
+Return JSON:
+{{
+  "items": [{{
+    "text": "[Main Title]",
+    "targetSection": "{target_section}",
+    "children": [
+      {{"text": "[Point 1]", "children": [{{"text": "[Detail 1.1]"}}, {{"text": "[Detail 1.2]"}}]}},
+      {{"text": "[Point 2]", "children": [{{"text": "[Detail 2.1]"}}, {{"text": "[Detail 2.2]"}}]}},
+      {{"text": "[Point 3]", "children": [{{"text": "[Detail 3.1]"}}, {{"text": "[Detail 3.2]"}}]}}
+    ]
+  }}],
+  "suggestions": ["[question 1]", "[question 2]"]
+}}"""
         
         elif action.type == "edit":
             current_text = action.currentContent or "No content provided"
@@ -419,7 +316,9 @@ async def call_llm_api(action: LLMActionRequest, outline_context: Optional[Dict]
                     {"role": "system", "content": system_prompt},
                     {"role": "user", "content": user_prompt}
                 ],
-                temperature=0.7,
+                temperature=0.3,  # Lower temperature for faster, more consistent responses
+                max_tokens=800,   # Limit response length for speed
+                timeout=15,       # 15 second timeout
                 response_format={"type": "json_object"}  # Force JSON response
             )
         except Exception as api_error:
@@ -432,7 +331,9 @@ async def call_llm_api(action: LLMActionRequest, outline_context: Optional[Dict]
                         {"role": "system", "content": system_prompt + "\nIMPORTANT: You must respond with valid JSON."},
                         {"role": "user", "content": user_prompt}
                     ],
-                    temperature=0.7
+                    temperature=0.3,
+                    max_tokens=800,
+                    timeout=15
                 )
             else:
                 raise api_error
