@@ -234,13 +234,15 @@ export const LLMAssistantPanel: React.FC<LLMAssistantPanelProps> = ({
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), 30000); // 30 second timeout
       
-      // Use a default outline ID for testing if not provided
-      const effectiveOutlineId = outlineId || 'test-outline-123';
+      // Use public endpoint if no outline ID (no auth required)
+      const endpoint = outlineId 
+        ? `${apiUrl}/api/v1/outlines/${outlineId}/llm-action`
+        : `${apiUrl}/api/v1/public/llm-action`;
       
-      console.log('Calling LLM API:', `${apiUrl}/api/v1/outlines/${effectiveOutlineId}/llm-action`);
-      console.log('Using outline ID:', effectiveOutlineId, 'Original outline ID:', outlineId);
+      console.log('Calling LLM API:', endpoint);
+      console.log('Using outline ID:', outlineId || 'none (public endpoint)');
       
-      const apiResponse = await fetch(`${apiUrl}/api/v1/outlines/${effectiveOutlineId}/llm-action`, {
+      const apiResponse = await fetch(endpoint, {
         method: 'POST',
         headers,
         body: JSON.stringify({
