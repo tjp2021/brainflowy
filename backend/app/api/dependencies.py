@@ -1,6 +1,6 @@
 """API dependencies for authentication and authorization"""
 from typing import Optional
-from fastapi import Depends, HTTPException, status
+from fastapi import Depends, HTTPException, status, Request
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 
 from app.core.security import decode_token
@@ -13,13 +13,34 @@ if settings.TESTING:
 else:
     from app.db.cosmos import cosmos_client
 
-security = HTTPBearer()
+security = HTTPBearer(auto_error=False)
 
 
 async def get_current_user(
-    credentials: HTTPAuthorizationCredentials = Depends(security)
+    request: Request,
+    credentials: Optional[HTTPAuthorizationCredentials] = Depends(security)
 ) -> User:
     """Get the current authenticated user from JWT token"""
+    
+    # In TESTING mode, allow bypass with X-Test-User-Id header
+    if settings.TESTING:
+        test_user_id = request.headers.get("X-Test-User-Id")
+        if test_user_id:
+            # Return a mock test user
+            return User(
+                id=test_user_id,
+                email="test@example.com",
+                name="Test User"
+            )
+    
+    # Normal authentication flow
+    if not credentials:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Not authenticated",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+    
     token = credentials.credentials
     
     # Decode token

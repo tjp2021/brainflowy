@@ -117,9 +117,12 @@ def get_mock_response(action: LLMActionRequest) -> Dict[str, Any]:
     """
     prompt_lower = action.userPrompt.lower()
     
+    print(f"Getting mock response for: type={action.type}, prompt='{action.userPrompt[:50]}'")
+    
     # Simple keyword matching for mock responses
     if action.type == "create":
-        if "spov" in prompt_lower or "spiky pov" in prompt_lower or "retention" in prompt_lower or "churn" in prompt_lower:
+        if "spov" in prompt_lower or "spiky pov" in prompt_lower or "strategic point" in prompt_lower or "retention" in prompt_lower or "churn" in prompt_lower:
+            print("Returning mock SPOV response")
             return MOCK_RESPONSES["create_spov"]
         else:
             return {
@@ -248,8 +251,15 @@ async def call_llm_api(action: LLMActionRequest, outline_context: Optional[Dict]
     
     if not openai_key:
         # No API key configured, use mock responses
-        print("No OpenAI API key found, using mock responses")
-        return get_mock_response(action)
+        print("⚠️ No OpenAI API key found, using mock responses")
+        print(f"Mock response will be generated for action type: {action.type}")
+        mock_result = get_mock_response(action)
+        print(f"Mock result keys: {list(mock_result.keys())}")
+        if "items" in mock_result:
+            print(f"Mock items count: {len(mock_result['items'])}")
+            if mock_result['items']:
+                print(f"First item text: {mock_result['items'][0].get('text', 'No text')[:50]}")
+        return mock_result
     
     try:
         # Initialize OpenAI client
@@ -357,6 +367,7 @@ async def call_llm_api(action: LLMActionRequest, outline_context: Optional[Dict]
                     section_instructions = "Place this content under the Purpose section."
             
             if "spov" in prompt_lower or "spiky pov" in prompt_lower or action.section == "spov":
+                print(f"Creating SPOV with target_section: {target_section}, section_instructions: {section_instructions}")
                 user_prompt = f"""Create a Strategic Point of View (SPOV) based on this request: {action.userPrompt}
                 
                 {section_instructions}
@@ -475,6 +486,24 @@ async def call_llm_api(action: LLMActionRequest, outline_context: Optional[Dict]
         
         try:
             result = json.loads(response_text)
+            print(f"Parsed LLM result: {result}")
+            
+            # Ensure the result has the expected structure for create actions
+            if action.type == "create" and "items" not in result:
+                print(f"Warning: LLM response missing 'items' field, wrapping content")
+                # Try to salvage the response
+                if "content" in result:
+                    result = {
+                        "items": [{
+                            "text": result["content"],
+                            "children": []
+                        }],
+                        "suggestions": result.get("suggestions", [])
+                    }
+                else:
+                    print(f"Unable to salvage response, using mock")
+                    return get_mock_response(action)
+            
             return result
         except json.JSONDecodeError as e:
             print(f"Failed to parse LLM response as JSON: {e}")

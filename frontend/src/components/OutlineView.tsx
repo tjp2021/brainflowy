@@ -36,45 +36,67 @@ const OutlineView: React.FC<OutlineViewProps> = ({ outlineId }) => {
         const user = await authApi.getCurrentUser();
         
         if (user) {
-          const outlines = await outlinesApi.getOutlines();
+          // Helper functions for processing items
+          const mapHierarchicalItems = (items: any[], level: number = 0): OutlineItem[] => {
+            return items.map(item => ({
+              ...item,
+              text: item.content || item.text || '',
+              level: level,
+              expanded: true,
+              children: item.children ? mapHierarchicalItems(item.children, level + 1) : []
+            }));
+          };
           
-          if (outlines.length > 0) {
+          const deduplicateItems = (items: OutlineItem[]): OutlineItem[] => {
+            const seen = new Set<string>();
+            const deduplicated: OutlineItem[] = [];
+            
+            for (const item of items) {
+              if (!seen.has(item.id)) {
+                seen.add(item.id);
+                if (item.children && item.children.length > 0) {
+                  item.children = deduplicateItems(item.children);
+                }
+                deduplicated.push(item);
+              } else {
+                console.warn(`Duplicate item ID detected on load and removed: ${item.id}`);
+              }
+            }
+            
+            return deduplicated;
+          };
+          
+          let outlines = await outlinesApi.getOutlines();
+          
+          // If no outlines exist, create a default one
+          if (outlines.length === 0) {
+            console.log('No outlines found, creating default outline...');
+            const newOutline = await outlinesApi.createOutline({
+              title: 'Work Notes',
+              items: []
+            });
+            console.log('Created new outline:', newOutline.id);
+            setCurrentOutlineId(newOutline.id);
+            
+            // Create default sections
+            const sections = [
+              { content: 'Strategic Points of View (SPOVs)', style: 'heading1' },
+              { content: 'Purpose', style: 'heading1' },
+              { content: 'Scope', style: 'heading1' }
+            ];
+            
+            for (const section of sections) {
+              await outlinesApi.createItem(newOutline.id, section as any);
+            }
+            
+            const backendItems = await outlinesApi.getOutlineItems(newOutline.id);
+            const hierarchicalItems = mapHierarchicalItems(backendItems);
+            const deduplicatedItems = deduplicateItems(hierarchicalItems);
+            setItems(deduplicatedItems);
+          } else {
+            console.log('Found existing outline:', outlines[0].id);
             setCurrentOutlineId(outlines[0].id);
             const backendItems = await outlinesApi.getOutlineItems(outlines[0].id);
-            
-            
-            // The mock API returns hierarchical data with children already populated
-            // We just need to map 'content' to 'text' and set the levels
-            const mapHierarchicalItems = (items: any[], level: number = 0): OutlineItem[] => {
-              return items.map(item => ({
-                ...item,
-                text: item.content || item.text || '',
-                level: level,
-                expanded: true,
-                children: item.children ? mapHierarchicalItems(item.children, level + 1) : []
-              }));
-            };
-            
-            // Deduplicate items to prevent duplicate key warnings
-            const deduplicateItems = (items: OutlineItem[]): OutlineItem[] => {
-              const seen = new Set<string>();
-              const deduplicated: OutlineItem[] = [];
-              
-              for (const item of items) {
-                if (!seen.has(item.id)) {
-                  seen.add(item.id);
-                  // Also deduplicate children recursively
-                  if (item.children && item.children.length > 0) {
-                    item.children = deduplicateItems(item.children);
-                  }
-                  deduplicated.push(item);
-                } else {
-                  console.warn(`Duplicate item ID detected on load and removed: ${item.id}`);
-                }
-              }
-              
-              return deduplicated;
-            };
             
             const hierarchicalItems = mapHierarchicalItems(backendItems);
             const deduplicatedItems = deduplicateItems(hierarchicalItems);
@@ -339,7 +361,15 @@ const OutlineView: React.FC<OutlineViewProps> = ({ outlineId }) => {
     llmItems: Array<{ text: string; style?: OutlineItem['style']; formatting?: OutlineItem['formatting']; children?: any[] }>,
     position?: number
   ): Promise<void> => {
-    if (!currentOutlineId) return;
+    console.log('=== handleLLMCreateItems called ===');
+    console.log('parentId:', parentId);
+    console.log('llmItems:', llmItems);
+    console.log('currentOutlineId:', currentOutlineId);
+    
+    if (!currentOutlineId) {
+      console.error('No currentOutlineId, cannot create items');
+      return;
+    }
     
     setSaving(true);
     try {

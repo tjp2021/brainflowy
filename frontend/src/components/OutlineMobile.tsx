@@ -714,6 +714,7 @@ const OutlineMobile: React.FC<OutlineMobileProps> = ({
         currentSection={llmCurrentSection}
         initialPrompt={llmInitialPrompt}
         onApplyAction={handleLLMAction}
+        outlineId={outlineId}
       />
     </div>
   );

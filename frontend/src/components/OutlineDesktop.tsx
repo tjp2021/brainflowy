@@ -55,6 +55,13 @@ const OutlineDesktop: React.FC<OutlineDesktopProps> = ({
   const { logout } = useAuth();
   const [outline, setOutline] = useState<OutlineItem[]>(initialItems);
   const [editingId, setEditingId] = useState<string | null>(null);
+  
+  // Sync outline with initialItems when they change
+  useEffect(() => {
+    console.log('OutlineDesktop: initialItems changed, updating outline state');
+    console.log('New initialItems length:', initialItems.length);
+    setOutline(initialItems);
+  }, [initialItems]);
   const [showVoiceModal, setShowVoiceModal] = useState(false);
   const [selectedItems, setSelectedItems] = useState<Set<string>>(new Set());
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
@@ -1349,8 +1356,21 @@ const OutlineDesktop: React.FC<OutlineDesktopProps> = ({
   };
 
   const handleLLMAction = async (action: LLMAction, response: LLMResponse) => {
+    console.log('=== handleLLMAction START ===');
+    console.log('Action:', action);
+    console.log('Response:', response);
+    console.log('Handler check:', { 
+      actionType: action.type,
+      hasResponseItems: !!response.items,
+      itemsLength: response.items?.length,
+      hasOnLLMCreateItems: !!onLLMCreateItems,
+      hasOnLLMEditItem: !!onLLMEditItem,
+      responseKeys: Object.keys(response || {})
+    });
+    
     // Use surgical handlers if available
     if (onLLMEditItem && onLLMCreateItems) {
+      console.log('Using surgical handlers');
       if (action.type === 'edit' && action.targetId) {
         // EDIT existing item using surgical handler
         if (response.content && !response.items) {
@@ -1383,10 +1403,21 @@ const OutlineDesktop: React.FC<OutlineDesktopProps> = ({
           });
         }
         
-      } else if (action.type === 'create' && response.items) {
+      } else if (action.type === 'create') {
         // CREATE new items using surgical handler
+        console.log('Handling CREATE action');
+        if (!response.items) {
+          console.error('No items in response for create action:', response);
+          return;
+        }
+        console.log('Response items:', response.items);
+        console.log('Current outline state:', outline);
+        console.log('Current outline length:', outline.length);
         const parentId = action.parentId || determineParentFromSection(action.section, response.items[0]?.targetSection);
+        console.log('Determined parentId:', parentId, 'from section:', action.section, 'targetSection:', response.items[0]?.targetSection);
+        console.log('Calling onLLMCreateItems with parentId:', parentId, 'and items:', response.items);
         await onLLMCreateItems(parentId, response.items);
+        console.log('onLLMCreateItems completed');
         
       } else if (action.type === 'research') {
         // RESEARCH - might create or edit based on findings
@@ -2453,6 +2484,7 @@ const OutlineDesktop: React.FC<OutlineDesktopProps> = ({
             currentSection={llmCurrentSection}
             initialPrompt={llmInitialPrompt}
             onApplyAction={handleLLMAction}
+            outlineId={outlineId}
           />
         </>
       )}

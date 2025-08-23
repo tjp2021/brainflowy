@@ -9,6 +9,7 @@ interface LLMAssistantPanelProps {
   currentSection?: string | undefined;
   initialPrompt?: string;
   onApplyAction: (action: LLMAction, response: LLMResponse) => void;
+  outlineId?: string | null;
 }
 
 export interface LLMAction {
@@ -117,7 +118,8 @@ export const LLMAssistantPanel: React.FC<LLMAssistantPanelProps> = ({
   currentItem,
   currentSection,
   initialPrompt,
-  onApplyAction
+  onApplyAction,
+  outlineId
 }) => {
   const [prompt, setPrompt] = useState('');
   const [conversation, setConversation] = useState<ConversationEntry[]>([]);
@@ -216,12 +218,31 @@ export const LLMAssistantPanel: React.FC<LLMAssistantPanelProps> = ({
       const outlineId = localStorage.getItem('currentOutlineId') || 'test-outline';
       const apiUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8001';
       
-      const apiResponse = await fetch(`${apiUrl}/api/v1/outlines/${outlineId}/llm-action`, {
+      // Build headers - add test header if no token
+      const headers: any = {
+        'Content-Type': 'application/json'
+      };
+      
+      if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+      } else if (apiUrl.includes('localhost')) {
+        // In local dev without token, use test header
+        headers['X-Test-User-Id'] = 'test-user-123';
+      }
+      
+      // Add timeout to fetch request
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 30000); // 30 second timeout
+      
+      // Use a default outline ID for testing if not provided
+      const effectiveOutlineId = outlineId || 'test-outline-123';
+      
+      console.log('Calling LLM API:', `${apiUrl}/api/v1/outlines/${effectiveOutlineId}/llm-action`);
+      console.log('Using outline ID:', effectiveOutlineId, 'Original outline ID:', outlineId);
+      
+      const apiResponse = await fetch(`${apiUrl}/api/v1/outlines/${effectiveOutlineId}/llm-action`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
+        headers,
         body: JSON.stringify({
           type: actionMode,
           targetId: currentItem?.id,
@@ -229,8 +250,9 @@ export const LLMAssistantPanel: React.FC<LLMAssistantPanelProps> = ({
           section: currentSection || detectSection(userPrompt),
           userPrompt: userPrompt,
           currentContent: currentItem?.text  // Send current content for editing context
-        })
-      });
+        }),
+        signal: controller.signal
+      }).finally(() => clearTimeout(timeoutId));
 
       if (!apiResponse.ok) {
         if (apiResponse.status === 401) {
@@ -243,7 +265,10 @@ export const LLMAssistantPanel: React.FC<LLMAssistantPanelProps> = ({
       }
 
       const data = await apiResponse.json();
+      console.log('API Response data:', data);
       const response = data.result;
+      console.log('Extracted response:', response);
+      console.log('Response has items?', !!response?.items, 'Items length:', response?.items?.length);
 
       // Add assistant response to conversation
       const assistantEntry: ConversationEntry = {
@@ -256,12 +281,15 @@ export const LLMAssistantPanel: React.FC<LLMAssistantPanelProps> = ({
       setConversation(prev => [...prev, assistantEntry]);
 
       // Store the pending action for user approval instead of immediately applying
+      console.log('Setting pending action with response:', response);
       setPendingAction({ action, response });
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error calling LLM API:', error);
       
       // Set error message for user
-      if (error instanceof Error) {
+      if (error?.name === 'AbortError') {
+        setError('Request timed out. The AI service is taking too long to respond. Please try again.');
+      } else if (error instanceof Error) {
         setError(error.message);
       } else {
         setError('Failed to connect to AI service. Please try again.');
@@ -358,8 +386,10 @@ export const LLMAssistantPanel: React.FC<LLMAssistantPanelProps> = ({
   const [isApplying, setIsApplying] = useState(false);
   
   const handleApplyPending = async () => {
+    console.log('handleApplyPending called, pendingAction:', pendingAction);
     if (pendingAction && !isApplying) {
       setIsApplying(true);
+      console.log('Applying action:', pendingAction.action, 'with response:', pendingAction.response);
       try {
         // Apply the action using the existing persistence logic
         await onApplyAction(pendingAction.action, pendingAction.response);
