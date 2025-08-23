@@ -136,7 +136,11 @@ const OutlineDesktop: React.FC<OutlineDesktopProps> = ({
   // Flatten outline for rendering
   const flattenOutline = (items: OutlineItem[], result: OutlineItem[] = []): OutlineItem[] => {
     items.forEach(item => {
-      console.log(`🔧 Flattening: "${item.text}" (level=${item.level}, expanded=${item.expanded}, children=${item.children?.length || 0})`);
+      // Ensure children property exists and is an array
+      if (!item.children) {
+        item.children = [];
+      }
+      console.log(`🔧 Flattening: "${item.text}" (level=${item.level}, expanded=${item.expanded}, children=${item.children.length})`);
       result.push(item);
       if (item.expanded && item.children.length > 0) {
         console.log(`🔧 Adding children of "${item.text}":`, item.children.map(c => c.text));
@@ -149,7 +153,16 @@ const OutlineDesktop: React.FC<OutlineDesktopProps> = ({
     return result;
   };
 
-  const flatItems = flattenOutline(outline);
+  // Ensure all items have proper children arrays before flattening
+  const normalizeOutline = (items: OutlineItem[]): OutlineItem[] => {
+    return items.map(item => ({
+      ...item,
+      children: item.children ? normalizeOutline(item.children) : []
+    }));
+  };
+  
+  const normalizedOutline = normalizeOutline(outline);
+  const flatItems = flattenOutline(normalizedOutline);
   
   // Debug log to see what we're rendering
   if (flatItems.length > 0) {
