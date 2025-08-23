@@ -17,7 +17,7 @@ azure-cosmos==4.5.1
 aiohttp==3.9.1
 
 # AI Services
-openai==1.0.0
+openai==1.54.3
 anthropic==0.39.0
 
 # Development & Testing (optional for production)

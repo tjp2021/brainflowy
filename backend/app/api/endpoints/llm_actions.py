@@ -450,9 +450,8 @@ async def call_llm_api(action: LLMActionRequest, outline_context: Optional[Dict]
                 {"role": "system", "content": system_prompt},
                 {"role": "user", "content": user_prompt}
             ],
-            temperature=0.7
-            # Temporarily removed response_format to test if it's causing issues
-            # response_format={"type": "json_object"}  # Force JSON response
+            temperature=0.7,
+            response_format={"type": "json_object"}  # Force JSON response
         )
         
         # Parse the response

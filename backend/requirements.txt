@@ -29,5 +29,5 @@ mypy==1.4.1
 pre-commit==3.3.3
 
 # AI/Voice (Phase 3)
-openai==1.8.0  # For Whisper voice transcription
-anthropic==0.8.1  # For Claude text structuring
+openai==1.54.3  # For Whisper voice transcription and GPT
+anthropic==0.39.0  # For Claude text structuring
