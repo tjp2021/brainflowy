@@ -1,10 +1,23 @@
 """Main FastAPI application module"""
+import logging
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from contextlib import asynccontextmanager
 
 from app.api.router import api_router
 from app.core.config import settings
+
+# Set up logging
+logger = logging.getLogger(__name__)
+
+# Log environment variables at startup
+logger.info("🚀 Starting BrainFlowy API")
+logger.info(f"📋 Environment variables loaded:")
+logger.info(f"   - OPENAI_API_KEY: {'✅ Set' if settings.OPENAI_API_KEY else '❌ Not set'}")
+logger.info(f"   - ANTHROPIC_API_KEY: {'✅ Set' if settings.ANTHROPIC_API_KEY else '❌ Not set'}")
+logger.info(f"   - SECRET_KEY: {'✅ Set' if settings.SECRET_KEY != 'your-secret-key-change-in-production' else '⚠️ Using default'}")
+logger.info(f"   - COSMOS_ENDPOINT: {settings.COSMOS_ENDPOINT}")
+logger.info(f"   - TESTING: {settings.TESTING}")
 
 # Use mock client in test mode
 if settings.TESTING:

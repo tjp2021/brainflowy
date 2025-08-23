@@ -20,13 +20,19 @@ class AIVoiceService:
         self.openai_client = None
         self.anthropic_client = None
         
+        # Log the API key status for debugging
+        logger.info(f"🔑 OPENAI_API_KEY present: {bool(settings.OPENAI_API_KEY)}")
+        if settings.OPENAI_API_KEY:
+            logger.info(f"🔑 OPENAI_API_KEY length: {len(settings.OPENAI_API_KEY)}")
+            logger.info(f"🔑 OPENAI_API_KEY starts with: {settings.OPENAI_API_KEY[:10]}...")
+        
         # Initialize OpenAI client if API key is available
         if settings.OPENAI_API_KEY:
             try:
                 self.openai_client = OpenAI(api_key=settings.OPENAI_API_KEY)
-                logger.info("OpenAI client initialized successfully")
+                logger.info("✅ OpenAI client initialized successfully")
             except Exception as e:
-                logger.error(f"Failed to initialize OpenAI client: {e}")
+                logger.error(f"❌ Failed to initialize OpenAI client: {e}")
         
         # Initialize Anthropic client if API key is available
         if settings.ANTHROPIC_API_KEY:
@@ -43,6 +49,15 @@ class AIVoiceService:
         """
         logger.info(f"🎯 AI Service: Transcribe called with {len(audio_data)} bytes, filename={filename}")
         logger.info(f"🎯 OpenAI client status: {'Configured' if self.openai_client else 'Not configured'}")
+        
+        # Try to initialize client if not already done (in case env vars were set after startup)
+        if not self.openai_client and settings.OPENAI_API_KEY:
+            logger.info("🔄 Attempting to initialize OpenAI client (env var now available)")
+            try:
+                self.openai_client = OpenAI(api_key=settings.OPENAI_API_KEY)
+                logger.info("✅ OpenAI client initialized successfully on retry")
+            except Exception as e:
+                logger.error(f"❌ Failed to initialize OpenAI client on retry: {e}")
         
         if not self.openai_client:
             logger.warning("OpenAI client not configured, using mock transcription")
