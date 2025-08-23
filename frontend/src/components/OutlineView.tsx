@@ -389,6 +389,7 @@ const OutlineView: React.FC<OutlineViewProps> = ({ outlineId }) => {
       
       // Create the items with local IDs
       const createLocalItems = (items: any[], parentId: string | null, level: number = 0): OutlineItem[] => {
+        console.log(`🔧 createLocalItems called with level=${level}, parentId=${parentId}, items:`, items);
         return items.map((item, index) => {
           const newId = generateId();
           const newItem: OutlineItem = {
@@ -401,6 +402,7 @@ const OutlineView: React.FC<OutlineViewProps> = ({ outlineId }) => {
             formatting: item.formatting,
             children: item.children ? createLocalItems(item.children, newId, level + 1) : []
           };
+          console.log(`🔧 Created item: id=${newId}, text="${newItem.text}", level=${level}, expanded=${newItem.expanded}, children=${newItem.children.length}`);
           return newItem;
         });
       };
@@ -427,14 +429,20 @@ const OutlineView: React.FC<OutlineViewProps> = ({ outlineId }) => {
       
       // Add to local state
       setItems(prevItems => {
+        console.log(`🔧 Adding ${newItems.length} items to state. ParentId: ${parentId}`);
+        console.log(`🔧 New items:`, newItems.map(item => ({ id: item.id, text: item.text, level: item.level, children: item.children.length })));
+        
         if (!parentId) {
           // Add to root level
-          return [...prevItems, ...newItems];
+          const result = [...prevItems, ...newItems];
+          console.log(`🔧 Added to root level. New state length: ${result.length}`);
+          return result;
         } else {
           // Add as children of parent
           const addToParent = (items: OutlineItem[]): OutlineItem[] => {
             return items.map(item => {
               if (item.id === parentId) {
+                console.log(`🔧 Found parent "${item.text}". Adding ${newItems.length} children. Parent expanded: ${item.expanded} -> true`);
                 return {
                   ...item,
                   children: [...(item.children || []), ...newItems],
@@ -450,7 +458,9 @@ const OutlineView: React.FC<OutlineViewProps> = ({ outlineId }) => {
               return item;
             });
           };
-          return addToParent(prevItems);
+          const result = addToParent(prevItems);
+          console.log(`🔧 Updated state after adding children`);
+          return result;
         }
       });
       

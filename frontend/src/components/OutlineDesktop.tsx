@@ -136,11 +136,16 @@ const OutlineDesktop: React.FC<OutlineDesktopProps> = ({
   // Flatten outline for rendering
   const flattenOutline = (items: OutlineItem[], result: OutlineItem[] = []): OutlineItem[] => {
     items.forEach(item => {
+      console.log(`🔧 Flattening: "${item.text}" (level=${item.level}, expanded=${item.expanded}, children=${item.children?.length || 0})`);
       result.push(item);
       if (item.expanded && item.children.length > 0) {
+        console.log(`🔧 Adding children of "${item.text}":`, item.children.map(c => c.text));
         flattenOutline(item.children, result);
+      } else if (item.children.length > 0) {
+        console.log(`🔧 SKIPPED children of "${item.text}" because expanded=${item.expanded}`);
       }
     });
+    console.log(`🔧 Final flattened result (${result.length} items):`, result.map(r => `"${r.text}" (L${r.level})`));
     return result;
   };
 
