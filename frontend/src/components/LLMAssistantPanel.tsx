@@ -214,8 +214,9 @@ export const LLMAssistantPanel: React.FC<LLMAssistantPanelProps> = ({
       // Call real backend API
       const token = localStorage.getItem('accessToken');
       const outlineId = localStorage.getItem('currentOutlineId') || 'test-outline';
+      const apiUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8001';
       
-      const apiResponse = await fetch(`http://localhost:8001/api/v1/outlines/${outlineId}/llm-action`, {
+      const apiResponse = await fetch(`${apiUrl}/api/v1/outlines/${outlineId}/llm-action`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
