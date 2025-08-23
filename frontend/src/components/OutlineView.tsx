@@ -438,7 +438,7 @@ const OutlineView: React.FC<OutlineViewProps> = ({ outlineId }) => {
                 return {
                   ...item,
                   children: [...(item.children || []), ...newItems],
-                  expanded: true
+                  expanded: true  // Ensure parent is expanded to show new children
                 };
               }
               if (item.children && item.children.length > 0) {
@@ -614,6 +614,8 @@ const OutlineView: React.FC<OutlineViewProps> = ({ outlineId }) => {
               if (item.id === parentId) {
                 if (!item.children) item.children = [];
                 item.children.splice(position ?? item.children.length, 0, ...deduplicatedNewItems);
+                // Ensure parent is expanded to show new children
+                item.expanded = true;
                 return true;
               }
               if (item.children && insertIntoParent(item.children)) {
