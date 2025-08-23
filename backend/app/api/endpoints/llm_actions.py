@@ -257,22 +257,26 @@ async def call_llm_api(action: LLMActionRequest, outline_context: Optional[Dict]
             
             print(f"Creating content with target_section: {target_section}")
             
-            # Universal structured content creation - same format for ALL sections
-            user_prompt = f"""Create content for: {action.userPrompt}
+            # Universal structured content creation with specific guidance
+            user_prompt = f"""Create structured business content for: {action.userPrompt}
 
-Return JSON:
+You must create a hierarchical structure with main points and supporting sub-points. 
+
+Return exactly this JSON format:
 {{
   "items": [{{
-    "text": "[Main Title]",
+    "text": "Main headline that summarizes the topic",
     "targetSection": "{target_section}",
     "children": [
-      {{"text": "[Point 1]", "children": [{{"text": "[Detail 1.1]"}}, {{"text": "[Detail 1.2]"}}]}},
-      {{"text": "[Point 2]", "children": [{{"text": "[Detail 2.1]"}}, {{"text": "[Detail 2.2]"}}]}},
-      {{"text": "[Point 3]", "children": [{{"text": "[Detail 3.1]"}}, {{"text": "[Detail 3.2]"}}]}}
+      {{"text": "First key point", "children": [{{"text": "Supporting detail for first point"}}, {{"text": "Additional evidence for first point"}}]}},
+      {{"text": "Second key point", "children": [{{"text": "Supporting detail for second point"}}, {{"text": "Additional evidence for second point"}}]}},
+      {{"text": "Third key point", "children": [{{"text": "Supporting detail for third point"}}, {{"text": "Additional evidence for third point"}}]}}
     ]
   }}],
-  "suggestions": ["[question 1]", "[question 2]"]
-}}"""
+  "suggestions": ["What specific aspect would you like me to expand on?", "Would you like me to add more supporting evidence?"]
+}}
+
+Always include 3 main points with 2 sub-points each. Make content specific and actionable."""
         
         elif action.type == "edit":
             current_text = action.currentContent or "No content provided"
