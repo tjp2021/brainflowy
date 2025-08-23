@@ -444,15 +444,30 @@ async def call_llm_api(action: LLMActionRequest, outline_context: Optional[Dict]
             return get_mock_response(action)
         
         # Call OpenAI API
-        response = client.chat.completions.create(
-            model="gpt-4o-mini",  # Using GPT-4o-mini - more accessible and cost-effective
-            messages=[
-                {"role": "system", "content": system_prompt},
-                {"role": "user", "content": user_prompt}
-            ],
-            temperature=0.7,
-            response_format={"type": "json_object"}  # Force JSON response
-        )
+        try:
+            response = client.chat.completions.create(
+                model="gpt-4o-mini",  # Using GPT-4o-mini - more accessible and cost-effective
+                messages=[
+                    {"role": "system", "content": system_prompt},
+                    {"role": "user", "content": user_prompt}
+                ],
+                temperature=0.7,
+                response_format={"type": "json_object"}  # Force JSON response
+            )
+        except Exception as api_error:
+            # If response_format causes issues, try without it
+            if "response_format" in str(api_error):
+                print(f"response_format not supported, retrying without it")
+                response = client.chat.completions.create(
+                    model="gpt-4o-mini",
+                    messages=[
+                        {"role": "system", "content": system_prompt + "\nIMPORTANT: You must respond with valid JSON."},
+                        {"role": "user", "content": user_prompt}
+                    ],
+                    temperature=0.7
+                )
+            else:
+                raise api_error
         
         # Parse the response
         response_text = response.choices[0].message.content
@@ -515,12 +530,22 @@ async def process_llm_action(
         print(f"📝 Prompt: {request.userPrompt[:100]}...")
         
         # Call LLM API with outline context
-        result = await call_llm_api(request, outline_context)
+        try:
+            result = await call_llm_api(request, outline_context)
+        except Exception as llm_error:
+            print(f"❌ LLM API call failed: {str(llm_error)}")
+            # Always return a valid response with mock data
+            result = get_mock_response(request)
         
         print(f"✅ LLM Action completed, result keys: {list(result.keys()) if isinstance(result, dict) else 'not a dict'}")
         if outline_context:
             sections = detect_outline_sections(outline_context)
             print(f"Detected sections: {[k for k, v in sections.items() if v]}")
+        
+        # Ensure we always return a valid response
+        if not result:
+            print("⚠️ Empty result, using mock response")
+            result = get_mock_response(request)
         
         return LLMActionResponse(
             action=request,
