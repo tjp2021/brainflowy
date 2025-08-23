@@ -30,4 +30,4 @@ pre-commit==3.3.3
 
 # AI/Voice (Phase 3)
 openai==1.51.0  # For Whisper voice transcription and GPT
-anthropic==0.39.0  # For Claude text structuring
+anthropic==0.64.0  # For Claude text structuring
