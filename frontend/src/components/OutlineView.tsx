@@ -343,26 +343,52 @@ const OutlineView: React.FC<OutlineViewProps> = ({ outlineId }) => {
     
     setSaving(true);
     try {
-      // Check for duplicate content before creating
+      // Simple duplicate check - only prevent exact duplicates at the same level
       const isDuplicateContent = (text: string, parentId: string | null): boolean => {
         const normalizedText = text.toLowerCase().trim();
         
-        const checkItems = (items: OutlineItem[], currentParentId: string | null = null): boolean => {
-          for (const item of items) {
-            // Check if same parent and similar content
-            if (currentParentId === parentId && 
-                item.text.toLowerCase().trim() === normalizedText) {
-              return true;
-            }
-            // Check children recursively
-            if (item.children && checkItems(item.children, item.id)) {
-              return true;
-            }
-          }
+        // Don't check for section headers
+        if (normalizedText.endsWith(':')) {
           return false;
-        };
+        }
         
-        return checkItems(items, null);
+        // Find siblings under the same parent
+        let siblings: OutlineItem[] = [];
+        
+        if (parentId === null) {
+          // Check root level items
+          siblings = items;
+        } else {
+          // Find the parent and get its children
+          const findParent = (searchItems: OutlineItem[]): OutlineItem | null => {
+            for (const item of searchItems) {
+              if (item.id === parentId) {
+                return item;
+              }
+              if (item.children) {
+                const found = findParent(item.children);
+                if (found) return found;
+              }
+            }
+            return null;
+          };
+          
+          const parent = findParent(items);
+          if (parent) {
+            siblings = parent.children || [];
+          }
+        }
+        
+        // Check if this exact text already exists at this level
+        const isDuplicate = siblings.some(item => 
+          item.text.toLowerCase().trim() === normalizedText
+        );
+        
+        if (isDuplicate) {
+          console.log(`Duplicate detected: "${text}" under parent ${parentId}`);
+        }
+        
+        return isDuplicate;
       };
       
       // Recursive function to create items with children
