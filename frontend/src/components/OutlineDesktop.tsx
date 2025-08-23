@@ -1267,7 +1267,14 @@ const OutlineDesktop: React.FC<OutlineDesktopProps> = ({
   // Helper function to determine parent ID from section
   const determineParentFromSection = (section?: string, targetSection?: string): string | null => {
     const sectionToCheck = targetSection || section;
-    if (!sectionToCheck) return null;
+    console.log(`🔧 determineParentFromSection: section="${section}", targetSection="${targetSection}", sectionToCheck="${sectionToCheck}"`);
+    if (!sectionToCheck) {
+      console.log(`🔧 No section to check, returning null`);
+      return null;
+    }
+    
+    // Log current outline structure for debugging
+    console.log(`🔧 Current outline sections:`, outline.map(item => ({ id: item.id, text: item.text })));
     
     // Find the most specific matching section (deepest in the hierarchy)
     let bestMatch: { id: string; depth: number } | null = null;
@@ -1348,8 +1355,10 @@ const OutlineDesktop: React.FC<OutlineDesktopProps> = ({
         
         // If we found a match, update bestMatch if this is deeper
         if (isMatch) {
+          console.log(`🔧 Found section match: "${item.text}" (depth=${depth}) for sectionToCheck="${sectionToCheck}"`);
           if (!bestMatch || depth > bestMatch.depth) {
             bestMatch = { id: item.id, depth };
+            console.log(`🔧 Updated bestMatch to: id=${item.id}, depth=${depth}`);
           }
         }
         
@@ -1361,6 +1370,7 @@ const OutlineDesktop: React.FC<OutlineDesktopProps> = ({
     };
     
     findSectionParent(outline, 0);
+    console.log(`🔧 determineParentFromSection result: bestMatch=${bestMatch ? `id=${bestMatch.id}, depth=${bestMatch.depth}` : 'null'}`);
     return bestMatch ? bestMatch.id : null;
   };
 
