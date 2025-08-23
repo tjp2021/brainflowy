@@ -36,6 +36,9 @@ class Settings(BaseSettings):
         "http://127.0.0.1:3000",
         "http://127.0.0.1:5173",
         "http://127.0.0.1:5176",
+        "https://ambitious-smoke-041792910.1.azurestaticapps.net",
+        "https://ambitious-smoke-041792910-preview.centralus.1.azurestaticapps.net",
+        "https://ambitious-smoke-041792910.azurestaticapps.net",
     ]
     
     # Azure Cosmos DB
