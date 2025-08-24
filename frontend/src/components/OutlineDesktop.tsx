@@ -1473,6 +1473,17 @@ const OutlineDesktop: React.FC<OutlineDesktopProps> = ({
         const parentId = action.parentId || determineParentFromSection(action.section, response.items[0]?.targetSection);
         console.log('Determined parentId:', parentId, 'from section:', action.section, 'targetSection:', response.items[0]?.targetSection);
         
+        // CRITICAL DEBUG: If parentId is null, show why section matching failed
+        if (!parentId) {
+          console.log('❌ SECTION MATCHING FAILED - Content will go to root!');
+          console.log('Available sections in outline:', outline.map(item => `"${item.text}"`));
+          console.log('Looking for target section:', response.items[0]?.targetSection);
+          console.log('Looking for action section:', action.section);
+          console.log('This means the LLM content will be appended to bottom instead of injected into sections');
+        } else {
+          console.log('✅ SECTION MATCH SUCCESS - Content will go to section:', outline.find(item => item.id === parentId)?.text);
+        }
+        
         if (!onLLMCreateItems) {
           console.error('onLLMCreateItems handler is not defined!');
           return;
